@@ -1,16 +1,29 @@
-# Netlify deploy for @klarify/api (Hono backend).
+# Netlify — @klarify/web (Next.js 14 App Router)
 #
-# IMPORTANT: In the Netlify UI, set “Base directory” to empty (repository root).
-# If it is set to apps/api, workspace installs and CLI resolution break.
+# 404 / “Page not found” after deploy: Netlify lists wrong publish folder, missing SPA
+# fallback, or broken SSR integration — see:
+# https://answers.netlify.com/t/support-guide-i-ve-deployed-my-site-but-i-still-see-page-not-found/125
+#
+# Monorepo: leave “Base directory” empty (repo root). In Netlify UI, set
+# “Package directory” to `apps/web` so framework detection + this config apply
+# to the Next app while `pnpm install` still runs from the workspace root.
+#
+# ---------------------------------------------------------------------------
+# Why we do NOT copy SPA redirects (`/*` → `/index.html`) from static React apps:
+# `/auth/callback` is implemented as `app/auth/callback/route.ts` (Route Handler).
+# Serving `index.html` for that path would skip the server and break Supabase OAuth.
+# Deep links and refreshes are handled by Netlify’s Next.js runtime (OpenNext).
+# ---------------------------------------------------------------------------
+#
+# Deploy @klarify/api (Hono) on Railway/Render, or a second Netlify site whose
+# build command is the API pipeline (see git history for prisma + tsc example).
 
 [build]
-  # Force a full workspace install including devDependencies used locally (tsx, vitest).
-  # NODE_ENV=production on Netlify otherwise skips devDeps before our prisma/typescript deps move.
   installCommand = "corepack enable && corepack prepare pnpm@9.0.0 --activate && env NODE_ENV=development pnpm install --frozen-lockfile"
+  command        = "pnpm --filter @klarify/web run build"
 
-  # Use npm scripts so pnpm puts node_modules/.bin on PATH (pnpm exec prisma still fails on some CI setups).
-  command        = "pnpm --filter @klarify/api run db:generate && pnpm --filter @klarify/api run build"
-  publish        = "apps/api/dist"
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 [build.environment]
   NODE_VERSION = "20"
