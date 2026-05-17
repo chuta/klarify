@@ -1,0 +1,42 @@
+{
+  "name": "@klarify/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Klarify mobile (Expo SDK 51 + Expo Router) — iOS + Android",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "build:ios": "eas build --platform ios",
+    "build:android": "eas build --platform android",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@klarify/ai": "workspace:*",
+    "@klarify/core": "workspace:*",
+    "@klarify/ui": "workspace:*",
+    "@supabase/supabase-js": "^2.45.4",
+    "expo": "~51.0.28",
+    "expo-router": "~3.5.23",
+    "expo-status-bar": "~1.12.1",
+    "expo-linking": "~6.3.1",
+    "expo-constants": "~16.0.2",
+    "expo-secure-store": "~13.0.2",
+    "expo-web-browser": "~13.0.3",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-safe-area-context": "4.10.5",
+    "react-native-screens": "3.31.1",
+    "react-native-url-polyfill": "^2.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.0",
+    "@klarify/config": "workspace:*",
+    "@types/node": "^20.14.0",
+    "@types/react": "~18.2.79",
+    "typescript": "~5.3.3"
+  }
+}

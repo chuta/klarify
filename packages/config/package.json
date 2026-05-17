@@ -1,0 +1,26 @@
+{
+  "name": "@klarify/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Klarify shared configs — TypeScript, ESLint, Prettier",
+  "files": [
+    "tsconfig",
+    "eslint",
+    "prettier"
+  ],
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/node.json": "./tsconfig/node.json",
+    "./tsconfig/next.json": "./tsconfig/next.json",
+    "./tsconfig/react-native.json": "./tsconfig/react-native.json",
+    "./eslint/base": "./eslint/base.js",
+    "./prettier": "./prettier/index.js"
+  },
+  "dependencies": {
+    "@eslint/js": "^9.10.0",
+    "eslint": "^9.10.0",
+    "eslint-config-prettier": "^9.1.0",
+    "typescript-eslint": "^8.5.0"
+  }
+}

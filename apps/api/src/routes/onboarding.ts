@@ -1,0 +1,175 @@
+// POST /api/onboarding/complete — 5-step onboarding wizard completion.
+// CLAUDE.md §9; §16 Rule 6 (score updates in real time after onboarding).
+import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { Prisma } from '@prisma/client';
+import {
+  onboardingCompleteSchema,
+  createEmptyIndicatorState,
+  applyExistingInfrastructure,
+  indicatorsToDimensionScores,
+  calculateReadinessScore,
+  PHASE_1_TEMPLATES,
+} from '@klarify/core';
+import { prisma, withRls } from '../db.js';
+import { requireAuth, type AuthVars } from '../middleware/auth.js';
+
+export const onboardingRoutes = new Hono<{ Variables: AuthVars }>();
+
+/**
+ * POST /api/onboarding/complete
+ *
+ * 1. Validate body against onboardingCompleteSchema.
+ * 2. Resolve (or create) the user's default org.
+ * 3. In a withRls transaction:
+ *    a. Upsert user_profiles.
+ *    b. Build IndicatorState from existing_infrastructure.
+ *    c. Compute + upsert readiness_scores.
+ *    d. Seed Phase 1 roadmap tasks if none exist yet.
+ * 4. Return calculated score + redirect hint.
+ */
+onboardingRoutes.post(
+  '/complete',
+  requireAuth,
+  zValidator('json', onboardingCompleteSchema),
+  async (c) => {
+    const userId = c.get('userId');
+    const body = c.req.valid('json');
+
+    try {
+      // ------------------------------------------------------------------ //
+      // 1. Resolve (or create) the user's default organisation.             //
+      // ------------------------------------------------------------------ //
+      let orgId: string;
+
+      const existingMembership = await prisma.orgMember.findFirst({
+        where: { userId },
+        orderBy: { createdAt: 'asc' },
+        select: { orgId: true },
+      });
+
+      if (existingMembership !== null) {
+        orgId = existingMembership.orgId;
+      } else {
+        // No org — create a default one named after the email domain.
+        const email = c.get('email');
+        const domain = email.includes('@') ? email.split('@')[1] ?? email : email;
+        const orgName = `${domain} (default)`;
+
+        const newOrg = await prisma.organisation.create({
+          data: {
+            name: orgName,
+            ownerId: userId,
+            plan: 'free',
+          },
+        });
+        await prisma.orgMember.create({
+          data: {
+            orgId: newOrg.id,
+            userId,
+            role: 'owner',
+          },
+        });
+        orgId = newOrg.id;
+      }
+
+      // ------------------------------------------------------------------ //
+      // 2. RLS-scoped transaction.                                           //
+      // ------------------------------------------------------------------ //
+      const result = await withRls({ userId, orgId }, async (tx) => {
+        // a. Upsert user_profiles.
+        await tx.userProfile.upsert({
+          where: { userId },
+          create: {
+            userId,
+            productTypes: body.product_types,
+            targetMarkets: body.target_markets,
+            stage: body.stage,
+            teamSize: body.team_size,
+            hasComplianceOfficer: body.has_compliance_officer,
+            existingInfrastructure: body.existing_infrastructure,
+          },
+          update: {
+            productTypes: body.product_types,
+            targetMarkets: body.target_markets,
+            stage: body.stage,
+            teamSize: body.team_size,
+            hasComplianceOfficer: body.has_compliance_officer,
+            existingInfrastructure: body.existing_infrastructure,
+          },
+        });
+
+        // b. Build IndicatorState from existing_infrastructure.
+        const emptyState = createEmptyIndicatorState();
+        const indicatorState = applyExistingInfrastructure(
+          emptyState,
+          body.existing_infrastructure,
+        );
+
+        // c. Compute DimensionScores + total readiness score.
+        const dimensionScores = indicatorsToDimensionScores(indicatorState);
+        const totalScore = calculateReadinessScore(dimensionScores);
+
+        // Upsert readiness_scores — create a new snapshot record.
+        await tx.readinessScore.create({
+          data: {
+            orgId,
+            totalScore,
+            corporateStructure: dimensionScores.corporate_structure,
+            capitalLicensing: dimensionScores.capital_licensing,
+            kycInfrastructure: dimensionScores.kyc_infrastructure,
+            amlCftProgramme: dimensionScores.aml_cft_programme,
+            transactionMonitoring: dimensionScores.transaction_monitoring,
+            regulatoryReporting: dimensionScores.regulatory_reporting,
+            regulatoryRelationships: dimensionScores.regulatory_relationships,
+            productClassification: dimensionScores.product_classification,
+            snapshot: indicatorState as unknown as Prisma.InputJsonValue,
+          },
+        });
+
+        // d. Seed Phase 1 roadmap tasks if the org has none yet.
+        const existingTaskCount = await tx.roadmapTask.count({
+          where: { orgId },
+        });
+
+        if (existingTaskCount === 0) {
+          await tx.roadmapTask.createMany({
+            data: PHASE_1_TEMPLATES.map((tpl) => ({
+              orgId,
+              phase: tpl.phase,
+              title: tpl.title,
+              description: tpl.description,
+              regulatoryBasis: tpl.regulatory_basis,
+              templateId: tpl.template_id ?? null,
+              indicatorKey: tpl.indicator_key ?? null,
+              status: 'not_started',
+              isLocked: false,
+            })),
+          });
+        }
+
+        return { totalScore, dimensionScores };
+      });
+
+      return c.json({
+        success: true as const,
+        data: {
+          score: result.totalScore,
+          dimensions: result.dimensionScores,
+          orgId,
+          redirect: '/dashboard',
+        },
+      });
+    } catch (err) {
+      console.error('[onboarding] error', err);
+      return c.json(
+        {
+          success: false as const,
+          error: 'Onboarding failed. Please try again.',
+          code: 'ONBOARDING_ERROR',
+        },
+        500,
+      );
+    }
+  },
+);
