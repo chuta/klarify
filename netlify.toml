@@ -1,6 +1,6 @@
 [build]
-  # pnpm resolves turbo from the workspace node_modules, avoiding "command not found"
-  command       = "pnpm turbo run build --filter @klarify/api"
+  # pnpm exec resolves the binary from workspace node_modules without PATH issues
+  command       = "pnpm exec turbo run build --filter @klarify/api"
   publish       = "apps/api/dist"
 
 [build.environment]
