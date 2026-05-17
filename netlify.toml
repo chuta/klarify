@@ -29,10 +29,16 @@
   # https://docs.netlify.com/build/configure-builds/monorepos/
   publish        = "apps/web/.next"
 
-# Netlify auto-detects Next.js and installs the latest runtime adapter (v5+).
-# Per https://docs.netlify.com/frameworks/next-js/overview/ — do NOT pin the
-# plugin (that triggered v4.x with a CJS handler that crashes against the
-# root package.json's "type": "module").
+# Pin the v5 OpenNext-based runtime so Netlify wires up the SSR redirects
+# (the SSR “if your deploy shows no redirects, integration broke” case in
+# https://answers.netlify.com/t/support-guide-i-ve-deployed-my-site-but-i-still-see-page-not-found/125).
+#
+# The plugin must live in apps/web/package.json (the package directory) so
+# Netlify resolves the locally-installed v5+ instead of its bundled v4.x —
+# v4 ships a CJS handler that crashes against the root package.json's
+# "type": "module".
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 [build.environment]
   NODE_VERSION = "20"
