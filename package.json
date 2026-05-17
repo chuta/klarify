@@ -2,7 +2,6 @@
   "name": "klarify",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "description": "Klarify Africa — AI-powered regulatory compliance and advisory platform",
   "author": "Chimezie Chuta <chimeziechuta@gmail.com>",
   "license": "UNLICENSED",
