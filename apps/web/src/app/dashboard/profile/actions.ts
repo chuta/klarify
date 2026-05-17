@@ -6,12 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
 import { updateProfileSchema } from '@klarify/core';
 
-interface ProfileUpdateResult {
-  error?: string;
-  success?: boolean;
-}
-
-export async function updateProfile(formData: FormData): Promise<ProfileUpdateResult> {
+export async function updateProfile(formData: FormData): Promise<void> {
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -23,7 +18,7 @@ export async function updateProfile(formData: FormData): Promise<ProfileUpdateRe
   const parsed = updateProfileSchema.safeParse(raw);
   if (!parsed.success) {
     const msg = parsed.error.errors[0]?.message ?? 'Invalid input.';
-    return { error: msg };
+    redirect(`/dashboard/profile?error=${encodeURIComponent(msg)}`);
   }
 
   await supabase.auth.updateUser({ data: { name: parsed.data.name } });
@@ -38,10 +33,12 @@ export async function updateProfile(formData: FormData): Promise<ProfileUpdateRe
   );
 
   if (!result.success) {
-    return { error: result.error ?? 'Profile update failed.' };
+    redirect(
+      `/dashboard/profile?error=${encodeURIComponent(result.error ?? 'Profile update failed.')}`,
+    );
   }
 
   revalidatePath('/dashboard/profile');
   revalidatePath('/dashboard');
-  return { success: true };
+  redirect('/dashboard/profile?success=1');
 }
