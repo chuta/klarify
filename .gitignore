@@ -10,6 +10,9 @@ out/
 .turbo/
 *.tsbuildinfo
 
+# Netlify CLI / plugin output (site state, function bundles)
+.netlify/
+
 # Environment
 .env
 .env.local

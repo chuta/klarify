@@ -1,25 +1,39 @@
 # Netlify — @klarify/web (Next.js 14 App Router)
 #
-# 404 / “Page not found” after deploy: Netlify lists wrong publish folder, missing SPA
-# fallback, or broken SSR integration — see:
+# ───────────────────────────────────────────────────────────────────────────
+# REQUIRED Netlify UI settings (Site configuration → Build & deploy → Build settings)
+# ───────────────────────────────────────────────────────────────────────────
+#   Base directory     : (leave empty — repo root)
+#   Package directory  : apps/web        ← CRITICAL. If this is `apps/api`
+#                                          (or anything else), the Next.js
+#                                          plugin writes its function bundle
+#                                          under that wrong workspace, which
+#                                          inherits apps/api/package.json
+#                                          ("type": "module") and crashes at
+#                                          runtime with ERR_REQUIRE_ESM:
+#                                            require() of ES Module
+#                                            /var/task/apps/api/.netlify/...
+#                                          The UI value OVERRIDES this file —
+#                                          this toml cannot fix it.
+#   Build command      : (leave empty — read from this file)
+#   Publish directory  : (leave empty — read from this file)
+#   Functions directory: (leave empty)
+#
+# If the site has stale settings from a previous API-deploy attempt, the
+# safest fix is to delete the site (Site configuration → Danger zone) and
+# create a fresh one with the values above.
+# ───────────────────────────────────────────────────────────────────────────
+#
+# 404 / “Page not found” after deploy → see:
 # https://answers.netlify.com/t/support-guide-i-ve-deployed-my-site-but-i-still-see-page-not-found/125
 #
-# Monorepo: leave “Base directory” empty (repo root). In Netlify UI, set
-# “Package directory” to `apps/web` so framework detection + this config apply
-# to the Next app while `pnpm install` still runs from the workspace root.
+# We deliberately do NOT add SPA redirects (`/*` → `/index.html`):
+# `/auth/callback` is `app/auth/callback/route.ts` (Route Handler). Serving
+# `index.html` would skip the server and break Supabase OAuth. Deep links
+# and refreshes are handled by the Next.js runtime (OpenNext) instead.
 #
-# Clear any legacy “Publish directory” (e.g. apps/api/dist) in Site settings —
-# this file sets publish = "apps/web/.next" so @netlify/plugin-nextjs finds the build.
-#
-# ---------------------------------------------------------------------------
-# Why we do NOT copy SPA redirects (`/*` → `/index.html`) from static React apps:
-# `/auth/callback` is implemented as `app/auth/callback/route.ts` (Route Handler).
-# Serving `index.html` for that path would skip the server and break Supabase OAuth.
-# Deep links and refreshes are handled by Netlify’s Next.js runtime (OpenNext).
-# ---------------------------------------------------------------------------
-#
-# Deploy @klarify/api (Hono) on Railway/Render, or a second Netlify site whose
-# build command is the API pipeline (see git history for prisma + tsc example).
+# Deploy @klarify/api (Hono) on Railway/Render, or a separate Netlify site
+# whose package directory is `apps/api`.
 
 [build]
   installCommand = "corepack enable && corepack prepare pnpm@9.0.0 --activate && env NODE_ENV=development pnpm install --frozen-lockfile"
