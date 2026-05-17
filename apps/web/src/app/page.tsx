@@ -106,7 +106,7 @@ function Hero(): JSX.Element {
       <div className="mx-auto max-w-4xl text-center">
         {/* Eyebrow */}
         <p className="mb-5 inline-block rounded-full border border-[#0B6E6E]/60 bg-[#0B6E6E]/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#0B6E6E]">
-          AI-Powered Regulatory Compliance for African Founders
+       Become regulator-ready, institution-ready, and trust-ready.
         </p>
 
         {/* Headline */}
@@ -119,9 +119,8 @@ function Hero(): JSX.Element {
 
         {/* Sub-headline */}
         <p className="mx-auto mb-10 max-w-2xl text-lg text-white/70">
-          Klarify gives Nigerian and African founders instant regulatory clarity, product
-          classification, compliance infrastructure, document analysis, and AI advisory in
-          one platform. Know what you need. Build what matters.
+          Know what licences you need. Respond to regulators with confidence. Build your
+          compliance infrastructure from day one. All in one platform.
         </p>
 
         {/* CTA buttons */}
@@ -185,17 +184,17 @@ function ProblemSection(): JSX.Element {
     {
       icon: '📋',
       title: 'You don\'t know what you don\'t know',
-      body: 'Most Nigerian founders discover they need a licence only after building for months, or after receiving a regulator\'s letter. Klarify closes this gap on Day 1.',
+      body: 'Most founders discover they need a licence only after building for months, or after receiving a regulator\'s letter.',
     },
     {
       icon: '⛔',
       title: 'Regulatory letters trigger panic',
-      body: 'A letter from SEC Nigeria or CBN is terrifying without context. You have 21 days and no idea what they\'re asking. Klarify translates it into a 72-hour action plan.',
+      body: 'A letter from SEC Nigeria, CBN, or NFIU is terrifying without context. You have 21 days and no idea what they\'re asking.',
     },
     {
       icon: '🗃️',
       title: 'Compliance is manual and fragmented',
-      body: 'AML manuals nobody follows. STRs filed late. ARIP applications stalled at Stage 3. Klarify replaces scattered documents and spreadsheets with a live compliance operating system.',
+      body: 'AML manuals nobody follows. STRs filed late. ARIP stalled at Stage 3. Scattered documents and spreadsheets are not a compliance system.',
     },
   ];
 
@@ -204,9 +203,8 @@ function ProblemSection(): JSX.Element {
       <div className="mx-auto max-w-5xl">
         {/* Pull quote from The Founder's Guide */}
         <blockquote className="mb-16 border-l-4 border-[#0B6E6E] bg-white px-8 py-6 text-base italic text-[#555555] shadow-sm">
-          &ldquo;African founders building in regulated markets face a recurring, expensive, and
-          often business-ending gap — they do not know what they do not know. They build for
-          months before discovering their product requires a licence.&rdquo;
+          &ldquo;African founders face a recurring, expensive gap, they do not know what they
+          do not know.&rdquo;
           <footer className="mt-3 text-sm font-semibold not-italic text-[#0B6E6E]">
             — <em>The Founder&apos;s Guide to Building in Regulated Markets</em>, Chimezie
             Chuta, 2026
@@ -217,10 +215,6 @@ function ProblemSection(): JSX.Element {
           <h2 className="mb-3 text-3xl font-bold text-[#1A1A1A]">
             The compliance gap is real. And expensive.
           </h2>
-          <p className="mx-auto max-w-2xl text-[#555555]">
-            From pre-launch classification to post-letter crisis response to ongoing operational
-            compliance, Klarify covers the entire regulatory journey.
-          </p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
@@ -251,8 +245,7 @@ function TwoEngines(): JSX.Element {
         <div className="mb-12 text-center">
           <h2 className="mb-3 text-3xl font-bold text-[#1A1A1A]">Two engines in one platform</h2>
           <p className="mx-auto max-w-2xl text-[#555555]">
-            Klarify combines an AI advisory engine with a compliance operating system, because
-            knowing what to do and actually doing it are two different problems.
+            Knowing what to do and actually doing it are two different problems.
           </p>
         </div>
 
@@ -266,9 +259,8 @@ function TwoEngines(): JSX.Element {
             </div>
             <h3 className="mb-3 text-xl font-bold text-[#0D2B45]">AI Advisory Engine</h3>
             <p className="mb-6 text-sm text-[#555555]">
-              Ask any regulatory question in plain English. Get instant answers grounded in
-              ISA 2025, SEC Digital Asset Rules, MLPPA 2022, CBN guidelines, and pan-African
-              frameworks, always with citations.
+              Ask any regulatory question. Get instant answers in plain English, grounded in
+              Nigerian and African law, always with citations.
             </p>
             <ul className="space-y-3">
               {[
@@ -296,8 +288,8 @@ function TwoEngines(): JSX.Element {
             </div>
             <h3 className="mb-3 text-xl font-bold text-[#0D2B45]">Operational Engine</h3>
             <p className="mb-6 text-sm text-[#555555]">
-              Turn regulatory knowledge into systematic action. A live compliance score, smart
-              roadmap, document generator, ARIP tracker, and regulator CRM, all in one place.
+              Turn regulatory knowledge into systematic action. Live score, smart roadmap,
+              document generator, ARIP tracker, and regulator CRM.
             </p>
             <ul className="space-y-3">
               {[
@@ -332,14 +324,14 @@ function Features(): JSX.Element {
       badge: 'FounderCounsel',
       badgeColour: '#0B6E6E',
       title: 'Regulatory Q&A with Citations',
-      body: 'Ask anything. Get answers grounded in Nigerian and African law with exact section references — not generic advice.',
+      body: 'Ask anything. Get answers grounded in Nigerian and African law with exact section references, not generic advice.',
     },
     {
       icon: '🔍',
       badge: 'FounderCounsel',
       badgeColour: '#0B6E6E',
       title: 'Product Classification Engine',
-      body: 'Describe your product. We classify it as DAX, DAOP, DAC, DAI, or Payment — and tell you exactly which regulators you need to engage.',
+      body: 'Describe your product. We classify it as DAX, DAOP, DAC, DAI, or Payment, and tell you exactly which regulators you need to engage.',
     },
     {
       icon: '📄',
@@ -376,6 +368,20 @@ function Features(): JSX.Element {
       title: 'ARIP Process Tracker',
       body: 'Navigate the 5-stage ARIP process with stage-by-stage checklists, the 10% customer growth cap monitor, AIP restrictions tracker, and solicitor engagement workflows.',
     },
+    {
+      icon: '🤝',
+      badge: 'FounderCounsel',
+      badgeColour: '#0B6E6E',
+      title: 'Regulator Relationship Intelligence',
+      body: 'Go beyond knowing the rules — learn how to work with regulators. Meeting prep, jurisdiction-specific etiquette, communication templates, escalation protocols, and institutional maturity scoring.',
+    },
+    {
+      icon: '🏦',
+      badge: 'ComplianceOS',
+      badgeColour: '#D4A843',
+      title: 'Banking & Partner Readiness',
+      body: 'Compliance alone does not guarantee banking access. Klarify prepares your risk profile, institutional due diligence pack, and operational transparency systems so partners say yes.',
+    },
   ];
 
   return (
@@ -385,10 +391,6 @@ function Features(): JSX.Element {
           <h2 className="mb-3 text-3xl font-bold text-[#1A1A1A]">
             Everything you need to build in regulated markets
           </h2>
-          <p className="mx-auto max-w-2xl text-[#555555]">
-            From your first question about licences to your ARIP application to your ongoing
-            STR filings, Klarify covers the full compliance lifecycle.
-          </p>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -414,6 +416,12 @@ function Features(): JSX.Element {
 
         {/* ARIP Feature Highlight Card */}
         <ARIPFeatureCard />
+
+        {/* Regulator Relationship Intelligence Highlight Card */}
+        <RegulatorRelationshipCard />
+
+        {/* Banking & Partner Readiness Highlight Card */}
+        <BankingReadinessCard />
       </div>
     </section>
   );
@@ -445,14 +453,8 @@ function ARIPFeatureCard(): JSX.Element {
           <h3 className="mb-3 text-2xl font-bold text-white">
             Navigate the ARIP Process with Confidence
           </h3>
-          <p className="mb-2 text-sm font-semibold text-[#0B6E6E]">
+          <p className="mb-6 text-sm font-semibold text-[#0B6E6E]">
             The only compliance platform built around the SEC Nigeria ARIP Framework
-          </p>
-          <p className="mb-6 text-sm text-white/70">
-            From Initial Assessment through Approval-in-Principle to full registration —
-            Klarify guides you through every stage of the 5-stage ARIP process with
-            checklists, document templates, deadline alerts, and automatic monitoring of
-            AIP conditions including the 10% customer growth cap.
           </p>
           <ul className="mb-8 space-y-2">
             {[
@@ -522,6 +524,150 @@ function ARIPFeatureCard(): JSX.Element {
 }
 
 /* ─────────────────────────────────────────────────────────── */
+/*  5c. REGULATOR RELATIONSHIP INTELLIGENCE CARD              */
+/* ─────────────────────────────────────────────────────────── */
+
+function RegulatorRelationshipCard(): JSX.Element {
+  const capabilities = [
+    { label: 'Meeting Preparation', desc: 'Pre-meeting briefings on regulator priorities, open enforcement actions, and institutional sensitivities' },
+    { label: 'Communication Templates', desc: 'Jurisdiction-specific letter templates calibrated for tone, formality, and regulatory etiquette' },
+    { label: 'Response Drafting', desc: 'Structured, legally neutral responses to information requests — co-operative, not combative' },
+    { label: 'Engagement Timelines', desc: 'Recommended sequencing: who to engage first, when, and in what order across SEC, CBN, NFIU, and NITDA' },
+    { label: '"What NOT to Say"', desc: 'Common mistakes that signal non-compliance or bad faith — avoid them before you walk into the room' },
+    { label: 'Institutional Maturity Scoring', desc: 'How does your organisation appear to a regulator right now? Score and fix gaps before your first formal meeting' },
+  ];
+
+  return (
+    <div className="mt-12 overflow-hidden rounded-2xl border-2 border-[#0B6E6E] bg-white">
+      <div className="grid md:grid-cols-2">
+        {/* Left: copy */}
+        <div className="bg-[#0D2B45] p-8">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#0B6E6E]/20 px-3 py-1">
+            <span className="text-xs font-bold uppercase tracking-wide text-[#0B6E6E]">
+              FounderCounsel · Regulator Engagement Copilot
+            </span>
+          </div>
+          <h3 className="mb-3 text-2xl font-bold text-white">
+            Regulator Relationship Intelligence
+          </h3>
+          <p className="mb-6 text-sm font-semibold text-[#0B6E6E]">
+            Knowing the rules is not enough. You need to know how to work with the people who enforce them.
+          </p>
+          <Link
+            href="/sign-up"
+            className="inline-block rounded-lg bg-[#0B6E6E] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#0A5F5F]"
+          >
+            Prepare for Your Regulator Meeting →
+          </Link>
+        </div>
+
+        {/* Right: capability tiles */}
+        <div className="bg-[#FAFAFA] p-8">
+          <p className="mb-5 text-xs font-bold uppercase tracking-widest text-[#555555]">
+            What the Engagement Copilot gives you
+          </p>
+          <div className="space-y-4">
+            {capabilities.map(({ label, desc }) => (
+              <div key={label} className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#0B6E6E]">
+                  <span className="text-[10px] font-bold text-white">✓</span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[#1A1A1A]">{label}</p>
+                  <p className="text-xs text-[#555555]">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────── */
+/*  5d. BANKING & PARTNER READINESS CARD                      */
+/* ─────────────────────────────────────────────────────────── */
+
+function BankingReadinessCard(): JSX.Element {
+  const pillars = [
+    {
+      icon: '🏦',
+      title: 'Banking Readiness Score',
+      body: 'Assess your profile against the risk criteria Nigerian and international correspondent banks apply to fintech and digital asset companies before opening accounts.',
+    },
+    {
+      icon: '📋',
+      title: 'Institutional Due Diligence Pack',
+      body: 'Auto-generate the documentation package that banks, payment processors, and institutional partners request — KYC, UBO register, AML policy, source-of-funds narrative.',
+    },
+    {
+      icon: '🎯',
+      title: 'Risk Profile Optimisation',
+      body: 'Identify the exact flags that cause banks to decline or terminate accounts — and fix them before your application, not after rejection.',
+    },
+    {
+      icon: '🔍',
+      title: 'Operational Transparency Systems',
+      body: 'Transaction monitoring documentation, audit trail architecture, and reporting infrastructure that gives partners confidence your controls are real.',
+    },
+  ];
+
+  return (
+    <div className="mt-8 overflow-hidden rounded-2xl border border-[#D4A843]/40 bg-[#FDF6E3]">
+      <div className="p-8">
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-xl">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#D4A843]/20 px-3 py-1">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#D4A843]">
+                ComplianceOS · Banking & Partner Readiness
+              </span>
+            </div>
+            <h3 className="mb-3 text-2xl font-bold text-[#0D2B45]">
+              Compliance alone does not open bank accounts.
+            </h3>
+            <p className="text-sm text-[#555555]">
+              Being compliant doesn&apos;t guarantee a bank account. Klarify prepares you for the
+              institutional due diligence that regulatory compliance alone doesn&apos;t cover.
+            </p>
+          </div>
+          <div className="shrink-0">
+            <Link
+              href="/sign-up"
+              className="inline-block rounded-lg bg-[#D4A843] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#C49A3A]"
+            >
+              Check Your Banking Readiness →
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {pillars.map(({ icon, title, body }) => (
+            <div
+              key={title}
+              className="rounded-xl border border-[#D4A843]/20 bg-white p-5 shadow-sm"
+            >
+              <div className="mb-3 text-2xl">{icon}</div>
+              <h4 className="mb-2 text-sm font-semibold text-[#1A1A1A]">{title}</h4>
+              <p className="text-xs text-[#555555]">{body}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Silent killer callout */}
+        <div className="mt-6 rounded-xl border border-[#C0392B]/20 bg-[#C0392B]/5 p-4">
+          <p className="text-sm text-[#1A1A1A]">
+            <span className="font-semibold text-[#C0392B]">The silent killer: </span>
+            18 months of compliance work. Bank account still frozen. Payment processor
+            offboarded. The compliance was real — it just wasn&apos;t designed for a bank&apos;s risk appetite.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────── */
 /*  6. WHO IT'S FOR                                           */
 /* ─────────────────────────────────────────────────────────── */
 
@@ -531,7 +677,7 @@ function WhoItIsFor(): JSX.Element {
       icon: '🚀',
       title: 'The Pre-Launch Founder',
       urgent: false,
-      body: 'Building a digital asset product in Nigeria. Has not yet engaged any regulator. May have been building for months without knowing they need a licence.',
+      body: 'Building a digital asset product in Nigeria. Has not yet engaged any regulator.',
       useCase: 'Instant product classification, regulator map, step-by-step readiness roadmap.',
     },
     {
@@ -566,7 +712,7 @@ function WhoItIsFor(): JSX.Element {
       icon: '🌍',
       title: 'The Cross-Border Operator',
       urgent: false,
-      body: 'Licensed or operational in Nigeria and expanding into Ghana, Kenya, or South Africa. Each new market brings fresh regulators, new capital requirements, and a different compliance stack.',
+      body: 'Expanding beyond Nigeria into Ghana, Kenya, or South Africa. Each new market brings different regulators and a different compliance framework.',
       useCase: 'Jurisdiction gap analysis, multi-market readiness scoring, pan-African regulator intelligence.',
     },
   ];
@@ -598,8 +744,7 @@ function WhoItIsFor(): JSX.Element {
             Built for every stage of the journey
           </h2>
           <p className="mx-auto max-w-2xl text-white/60">
-            Whether you&apos;re classifying your first product, responding to a regulator, deploying
-            capital, or advising clients, Klarify meets you where you are.
+            From first-time founders to institutional investors. Klarify meets you where you are.
           </p>
         </div>
 
@@ -657,10 +802,9 @@ function WhoItIsFor(): JSX.Element {
 
           {/* Pain point */}
           <p className="mb-6 max-w-3xl text-sm leading-relaxed text-white/70">
-            Investing in African fintech, digital assets, or Web3 startups without clear visibility
-            into licensing exposure, regulatory risk, or compliance maturity. Portfolio companies may
-            be operating without required licences, mis-classified, or one regulator letter away from
-            collapse! Most investment teams lack the regulatory diligence capability to know.
+            Portfolio companies may be operating without licences, mis-classified, or one regulator
+            letter away from failure. Most investment teams lack the specialist diligence capability
+            to know.
           </p>
 
           {/* Two-column breakdown */}
@@ -699,9 +843,8 @@ function WhoItIsFor(): JSX.Element {
           {/* Strategic note */}
           <div className="mt-6 rounded-xl border border-[#D4A843]/20 bg-[#D4A843]/5 px-4 py-3">
             <p className="text-xs text-[#D4A843]/90">
-              <span className="font-semibold">Investor Mode — coming soon.</span>{' '}
-              Portfolio compliance dashboards, due diligence reports, startup risk benchmarking, and
-              regulatory health scoring across your entire investment portfolio.
+              <span className="font-semibold">Investor Mode, coming soon.</span>{' '}
+              Portfolio-wide compliance dashboards, startup risk scoring, and regulatory due diligence reports.
             </p>
           </div>
         </div>
@@ -743,8 +886,7 @@ function ReadinessPreview(): JSX.Element {
             Your live Regulatory Readiness Score
           </h2>
           <p className="mx-auto max-w-2xl text-[#555555]">
-            A 0–100 score across 8 compliance dimensions, calibrated to Nigerian and African
-            regulatory requirements. It updates in real time as you act.
+            8 compliance dimensions. Updates in real time as you work.
           </p>
         </div>
 
@@ -792,8 +934,7 @@ function ReadinessPreview(): JSX.Element {
                   Critical, Significant gaps identified
                 </p>
                 <p className="mt-1 text-white/60 text-sm">
-                  Example score for a founder who just completed onboarding. Your actual score
-                  updates as you complete tasks and build compliance infrastructure.
+                  Example score at sign-up. Your actual score updates as you complete tasks.
                 </p>
               </div>
             </div>
@@ -850,17 +991,17 @@ function HowItWorks(): JSX.Element {
     {
       step: '01',
       title: 'Answer 5 questions',
-      body: 'Tell us what you\'re building, which markets you\'re targeting, and where you are in the compliance journey. Takes under 3 minutes.',
+      body: 'Tell us what you\'re building and which markets you\'re targeting. Takes under 3 minutes.',
     },
     {
       step: '02',
       title: 'Get your Readiness Score',
-      body: 'Receive an instant 0–100 score across 8 regulatory dimensions, calibrated to Nigerian and African frameworks. Understand exactly where your gaps are.',
+      body: 'Receive an instant 0–100 score across 8 compliance dimensions. Understand exactly where your gaps are.',
     },
     {
       step: '03',
       title: 'Work your personalised roadmap',
-      body: 'A phase-locked compliance roadmap guides you from corporate structure to ARIP registration. Every task links to the specific regulatory requirement it satisfies.',
+      body: 'A phase-locked roadmap guides you from corporate structure to ARIP registration. Every task links to the specific regulatory requirement it satisfies.',
     },
   ];
 
@@ -1022,8 +1163,7 @@ function CtaBanner(): JSX.Element {
           Start building with regulatory confidence today
         </h2>
         <p className="mb-8 text-white/60">
-          Answer 5 questions. Get your Readiness Score in 3 minutes. Know exactly what you need
-          to build in Nigerian and African regulated markets.
+          Know your regulatory gaps in 3 minutes. No credit card required.
         </p>
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
@@ -1107,8 +1247,7 @@ function Footer(): JSX.Element {
             Klarify provides regulatory information and educational guidance only, not legal
             advice. All AI-generated content on this platform is for informational purposes and
             must not be relied upon as a substitute for advice from a qualified Nigerian legal or
-            compliance practitioner. Regulatory frameworks are subject to change. Always verify
-            current requirements directly with the relevant regulatory authority. Klarify accepts
+            compliance practitioner. Regulatory frameworks are subject to change. Klarify accepts
             no liability for regulatory decisions made based on information provided through this
             platform. For advice specific to your situation, consult a qualified practitioner.
           </p>

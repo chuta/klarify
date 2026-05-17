@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 // Single shared Prisma client. In serverless/edge deployments a new instance
 // would normally be created per request, but we run on a long-lived Node
@@ -20,7 +20,7 @@ export interface RlsContext {
  */
 export async function withRls<T>(
   ctx: RlsContext,
-  fn: (tx: Omit<PrismaClient, '$transaction' | '$connect' | '$disconnect' | '$on' | '$use' | '$extends'>) => Promise<T>,
+  fn: (tx: Prisma.TransactionClient) => Promise<T>,
 ): Promise<T> {
   return prisma.$transaction(async (tx) => {
     // set_config(name, value, is_local=true) scopes the GUC to this transaction.

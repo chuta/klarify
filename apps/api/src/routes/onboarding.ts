@@ -123,7 +123,7 @@ onboardingRoutes.post(
             regulatoryReporting: dimensionScores.regulatory_reporting,
             regulatoryRelationships: dimensionScores.regulatory_relationships,
             productClassification: dimensionScores.product_classification,
-            snapshot: indicatorState as unknown as Prisma.InputJsonValue,
+            snapshot: indicatorState as unknown as Prisma.JsonObject,
           },
         });
 

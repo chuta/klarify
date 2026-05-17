@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { ApiSuccess, UserMeResponse } from '@klarify/core';
 import { updateProfileSchema } from '@klarify/core';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../db.js';
 import { requireAuth, type AuthVars } from '../middleware/auth.js';
 
@@ -17,7 +18,7 @@ export const userRoutes = new Hono<{ Variables: AuthVars }>();
 userRoutes.get('/me', requireAuth, async (c) => {
   const userId = c.get('userId');
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.$executeRawUnsafe(
       `SELECT set_config('app.current_user_id', $1, true)`,
       userId,
