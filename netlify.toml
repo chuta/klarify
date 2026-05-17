@@ -8,6 +8,9 @@
 # “Package directory” to `apps/web` so framework detection + this config apply
 # to the Next app while `pnpm install` still runs from the workspace root.
 #
+# Clear any legacy “Publish directory” (e.g. apps/api/dist) in Site settings —
+# this file sets publish = "apps/web" so @netlify/plugin-nextjs finds .next.
+#
 # ---------------------------------------------------------------------------
 # Why we do NOT copy SPA redirects (`/*` → `/index.html`) from static React apps:
 # `/auth/callback` is implemented as `app/auth/callback/route.ts` (Route Handler).
@@ -21,6 +24,8 @@
 [build]
   installCommand = "corepack enable && corepack prepare pnpm@9.0.0 --activate && env NODE_ENV=development pnpm install --frozen-lockfile"
   command        = "pnpm --filter @klarify/web run build"
+  # Overrides stale UI values (e.g. old API deploy using apps/api/dist). Next output is apps/web/.next.
+  publish        = "apps/web"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
