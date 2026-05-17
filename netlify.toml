@@ -9,7 +9,7 @@
 # to the Next app while `pnpm install` still runs from the workspace root.
 #
 # Clear any legacy “Publish directory” (e.g. apps/api/dist) in Site settings —
-# this file sets publish = "apps/web" so @netlify/plugin-nextjs finds .next.
+# this file sets publish = "apps/web/.next" so @netlify/plugin-nextjs finds the build.
 #
 # ---------------------------------------------------------------------------
 # Why we do NOT copy SPA redirects (`/*` → `/index.html`) from static React apps:
@@ -24,8 +24,10 @@
 [build]
   installCommand = "corepack enable && corepack prepare pnpm@9.0.0 --activate && env NODE_ENV=development pnpm install --frozen-lockfile"
   command        = "pnpm --filter @klarify/web run build"
-  # Overrides stale UI values (e.g. old API deploy using apps/api/dist). Next output is apps/web/.next.
-  publish        = "apps/web"
+  # @netlify/plugin-nextjs expects publish to point at the .next output directory
+  # (relative to the repo root in monorepos). See:
+  # https://docs.netlify.com/build/configure-builds/monorepos/
+  publish        = "apps/web/.next"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
