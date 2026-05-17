@@ -29,8 +29,10 @@
   # https://docs.netlify.com/build/configure-builds/monorepos/
   publish        = "apps/web/.next"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+# Netlify auto-detects Next.js and installs the latest runtime adapter (v5+).
+# Per https://docs.netlify.com/frameworks/next-js/overview/ — do NOT pin the
+# plugin (that triggered v4.x with a CJS handler that crashes against the
+# root package.json's "type": "module").
 
 [build.environment]
   NODE_VERSION = "20"
