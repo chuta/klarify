@@ -1,14 +1,15 @@
 # Netlify deploy for @klarify/api (Hono backend).
-# Site settings: base directory must be the repo root (empty), not apps/api,
-# so pnpm sees pnpm-workspace.yaml and installs the full monorepo.
+#
+# IMPORTANT: In the Netlify UI, set “Base directory” to empty (repository root).
+# If it is set to apps/api, workspace installs and CLI resolution break.
 
 [build]
-  # Netlify often sets NODE_ENV=production during install, which skips devDependencies.
-  # Prisma CLI lives in devDependencies — without this, generate + tsc fail.
-  installCommand = "pnpm install --frozen-lockfile --prod=false"
+  # Force a full workspace install including devDependencies used locally (tsx, vitest).
+  # NODE_ENV=production on Netlify otherwise skips devDeps before our prisma/typescript deps move.
+  installCommand = "corepack enable && corepack prepare pnpm@9.0.0 --activate && env NODE_ENV=development pnpm install --frozen-lockfile"
 
-  # Avoid relying on turbo’s binary (also a devDependency). Filter-build only the API package.
-  command        = "pnpm --filter @klarify/api exec prisma generate && pnpm --filter @klarify/api run build"
+  # Use npm scripts so pnpm puts node_modules/.bin on PATH (pnpm exec prisma still fails on some CI setups).
+  command        = "pnpm --filter @klarify/api run db:generate && pnpm --filter @klarify/api run build"
   publish        = "apps/api/dist"
 
 [build.environment]
