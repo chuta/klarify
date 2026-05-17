@@ -1,10 +1,16 @@
+# Netlify deploy for @klarify/api (Hono backend).
+# Site settings: base directory must be the repo root (empty), not apps/api,
+# so pnpm sees pnpm-workspace.yaml and installs the full monorepo.
+
 [build]
-  # pnpm exec resolves the binary from workspace node_modules without PATH issues
-  command       = "pnpm exec turbo run build --filter @klarify/api"
-  publish       = "apps/api/dist"
+  # Netlify often sets NODE_ENV=production during install, which skips devDependencies.
+  # Prisma CLI lives in devDependencies — without this, generate + tsc fail.
+  installCommand = "pnpm install --frozen-lockfile --prod=false"
+
+  # Avoid relying on turbo’s binary (also a devDependency). Filter-build only the API package.
+  command        = "pnpm --filter @klarify/api exec prisma generate && pnpm --filter @klarify/api run build"
+  publish        = "apps/api/dist"
 
 [build.environment]
-  NODE_VERSION  = "20"
-  PNPM_VERSION  = "9"
-  # Turborepo remote cache is disabled in CI — local cache only
-  TURBO_TELEMETRY_DISABLED = "1"
+  NODE_VERSION = "20"
+  PNPM_VERSION = "9"
