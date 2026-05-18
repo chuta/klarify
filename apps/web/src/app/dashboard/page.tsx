@@ -4,7 +4,14 @@ import { createClient } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
 import { ScoreGauge } from '@/components/ScoreGauge';
 import { ARIPRestrictionsWidget } from '@/components/dashboard/ARIPRestrictionsWidget';
-import { ARIP_STAGE_LABELS } from '@/components/dashboard/ARIPRestrictionsWidget';
+// Import the label map from the pure-data module, NOT from the widget itself.
+// The widget is `'use client'`, and named exports from client modules become
+// opaque client references inside Server Components — reading a property off
+// one and serialising the result into the RSC stream throws:
+//   "Could not find the module
+//    `…ARIPRestrictionsWidget.tsx#ARIP_STAGE_LABELS#…` in the React Client
+//    Manifest."
+import { ARIP_STAGE_LABELS } from '@/components/dashboard/aripLabels';
 import { formatDimensionName } from '@klarify/core';
 import type { DimensionKey } from '@klarify/core';
 
