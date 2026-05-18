@@ -1,0 +1,113 @@
+<!doctype html>
+<!--
+  Klarify — Supabase Auth template: "Confirm signup"
+  -----------------------------------------------------
+  Paste this entire file into:
+    Supabase Dashboard → Authentication → Email Templates → Confirm signup
+  Subject: "Confirm your Klarify account"
+
+  Supabase variables used:
+    {{ .ConfirmationURL }}   — link the user clicks to confirm their email
+    {{ .Email }}             — recipient email
+    {{ .Data.name }}         — display name (set in supabase.auth.signUp options.data.name)
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light only" />
+  <meta name="supported-color-schemes" content="light" />
+  <title>Confirm your Klarify account</title>
+</head>
+<body style="margin:0;padding:0;background:#F5F5F5;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#1A1A1A;-webkit-font-smoothing:antialiased;">
+  <span style="display:none!important;visibility:hidden;mso-hide:all;font-size:1px;color:#F5F5F5;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+    Confirm your email to activate your Klarify account.
+  </span>
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F5F5;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;width:100%;">
+
+          <!-- Brand header -->
+          <tr>
+            <td align="center" style="padding:8px 0 24px 0;">
+              <img src="https://klarify.africa/klarify_logo.png" alt="Klarify" width="140" height="47" style="display:block;border:0;outline:none;text-decoration:none;max-width:140px;height:auto;" />
+              <p style="margin:12px 0 0 0;font-size:13px;font-weight:500;color:#555555;letter-spacing:0.2px;">
+                Navigate Regulated Markets with Confidence
+              </p>
+              <div style="width:48px;height:3px;background:#0B6E6E;margin:14px auto 0 auto;border-radius:2px;"></div>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:8px;padding:32px;">
+              <h1 style="margin:0 0 16px 0;font-size:22px;line-height:28px;font-weight:700;color:#1A1A1A;">
+                Confirm your email to get started
+              </h1>
+
+              <p style="margin:0 0 16px 0;font-size:15px;line-height:24px;color:#1A1A1A;">
+                Welcome to Klarify — your AI regulatory copilot for African digital asset and fintech markets.
+              </p>
+
+              <p style="margin:0 0 24px 0;font-size:15px;line-height:24px;color:#1A1A1A;">
+                Click the button below to confirm your email and activate your account.
+                Once confirmed, we&rsquo;ll guide you through a 5-step onboarding to generate
+                your personalised Readiness Score.
+              </p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:8px auto 16px auto;">
+                <tr>
+                  <td align="center" bgcolor="#0B6E6E" style="border-radius:6px;">
+                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block;padding:12px 28px;font-family:'Inter',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;background:#0B6E6E;border:1px solid #0B6E6E;line-height:20px;">
+                      Confirm my email →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:16px 0 0 0;font-size:13px;line-height:20px;color:#555555;">
+                Or paste this link into your browser:<br />
+                <a href="{{ .ConfirmationURL }}" style="color:#0B6E6E;word-break:break-all;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+              </p>
+
+              <hr style="border:none;border-top:1px solid #E5E7EB;margin:24px 0 16px 0;" />
+
+              <p style="margin:0;font-size:13px;line-height:20px;color:#555555;">
+                This link expires in 24 hours. If you didn&rsquo;t create a Klarify account,
+                you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 8px 32px 8px;">
+              <p style="margin:0 0 16px 0;padding:12px 14px;font-size:12px;line-height:18px;color:#555555;background:#F5F5F5;border-left:3px solid #0B6E6E;border-radius:4px;">
+                <strong style="color:#1A1A1A;">Regulatory information, not legal advice.</strong>
+                Klarify provides regulatory guidance and educational information for digital
+                asset and fintech founders. For advice specific to your situation, consult a
+                qualified Nigerian regulatory practitioner.
+              </p>
+
+              <p style="margin:0 0 8px 0;font-size:12px;line-height:18px;color:#555555;text-align:center;">
+                Blockspace Technologies Limited &middot; Lagos, Nigeria
+              </p>
+              <p style="margin:0 0 8px 0;font-size:12px;line-height:18px;color:#555555;text-align:center;">
+                <a href="https://klarify.africa" style="color:#0B6E6E;text-decoration:none;">klarify.africa</a>
+                &nbsp;&middot;&nbsp;
+                <a href="mailto:hello@klarify.africa" style="color:#0B6E6E;text-decoration:none;">hello@klarify.africa</a>
+              </p>
+              <p style="margin:12px 0 0 0;font-size:11px;line-height:16px;color:#CCCCCC;text-align:center;">
+                &copy; Blockspace Technologies Limited. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

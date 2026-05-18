@@ -1,0 +1,57 @@
+{
+  "name": "@klarify/email",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Klarify transactional email — React Email templates + Resend client",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js"
+    },
+    "./config": {
+      "types": "./dist/config.d.ts",
+      "import": "./dist/config.js"
+    },
+    "./templates": {
+      "types": "./dist/templates/index.d.ts",
+      "import": "./dist/templates/index.js"
+    },
+    "./render": {
+      "types": "./dist/render.d.ts",
+      "import": "./dist/render.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src/supabase"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "preview": "email dev --dir src/templates --port 4001"
+  },
+  "dependencies": {
+    "@react-email/components": "^0.0.25",
+    "@react-email/render": "^1.0.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "resend": "^4.0.1"
+  },
+  "devDependencies": {
+    "@klarify/config": "workspace:*",
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "react-email": "^3.0.2",
+    "typescript": "^5.5.0"
+  }
+}

@@ -1,0 +1,97 @@
+<!doctype html>
+<!--
+  Klarify — Supabase Auth template: "Reauthentication"
+  -----------------------------------------------------
+  Paste this entire file into:
+    Supabase Dashboard → Authentication → Email Templates → Reauthentication
+  Subject: "Your Klarify verification code"
+
+  Supabase variables used:
+    {{ .Token }}             — 6-digit OTP code (used to confirm a sensitive action)
+    {{ .Email }}             — recipient email
+
+  Note: Reauthentication never sends a URL — only an OTP. The user must
+  enter the code inside the app to confirm the sensitive action.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light only" />
+  <meta name="supported-color-schemes" content="light" />
+  <title>Your Klarify verification code</title>
+</head>
+<body style="margin:0;padding:0;background:#F5F5F5;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#1A1A1A;-webkit-font-smoothing:antialiased;">
+  <span style="display:none!important;visibility:hidden;mso-hide:all;font-size:1px;color:#F5F5F5;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+    Your one-time verification code for Klarify.
+  </span>
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F5F5;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;width:100%;">
+
+          <!-- Brand header -->
+          <tr>
+            <td align="center" style="padding:8px 0 24px 0;">
+              <img src="https://klarify.africa/klarify_logo.png" alt="Klarify" width="140" height="47" style="display:block;border:0;outline:none;text-decoration:none;max-width:140px;height:auto;" />
+              <p style="margin:12px 0 0 0;font-size:13px;font-weight:500;color:#555555;letter-spacing:0.2px;">
+                Navigate Regulated Markets with Confidence
+              </p>
+              <div style="width:48px;height:3px;background:#0B6E6E;margin:14px auto 0 auto;border-radius:2px;"></div>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:8px;padding:32px;">
+              <h1 style="margin:0 0 16px 0;font-size:22px;line-height:28px;font-weight:700;color:#1A1A1A;">
+                Verify it&rsquo;s you
+              </h1>
+
+              <p style="margin:0 0 24px 0;font-size:15px;line-height:24px;color:#1A1A1A;">
+                You&rsquo;re confirming a sensitive action on your Klarify account.
+                Enter this 6-digit code in the app to continue:
+              </p>
+
+              <p style="margin:0;padding:18px 0;text-align:center;background:#E6F4F4;border:1px dashed #0B6E6E;border-radius:8px;font-family:'JetBrains Mono','SF Mono',Menlo,Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:8px;color:#0B6E6E;">
+                {{ .Token }}
+              </p>
+
+              <p style="margin:24px 0 0 0;font-size:13px;line-height:20px;color:#555555;">
+                This code expires in <strong>10 minutes</strong> and can only be used once.
+              </p>
+
+              <hr style="border:none;border-top:1px solid #E5E7EB;margin:24px 0 16px 0;" />
+
+              <p style="margin:0;font-size:13px;line-height:20px;color:#555555;">
+                <strong style="color:#1A1A1A;">Didn&rsquo;t request this?</strong>
+                If you didn&rsquo;t initiate this action, reply to this email immediately
+                &mdash; someone may be trying to access your account.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 8px 32px 8px;">
+              <p style="margin:0 0 8px 0;font-size:12px;line-height:18px;color:#555555;text-align:center;">
+                Blockspace Technologies Limited &middot; Lagos, Nigeria
+              </p>
+              <p style="margin:0 0 8px 0;font-size:12px;line-height:18px;color:#555555;text-align:center;">
+                <a href="https://klarify.africa" style="color:#0B6E6E;text-decoration:none;">klarify.africa</a>
+                &nbsp;&middot;&nbsp;
+                <a href="mailto:hello@klarify.africa" style="color:#0B6E6E;text-decoration:none;">hello@klarify.africa</a>
+              </p>
+              <p style="margin:12px 0 0 0;font-size:11px;line-height:16px;color:#CCCCCC;text-align:center;">
+                &copy; Blockspace Technologies Limited. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

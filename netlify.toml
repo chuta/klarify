@@ -37,7 +37,12 @@
 
 [build]
   installCommand = "corepack enable && corepack prepare pnpm@9.0.0 --activate && env NODE_ENV=development pnpm install --frozen-lockfile"
-  command        = "pnpm --filter @klarify/web run build"
+  # Use turbo so workspace dependencies that need compilation (e.g. @klarify/email,
+  # whose `main` points at ./dist/index.js) are built before @klarify/web bundles
+  # them. Other workspace packages (@klarify/core, /ai, /ui, /config) export from
+  # ./src/index.ts directly and are picked up as TypeScript source, so they have
+  # no build step — turbo skips them harmlessly.
+  command        = "pnpm exec turbo run build --filter=@klarify/web"
   # @netlify/plugin-nextjs expects publish to point at the .next output directory
   # (relative to the repo root in monorepos). See:
   # https://docs.netlify.com/build/configure-builds/monorepos/
