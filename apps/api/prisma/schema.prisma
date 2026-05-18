@@ -6,6 +6,13 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
+  // `native` covers local dev (macOS / Linux dev containers).
+  // `rhel-openssl-3.0.x` covers Netlify Functions / AWS Lambda runtime
+  //   (Amazon Linux 2023). Without it the function throws at runtime:
+  //     "Prisma Client could not locate the Query Engine for runtime
+  //      'rhel-openssl-3.0.x'"
+  // `debian-openssl-3.0.x` covers Vercel Serverless and most Docker images.
+  binaryTargets   = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {

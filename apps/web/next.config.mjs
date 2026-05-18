@@ -9,7 +9,22 @@ const nextConfig = {
   transpilePackages: ['@klarify/core', '@klarify/ai', '@klarify/ui'],
   experimental: {
     typedRoutes: true,
+    // Prisma's query engine is a native `.node` binary that is loaded
+    // dynamically at runtime. Bundling it through webpack breaks the loader;
+    // marking it external tells Next.js to require it from node_modules in
+    // the serverless function instead.
+    serverComponentsExternalPackages: ['@prisma/client', '.prisma/client'],
+    // Force the rhel-openssl-3.0.x engine binary into the function bundle.
+    // Without this, Next.js' file tracer may miss the dynamically-loaded
+    // `.so.node` file and Lambda throws PrismaClientInitializationError.
+    outputFileTracingIncludes: {
+      '/**/*': [
+        './node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client/libquery_engine-rhel-openssl-3.0.x.so.node',
+        './node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client/schema.prisma',
+      ],
+    },
   },
+  outputFileTracingRoot: path.join(__dirname, '../../'),
   /**
    * Teach webpack to resolve .js imports to .ts/.tsx sources.
    *
