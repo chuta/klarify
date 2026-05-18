@@ -158,7 +158,7 @@ export function OnboardingWizard({ initialStep = 1 }: OnboardingWizardProps): JS
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div>
       {/* Progress bar */}
       <div className="mb-8">
         <div className="mb-2 flex items-center justify-between text-xs text-[#555555]">
@@ -197,7 +197,7 @@ export function OnboardingWizard({ initialStep = 1 }: OnboardingWizardProps): JS
 
         {/* ── Step content ── */}
         {step === 1 && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {PRODUCT_TYPE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -325,7 +325,7 @@ export function OnboardingWizard({ initialStep = 1 }: OnboardingWizardProps): JS
         )}
 
         {step === 5 && (
-          <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+          <div className="space-y-2">
             {INFRASTRUCTURE_OPTIONS.map((opt) => {
               const checked = state.existing_infrastructure.includes(opt.key);
               return (

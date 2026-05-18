@@ -14,7 +14,7 @@ import { OnboardingWizard } from '@/app/onboarding/_wizard';
  */
 export default function DashboardOnboardingPage(): JSX.Element {
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="max-w-5xl mx-auto">
       {/* ── Page header ── */}
       <div className="mb-8">
         <div className="mb-1 flex items-center gap-2 text-xs text-[#CCCCCC]">
