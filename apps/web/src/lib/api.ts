@@ -10,7 +10,13 @@
 
 import type { ApiSuccess, ApiError } from '@klarify/core';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+// API_URL is server-only (never sent to the browser). NEXT_PUBLIC_API_URL is
+// kept as a fallback for backward compatibility and for the client-side fetch
+// in ARIPRestrictionsWidget. In production both should point to the same origin.
+const API_URL =
+  process.env.API_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  'http://localhost:3000';
 
 export type ApiResult<T> = ApiSuccess<T> | ApiError;
 

@@ -5,16 +5,22 @@
   "description": "Klarify web PWA — klarify.africa",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
+  },
+  "prisma": {
+    "schema": "../api/prisma/schema.prisma"
   },
   "dependencies": {
     "@klarify/ai": "workspace:*",
     "@klarify/config": "workspace:*",
     "@klarify/core": "workspace:*",
+    "@klarify/email": "workspace:*",
     "@klarify/ui": "workspace:*",
+    "@prisma/client": "^5.20.0",
+    "prisma": "^5.20.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.45.4",
     "@types/node": "^20.14.0",

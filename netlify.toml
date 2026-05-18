@@ -58,8 +58,9 @@
   NODE_VERSION    = "20"
   PNPM_VERSION    = "9"
   # NEXT_PUBLIC_APP_URL is baked into the client bundle at build time.
-  # It must be set here (or in the Netlify dashboard) so that any non-Server
-  # Action code (client components, edge config, etc.) resolves correctly.
-  # The server actions derive their own origin dynamically via headers(), so
-  # this value is only a fallback for them.
   NEXT_PUBLIC_APP_URL = "https://klarify.africa"
+  # API_URL (server-only) + NEXT_PUBLIC_API_URL (client fallback) both point
+  # to the same Netlify deployment — the Next.js Route Handlers at /api/*
+  # replace the separate Hono server entirely in production.
+  API_URL             = "https://klarify.africa"
+  NEXT_PUBLIC_API_URL = "https://klarify.africa"
