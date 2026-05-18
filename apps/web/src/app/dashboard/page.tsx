@@ -64,8 +64,15 @@ const DIMENSION_MAP: Array<{ key: DimensionKey; weight: string }> = [
 export default async function DashboardPage(): Promise<JSX.Element> {
   const supabase = createClient();
 
-  const { data: { session } } = await supabase.auth.getSession();
-  const { data: { user } } = await supabase.auth.getUser();
+  // Parallelise the two auth reads. getUser() hits the Supabase auth API
+  // (slow); getSession() reads cookies (effectively free). Running them
+  // serially gated TTFB on the sum; Promise.all gates it on the slower one.
+  const [sessionRes, userRes] = await Promise.all([
+    supabase.auth.getSession(),
+    supabase.auth.getUser(),
+  ]);
+  const session = sessionRes.data.session;
+  const user = userRes.data.user;
 
   if (!session || !user) redirect('/sign-in');
 
@@ -74,17 +81,18 @@ export default async function DashboardPage(): Promise<JSX.Element> {
     ?? user.email?.split('@')[0]
     ?? 'Founder';
 
-  // Fetch compliance score — null means no onboarding yet
-  const scoreResult = await apiFetch<ComplianceScoreData>(
-    '/api/compliance/score',
-    accessToken,
-  );
+  // Parallelise the two independent API fetches. With Supabase in
+  // eu-north-1 and Netlify functions likely in us-east-1, each call is a
+  // transatlantic round-trip — running them serially roughly doubled the
+  // dashboard's TTFB.
+  const [scoreResult, aripResult] = await Promise.all([
+    apiFetch<ComplianceScoreData>('/api/compliance/score', accessToken),
+    apiFetch<ARIPData>('/api/arip', accessToken),
+  ]);
 
   const score: ComplianceScoreData | null = scoreResult.success ? scoreResult.data : null;
   const hasOnboarded = score !== null && score.totalScore >= 0;
 
-  // Fetch ARIP status — may not exist for new users
-  const aripResult = await apiFetch<ARIPData>('/api/arip', accessToken);
   const arip: ARIPData | null = aripResult.success ? aripResult.data : null;
   const isAIPActive =
     arip?.current_stage === 'aip_active' && arip?.stage_status === 'active';

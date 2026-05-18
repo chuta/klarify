@@ -11,11 +11,17 @@ export default async function ProfilePage({
   searchParams: { success?: string; error?: string };
 }): Promise<JSX.Element> {
   const supabase = createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
+  // Parallelise the two auth reads — getUser is the slow one (network);
+  // getSession reads cookies and is effectively free.
+  const [userRes, sessionRes] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession(),
+  ]);
+  const user = userRes.data.user;
+  const error = userRes.error;
+  const session = sessionRes.data.session;
 
   if (error || !user) redirect('/sign-in');
-
-  const { data: { session } } = await supabase.auth.getSession();
 
   const email = user.email ?? '';
   const displayName = (user.user_metadata?.name as string | undefined) ?? email.split('@')[0] ?? '';

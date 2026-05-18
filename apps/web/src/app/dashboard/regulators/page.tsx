@@ -44,8 +44,13 @@ const PRIMARY_REGS = new Set(['SEC_NIGERIA', 'CBN', 'NFIU']);
 
 export default async function RegulatorsPage(): Promise<JSX.Element> {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  const { data: { user } } = await supabase.auth.getUser();
+  // Parallelise the two auth reads — getUser is the slow one (network).
+  const [sessionRes, userRes] = await Promise.all([
+    supabase.auth.getSession(),
+    supabase.auth.getUser(),
+  ]);
+  const session = sessionRes.data.session;
+  const user = userRes.data.user;
   if (!session || !user) redirect('/sign-in');
 
   const result = await apiFetch<RegulatorData[]>('/api/regulators', session.access_token);

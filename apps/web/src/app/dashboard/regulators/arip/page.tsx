@@ -39,11 +39,14 @@ interface ARIPData {
 
 export default async function ARIPTrackerPage(): Promise<JSX.Element> {
   const supabase = createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) redirect('/sign-in');
-
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect('/sign-in');
+  // Parallelise the two auth reads — getUser is the slow one (network).
+  const [userRes, sessionRes] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession(),
+  ]);
+  const user = userRes.data.user;
+  const session = sessionRes.data.session;
+  if (userRes.error || !user || !session) redirect('/sign-in');
 
   const aripResult = await apiFetch<ARIPData>('/api/arip', session.access_token);
   const arip: ARIPData | null = aripResult.success ? aripResult.data : null;

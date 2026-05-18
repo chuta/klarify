@@ -62,8 +62,15 @@ const PHASES = [
 
 export default async function RoadmapPage(): Promise<JSX.Element> {
   const supabase = createClient();
-  await supabase.auth.getUser();
-  const { data: { session } } = await supabase.auth.getSession();
+  // Parallelise the two auth reads. getUser() refreshes the session via a
+  // Supabase auth API call (the slow one); getSession() then reads the
+  // refreshed cookies. The two pages below run them serially because they
+  // need the user object — here we only need the session.access_token.
+  const [, sessionRes] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession(),
+  ]);
+  const session = sessionRes.data.session;
   if (!session) redirect('/sign-in');
 
   const accessToken = session.access_token;
