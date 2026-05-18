@@ -55,5 +55,11 @@
   package = "@netlify/plugin-nextjs"
 
 [build.environment]
-  NODE_VERSION = "20"
-  PNPM_VERSION = "9"
+  NODE_VERSION    = "20"
+  PNPM_VERSION    = "9"
+  # NEXT_PUBLIC_APP_URL is baked into the client bundle at build time.
+  # It must be set here (or in the Netlify dashboard) so that any non-Server
+  # Action code (client components, edge config, etc.) resolves correctly.
+  # The server actions derive their own origin dynamically via headers(), so
+  # this value is only a fallback for them.
+  NEXT_PUBLIC_APP_URL = "https://klarify.africa"

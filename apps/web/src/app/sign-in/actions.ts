@@ -2,8 +2,32 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
+
+/**
+ * Derives the request origin dynamically so `emailRedirectTo` is always
+ * correct regardless of environment (localhost, preview deploy, production).
+ * Falls back to NEXT_PUBLIC_APP_URL, then to localhost.
+ */
+function getRequestOrigin(): string {
+  const h = headers();
+  // Server Actions send an Origin header; Referer is the next best option.
+  const origin = h.get('origin');
+  if (origin) return origin;
+
+  const referer = h.get('referer');
+  if (referer) {
+    try {
+      return new URL(referer).origin;
+    } catch {
+      // malformed referer — fall through
+    }
+  }
+
+  return process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+}
 
 // ── Magic link ──────────────────────────────────────────────────────────────
 
@@ -20,12 +44,12 @@ export async function signInWithMagicLink(formData: FormData): Promise<void> {
   }
 
   const supabase = createClient();
-  const appUrl   = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const origin   = getRequestOrigin();
 
   const { error } = await supabase.auth.signInWithOtp({
     email: email.trim().toLowerCase(),
     options: {
-      emailRedirectTo: `${appUrl}/auth/callback`,
+      emailRedirectTo: `${origin}/auth/callback`,
     },
   });
 
