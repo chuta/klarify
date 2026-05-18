@@ -23,6 +23,7 @@
     "@klarify/ai": "workspace:*",
     "@klarify/config": "workspace:*",
     "@klarify/core": "workspace:*",
+    "@klarify/email": "workspace:*",
     "@prisma/client": "^5.20.0",
     "@types/node": "^20.14.0",
     "hono": "^4.6.0",
