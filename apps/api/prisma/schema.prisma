@@ -17,7 +17,14 @@ generator client {
 
 datasource db {
   provider   = "postgresql"
+  // Runtime queries — use the Supavisor transaction pooler. Required for
+  // serverless deployments (Netlify Functions) where IPv6 isn't routable.
   url        = env("DATABASE_URL")
+  // Migrations + introspection — bypass the pooler. pgbouncer transaction
+  // mode doesn't support prepared statements or DDL, so `prisma migrate`
+  // and `prisma db push` must use the direct connection. Set DIRECT_URL
+  // locally; CI/CD that doesn't run migrations can omit it.
+  directUrl  = env("DIRECT_URL")
   extensions = [pgcrypto, vector]
 }
 
