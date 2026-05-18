@@ -44,16 +44,13 @@ export function TaskCard({
     if (isComplete || loading) return;
     setLoading(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/compliance/roadmap/task/${id}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
+      const res = await fetch(`/api/compliance/roadmap/task/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
         },
-      );
+      });
       const json = (await res.json()) as {
         success: boolean;
         data?: { scoreUpdate?: { totalScore: number; dimensions: Record<string, number> } };

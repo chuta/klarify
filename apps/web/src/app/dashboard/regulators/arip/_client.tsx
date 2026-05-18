@@ -117,11 +117,14 @@ export function ARIPTrackerClient({ arip: initialArip, accessToken }: Props): JS
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
+  // API routes live on the same origin as the Next.js app (apps/web/src/app/api/*),
+  // so use a same-origin relative URL. Hardcoding NEXT_PUBLIC_API_URL to
+  // http://localhost:3000 in the env causes calls to fail in production.
   const save = useCallback(async (patch: Partial<ARIPData>): Promise<void> => {
     if (!arip) return;
     const next = { ...arip, ...patch };
     setArip(next);
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/arip`, {
+    await fetch('/api/arip', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -137,7 +140,7 @@ export function ARIPTrackerClient({ arip: initialArip, accessToken }: Props): JS
     setCreating(true);
     setCreateError(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/arip`, {
+      const res = await fetch('/api/arip', {
         // API route handles upsert via PUT — no POST handler exists.
         method: 'PUT',
         headers: {

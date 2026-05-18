@@ -90,7 +90,7 @@ function CustomerGrowthBar({
     if (isNaN(parsed) || parsed < 0) return;
     setSaving(true);
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/arip/customer-count`, {
+      await fetch('/api/arip/customer-count', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
