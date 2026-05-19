@@ -874,13 +874,10 @@ Examples: `NG_ISA_2025.pdf`, `GH_VASP_ACT_2025.pdf`, `FATF_REC15_2019.pdf`, `INT
 | Status | Filename | Document |
 |---|---|---|
 | ✅ | `FATF_REC15_2019.pdf` | FATF Recommendation 15 (2019 update) |
-| ✅ | `FATF_TU_VA_2023.pdf` | FATF Targeted Update on Virtual Assets 2023 |
-| ✅ | `FATF_UPDATES_2019_2025.pdf` | FATF Updates 2019–2025 (consolidated compilation of annual Targeted Updates) |
+| ✅ | `FATF_UPDATES_2019_2025.pdf` | FATF Targeted Updates on Virtual Assets 2019–2025 (consolidated — covers all annual updates including 2021, 2022, 2023, 2024, and 2025; accepted as the definitive FATF source since FATF does not publish individual-year Targeted Updates as standalone documents) |
 | ✅ | `INTL_GIABA_MER_NIGERIA.pdf` | GIABA Mutual Evaluation Report on Nigeria |
-| ⏳ | `FATF_TU_VA_2021.pdf` | FATF Targeted Update on Virtual Assets 2021 (individual) — to source if available outside compilation |
-| ⏳ | `FATF_TU_VA_2022.pdf` | FATF Targeted Update on Virtual Assets 2022 (individual) — to source if available outside compilation |
-| ⏳ | `FATF_TU_VA_2024.pdf` | FATF Targeted Update on Virtual Assets 2024 (individual) — to source if available outside compilation |
-| ⏳ | `FATF_TU_VA_2025.pdf` | FATF Targeted Update on Virtual Assets 2025 (individual) — to source if available outside compilation |
+
+> **Note on FATF individual-year TUs:** FATF publishes Targeted Updates as cumulative revisions rather than discrete annual documents. `FATF_UPDATES_2019_2025.pdf` is the authoritative consolidated source and fully replaces the need for individual-year files. `FATF_TU_VA_2023.pdf` is retained as a secondary reference for the 2023 update specifically, but `FATF_UPDATES_2019_2025.pdf` takes precedence in the RAG pipeline. When citing FATF guidance, FounderCounsel should reference the consolidated document and indicate the relevant year of the update (e.g. "FATF Targeted Update 2023, as consolidated in the FATF Virtual Assets Guidance 2019–2025").
 
 ### 11.6 Canonical Interpretive Reference
 
