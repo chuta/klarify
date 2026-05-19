@@ -791,46 +791,118 @@ export const PLAN_PRICING = {
 
 ## 11. REGULATORY CORPUS
 
-The RAG vector database must contain ALL of these documents. This is non-negotiable — Klarify's authority depends on it.
+The RAG vector database must contain every document listed below. This list is non-negotiable — Klarify's authority depends on it. Corpus files live in `packages/ai/corpus/raw/`.
 
-### Nigerian Corpus (PRIMARY)
-- Investments and Securities Act 2025 (ISA 2025)
-- SEC Digital Asset Rules 2022 (original)
-- SEC Digital Asset Rules 2024 (amended)
-- SEC Digital Asset Rules June 2025 (further amended)
-- Money Laundering (Prevention and Prohibition) Act 2022 (MLPPA)
-- CBN VASP Guidelines 2023
-- NFIU AML/CFT Compliance Framework for VASPs (Dec 2024)
-- Nigeria Tax Administration Act 2025 (NTAA)
-- Banks and Other Financial Institutions Act 2020 (BOFIA)
-- Nigeria Data Protection Act 2023 (NDPA)
-- Companies and Allied Matters Act (CAMA) — relevant sections
-- **The Founder's Guide to Building in Regulated Markets (Chuta, 2026)** ← THIS IS THE MOST IMPORTANT DOCUMENT IN THE CORPUS
+### 11.1 Corpus Inclusion Criteria
 
-### Pan-African Corpus
-- Ghana VASP Act 2025 (Act 1154)
-- Kenya VASP Act 2025
-- Mauritius VAITOS Act 2021 + 2025 guidance
-- South Africa CASP/FSCA framework + FAIS Act provisions
-- South Africa Financial Intelligence Centre Act (FICA)
+Operational restatement of §16 Rule 4. Before ingesting any new document, classify it against this filter.
 
-### International Standards
-- FATF Recommendation 15 (2019 update)
-- FATF Targeted Update on Virtual Assets 2021
-- FATF Targeted Update on Virtual Assets 2022
-- FATF Targeted Update on Virtual Assets 2023
-- FATF Targeted Update on Virtual Assets 2024
-- FATF Targeted Update on Virtual Assets 2025
-- EU MiCA (comparative reference — not binding in Nigeria)
-- BIS working papers on stablecoins and CBDC (key papers)
-- GIABA mutual evaluation report on Nigeria
+**✅ ELIGIBLE — must be ingested:**
+- Acts of Parliament (substantive primary legislation)
+- Binding regulatory instruments issued under statutory authority (e.g. SEC Rules under ISA, CBN regulations under BOFIA, NFIU frameworks under MLPPA)
+- FATF Recommendations and Targeted Updates (binding through FATF mutual-evaluation regime)
+- GIABA mutual evaluation reports (binding peer review)
+- The Founder's Guide to Building in Regulated Markets (Chuta, 2026) — canonical interpretive reference
 
-### Corpus Update Protocol
+**❌ INELIGIBLE — must NOT be ingested, even if officially published:**
+- Sandbox guidelines, regulatory incubation frameworks, innovation programme rules (experimental scope, not binding on production businesses)
+- Government strategy / policy / vision papers, national blockchain roadmaps
+- Draft or proposed rules (not yet enacted)
+- FAQs, explanatory memoranda, regulator press releases
+- Industry research (Chainalysis, Emurgo, BitKE, exchange outlook reports, etc.)
+- AI-generated summaries or secondary sources
+- Comparative-jurisdiction reference docs outside African scope (e.g. Barbados, EU MiCA standalone)
+
+When in doubt, exclude. A smaller, authoritative corpus produces better FounderCounsel responses than a larger corpus polluted with non-binding material.
+
+### 11.2 Filename Convention
+
+The ingestion script (Sprint 2-A3 `packages/ai/scripts/ingest.ts`) parses filenames to set jurisdiction and document-type metadata. All corpus files MUST follow:
+
+```
+{JURISDICTION_CODE}_{REGULATION_KEY}_{YEAR}.pdf
+```
+
+| Code | Meaning |
+|---|---|
+| `NG` | Nigeria |
+| `GH` | Ghana |
+| `KE` | Kenya |
+| `MU` | Mauritius |
+| `ZA` | South Africa |
+| `FATF` | FATF (international) |
+| `INTL` | Other international / regional bodies (BIS, GIABA, etc.) |
+| `REF` | Canonical reference materials (Founder's Guide) |
+
+Filenames must contain only `[A-Z0-9_-.]`. No spaces, colons, parentheses, or accented characters. Year is the version year of the document, not the year it was sourced.
+
+Examples: `NG_ISA_2025.pdf`, `GH_VASP_ACT_2025.pdf`, `FATF_REC15_2019.pdf`, `INTL_GIABA_MER_NIGERIA_2021.pdf`, `REF_FOUNDERS_GUIDE_2026.pdf`.
+
+### 11.3 Nigerian Corpus (PRIMARY)
+
+| Status | Filename | Document |
+|---|---|---|
+| ✅ | `NG_ISA_2025.pdf` | Investments and Securities Act 2025 |
+| ✅ | `NG_BOFIA_2020.pdf` | Banks and Other Financial Institutions Act 2020 |
+| ✅ | `NG_CAMA_2020.pdf` | Companies and Allied Matters Act 2020 |
+| ✅ | `NG_MLPPA_2022.pdf` | Money Laundering (Prevention and Prohibition) Act 2022 |
+| ✅ | `NG_POCA_2022.pdf` | Proceeds of Crime (Recovery and Management) Act 2022 |
+| ✅ | `NG_TPPA_2022.pdf` | Terrorism (Prevention and Prohibition) Act 2022 |
+| ✅ | `NG_NDPA_2023.pdf` | Nigeria Data Protection Act 2023 |
+| ✅ | `NG_NTAA_2025.pdf` | Nigeria Tax Administration Act 2025 |
+| ✅ | `NG_STARTUP_ACT_2022.pdf` | Nigeria Startup Act 2022 |
+| ✅ | `NG_SEC_DAR_2022.pdf` | SEC Digital Asset Rules 2022 (original) |
+| ✅ | `NG_SEC_DAR_2023.pdf` | SEC Digital Asset Rules 2023 |
+| ✅ | `NG_SEC_DAR_2024.pdf` | SEC Digital Asset Rules 2024 (latest enacted) |
+| ✅ | `NG_CBN_VASP_2023.pdf` | CBN Guidelines on Operation of Bank Accounts for VASPs 2023 (binding under BOFIA) |
+| ⏳ | `NG_NFIU_VASP_2024.pdf` | NFIU AML/CFT Compliance Framework for VASPs (Dec 2024) — to source |
+
+### 11.4 African Regional Corpus
+
+| Status | Filename | Document |
+|---|---|---|
+| ✅ | `GH_ISA_ACT_2025.pdf` | Ghana Investments and Securities Act 2025 |
+| ✅ | `GH_VASP_ACT_2025.pdf` | Ghana VASP Act 2025 (Act 1154) |
+| ✅ | `KE_VASP_ACT_2025.pdf` | Kenya VASP Act 2025 |
+| ✅ | `MU_VAITOS_2021.pdf` | Mauritius Virtual Asset and Initial Token Offering Services Act 2021 |
+| ✅ | `ZA_CASP_FSCA.pdf` | South Africa CASP / FSCA framework |
+| ⏳ | `ZA_FICA.pdf` | South Africa Financial Intelligence Centre Act — to source |
+| ⏳ | `ZA_FAIS.pdf` | South Africa Financial Advisory and Intermediary Services Act — to source |
+
+### 11.5 International Standards
+
+| Status | Filename | Document |
+|---|---|---|
+| ✅ | `FATF_REC15_2019.pdf` | FATF Recommendation 15 (2019 update) |
+| ✅ | `FATF_TU_VA_2023.pdf` | FATF Targeted Update on Virtual Assets 2023 |
+| ✅ | `FATF_UPDATES_2019_2025.pdf` | FATF Updates 2019–2025 (consolidated compilation of annual Targeted Updates) |
+| ✅ | `INTL_GIABA_MER_NIGERIA.pdf` | GIABA Mutual Evaluation Report on Nigeria |
+| ⏳ | `FATF_TU_VA_2021.pdf` | FATF Targeted Update on Virtual Assets 2021 (individual) — to source if available outside compilation |
+| ⏳ | `FATF_TU_VA_2022.pdf` | FATF Targeted Update on Virtual Assets 2022 (individual) — to source if available outside compilation |
+| ⏳ | `FATF_TU_VA_2024.pdf` | FATF Targeted Update on Virtual Assets 2024 (individual) — to source if available outside compilation |
+| ⏳ | `FATF_TU_VA_2025.pdf` | FATF Targeted Update on Virtual Assets 2025 (individual) — to source if available outside compilation |
+
+### 11.6 Canonical Interpretive Reference
+
+| Status | Filename | Document |
+|---|---|---|
+| ✅ | `FOUNDERS_GUIDE_2026.pdf` | **The Founder's Guide to Building in Regulated Markets** (Chuta, 2026) — THIS IS THE MOST IMPORTANT DOCUMENT IN THE CORPUS |
+
+### 11.7 Corpus Update Protocol
+
 The corpus must be updated within 72 hours whenever:
-- Any Nigerian regulatory body publishes a new circular or rule
+- Any Nigerian regulatory body publishes a new circular, rule, or amendment that meets §11.1 ✅ ELIGIBLE criteria
 - FATF publishes an annual Targeted Update (every June)
-- A new African VASP framework is finalised
+- A new African VASP Act is enacted (Ghana, Kenya, Mauritius, South Africa, or any new jurisdiction Klarify adds)
 - ISA 2025 or any referenced Act is amended
+
+**Update procedure:**
+1. Classify the document against §11.1 inclusion criteria. If ❌ INELIGIBLE, do not proceed.
+2. Rename to follow §11.2 filename convention.
+3. Add a row to the relevant §11.3–11.5 table with `✅` status.
+4. Run `pnpm ingest --file={NEW_FILENAME}.pdf` in `packages/ai/`.
+5. Verify with the RAG end-to-end test in Sprint 2-A5.
+6. Commit the CLAUDE.md update + corpus addition in the same PR.
 
 ---
 
@@ -1100,7 +1172,7 @@ The following must not be modified without explicit instruction from the product
 
 ---
 
-*Last updated: May 2026*
+*Last updated: May 19, 2026*
 *Product owner: Chimezie Chuta — chimeziechuta@gmail.com*
 *Company: Blockspace Technologies Limited, Lagos, Nigeria*
 *Repository: klarify (private)*
