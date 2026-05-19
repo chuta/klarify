@@ -855,7 +855,8 @@ Examples: `NG_ISA_2025.pdf`, `GH_VASP_ACT_2025.pdf`, `FATF_REC15_2019.pdf`, `INT
 | ✅ | `NG_SEC_DAR_2023.pdf` | SEC Digital Asset Rules 2023 |
 | ✅ | `NG_SEC_DAR_2024.pdf` | SEC Digital Asset Rules 2024 (latest enacted) |
 | ✅ | `NG_CBN_VASP_2023.pdf` | CBN Guidelines on Operation of Bank Accounts for VASPs 2023 (binding under BOFIA) |
-| ⏳ | `NG_NFIU_VASP_2024.pdf` | NFIU AML/CFT Compliance Framework for VASPs (Dec 2024) — to source |
+| ✅ | `NG_NFIU_VASP_2024.pdf` | NFIU AML/CFT Compliance Framework for VASPs (Dec 2024) |
+| ✅ | `NG_EFCC_2024.pdf` | Economic and Financial Crimes Commission Act / EFCC AML Guidance 2024 |
 
 ### 11.4 African Regional Corpus
 
@@ -866,8 +867,8 @@ Examples: `NG_ISA_2025.pdf`, `GH_VASP_ACT_2025.pdf`, `FATF_REC15_2019.pdf`, `INT
 | ✅ | `KE_VASP_ACT_2025.pdf` | Kenya VASP Act 2025 |
 | ✅ | `MU_VAITOS_2021.pdf` | Mauritius Virtual Asset and Initial Token Offering Services Act 2021 |
 | ✅ | `ZA_CASP_FSCA.pdf` | South Africa CASP / FSCA framework |
-| ⏳ | `ZA_FICA.pdf` | South Africa Financial Intelligence Centre Act — to source |
-| ⏳ | `ZA_FAIS.pdf` | South Africa Financial Advisory and Intermediary Services Act — to source |
+| ✅ | `ZA_FICA.pdf` | South Africa Financial Intelligence Centre Act |
+| ✅ | `ZA_FAIS.pdf` | South Africa Financial Advisory and Intermediary Services Act |
 
 ### 11.5 International Standards
 
