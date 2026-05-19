@@ -23,7 +23,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const code      = searchParams.get('code');
   const tokenHash = searchParams.get('token_hash');
-  const type      = searchParams.get('type') as 'magiclink' | 'email' | null;
+  const type      = searchParams.get('type') as
+    | 'magiclink' | 'email' | 'recovery' | 'invite' | 'signup' | null;
+  // `next` allows the original request (e.g. resetPasswordForEmail's redirectTo
+  // or signInWithOtp's options.emailRedirectTo) to override the default
+  // post-auth destination — used for the password-reset and invite flows.
+  const next      = searchParams.get('next');
 
   const errorRedirect = `${origin}/sign-in?error=${encodeURIComponent(
     'Your sign-in link has expired or is invalid. Please request a new one.',
@@ -39,7 +44,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return NextResponse.redirect(errorRedirect);
     }
   } else if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+    // `verifyOtp` accepts a narrower union — narrow before calling.
+    const otpType = type === 'magiclink' || type === 'recovery' || type === 'invite' || type === 'signup' || type === 'email'
+      ? type
+      : 'email';
+    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: otpType });
     if (error) {
       console.error('[auth/callback] OTP verify error', error.message);
       return NextResponse.redirect(errorRedirect);
@@ -47,6 +56,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   } else {
     console.error('[auth/callback] missing code and token_hash');
     return NextResponse.redirect(errorRedirect);
+  }
+
+  // ── 1b. Password-recovery flow short-circuits user sync ─────────────── //
+  // For type=recovery (or when ?next points to /auth/reset-password) the user
+  // is in a recovery session and must set a new password before reaching the
+  // dashboard. Don't run /api/auth/sync — let the reset-password page handle
+  // it after the password is updated.
+  if (type === 'recovery' || next === '/auth/reset-password') {
+    return NextResponse.redirect(`${origin}/auth/reset-password`);
   }
 
   // ── 2. Sync user to our database + determine routing ─────────────────── //
@@ -71,7 +89,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
 
     if (syncResult.success) {
-      return NextResponse.redirect(`${origin}${syncResult.data.redirect}`);
+      // Honor `?next` if the original auth flow specified a destination.
+      const destination = next ?? syncResult.data.redirect;
+      return NextResponse.redirect(`${origin}${destination}`);
     }
 
     // Sync failed — log and fall back to dashboard (non-blocking for UX).
@@ -79,5 +99,5 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   // Fallback: if we have a session but sync failed, go to dashboard.
-  return NextResponse.redirect(`${origin}/dashboard`);
+  return NextResponse.redirect(`${origin}${next ?? '/dashboard'}`);
 }

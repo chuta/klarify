@@ -138,7 +138,7 @@ function ProblemSection(): JSX.Element {
     <section className="bg-[#FAFAFA] px-6 py-20">
       <div className="mx-auto max-w-5xl">
         <blockquote className="mb-16 border-l-4 border-[#0B6E6E] bg-white px-8 py-6 text-base italic text-[#555555] shadow-sm">
-          &ldquo;African founders face a recurring, expensive gap, they do not know what they
+          &ldquo;African founders face recurring, and expensive regulatory gaps. They do not know what they
           do not know.&rdquo;
           <footer className="mt-3 text-sm font-semibold not-italic text-[#0B6E6E]">
             — <em>The Founder&apos;s Guide to Building in Regulated Markets</em>, Chimezie

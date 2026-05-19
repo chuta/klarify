@@ -103,7 +103,7 @@ export default async function SignUpPage({
         </p>
 
         <p className="mt-4 text-center text-xs text-[#CCCCCC]">
-          By creating an account you agree to our{' '}
+        © 2026 Blockspace Technologies Limited. All rights reserved. By creating an account you agree to our{' '}
           <a href="/legal/terms" className="underline">Terms of Service</a>{' '}
           and{' '}
           <a href="/legal/privacy" className="underline">Privacy Policy</a>.
