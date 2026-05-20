@@ -1,0 +1,39 @@
+# =============================================================================
+# Klarify — git attribute rules
+# =============================================================================
+# Without this file, git occasionally misidentifies binary files (PDFs with
+# certain magic-byte patterns, images, etc.) as text and produces enormous
+# diffs. The lines below force git to treat them as opaque blobs so diffs
+# stay readable.
+# =============================================================================
+
+# Regulatory corpus and any incidental PDFs anywhere in the repo.
+*.pdf       binary
+*.PDF       binary
+
+# Images.
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.webp      binary
+*.ico       binary
+
+# Fonts.
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.otf       binary
+*.eot       binary
+
+# Archives & other inherently-binary blobs.
+*.zip       binary
+*.gz        binary
+*.tar       binary
+*.7z        binary
+
+# Lockfiles — text but high-churn; mark as generated so GitHub collapses them
+# in PR views and tools don't try to fix line-endings on them.
+pnpm-lock.yaml         linguist-generated=true
+package-lock.json      linguist-generated=true
+yarn.lock              linguist-generated=true
