@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { createClient } from '@/lib/supabase/server';
+import { getOptionalUser } from '@/lib/supabase/server';
 import { SignUpForm } from './_form';
 
 interface SignUpPageProps {
@@ -21,8 +21,7 @@ interface SignUpPageProps {
 export default async function SignUpPage({
   searchParams,
 }: SignUpPageProps): Promise<JSX.Element> {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getOptionalUser();
   if (user) redirect('/dashboard');
 
   const sent  = searchParams.sent === '1';

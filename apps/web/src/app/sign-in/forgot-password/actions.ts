@@ -49,8 +49,14 @@ export async function requestPasswordReset(formData: FormData): Promise<void> {
   });
 
   if (error) {
-    console.error('[forgot-password] reset error', error.message);
-    // Don't reveal whether the email exists — generic confirmation only.
+    // Log full diagnostic context for ops — but never surface it to the
+    // user (account-enumeration prevention: always show the same confirmation).
+    console.error('[forgot-password] resetPasswordForEmail failed', {
+      name:    error.name,
+      message: error.message,
+      status:  (error as { status?: number }).status,
+      code:    (error as { code?: string }).code,
+    });
   }
 
   redirect('/sign-in/forgot-password?sent=1');

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { getOptionalUser } from '@/lib/supabase/server';
 import { Navbar } from '@/components/marketing/Navbar';
 import { Footer } from '@/components/marketing/Footer';
 
@@ -22,8 +22,7 @@ export const metadata: Metadata = {
  *   5. CTA banner
  */
 export default async function PricingPage(): Promise<JSX.Element> {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getOptionalUser();
   if (user) redirect('/dashboard');
 
   return (

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { createClient } from '@/lib/supabase/server';
+import { getOptionalUser } from '@/lib/supabase/server';
 import { SignInTabs } from './_tabs';
 
 interface SignInPageProps {
@@ -28,8 +28,7 @@ interface SignInPageProps {
 export default async function SignInPage({
   searchParams,
 }: SignInPageProps): Promise<JSX.Element> {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getOptionalUser();
   if (user) redirect('/dashboard');
 
   const sent      = searchParams.sent === '1';

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { createClient } from '@/lib/supabase/server';
+import { getOptionalUser } from '@/lib/supabase/server';
 import { requestPasswordReset } from './actions';
 
 interface ForgotPasswordPageProps {
@@ -30,8 +30,7 @@ interface ForgotPasswordPageProps {
 export default async function ForgotPasswordPage({
   searchParams,
 }: ForgotPasswordPageProps): Promise<JSX.Element> {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getOptionalUser();
   if (user) redirect('/dashboard');
 
   const sent  = searchParams.sent === '1';

@@ -37,9 +37,29 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     },
   });
 
-  // Calling getUser() triggers a token refresh when the access token
-  // is expired but a valid refresh token exists. Do NOT remove this call.
-  await supabase.auth.getUser();
+  // Calling getUser() triggers a token refresh when the access token is
+  // expired but a valid refresh token exists. We only call it when an
+  // auth cookie actually exists — otherwise @supabase/ssr 0.5.2 internally
+  // logs `AuthApiError: Refresh Token Not Found` on every anonymous
+  // request (home page, marketing, /sign-in itself), polluting Netlify
+  // function logs. The cookie name is `sb-<project-ref>-auth-token`, and
+  // when the JWT exceeds ~4 KB it is chunked into `.0`, `.1`, …
+  if (hasSupabaseAuthCookie(request)) {
+    await supabase.auth.getUser();
+  }
 
   return response;
+}
+
+/**
+ * True if any cookie on the request looks like a Supabase auth-token
+ * cookie set by @supabase/ssr — including the chunked variants used
+ * when the session JWT is larger than the per-cookie size limit.
+ *
+ * Exported for reuse by RSC helpers in `lib/supabase/server.ts`.
+ */
+export function hasSupabaseAuthCookie(request: NextRequest): boolean {
+  return request.cookies.getAll().some((c) =>
+    /^sb-.+-auth-token(\.\d+)?$/.test(c.name),
+  );
 }

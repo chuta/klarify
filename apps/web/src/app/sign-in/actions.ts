@@ -54,12 +54,40 @@ export async function signInWithMagicLink(formData: FormData): Promise<void> {
   });
 
   if (error) {
-    console.error('[sign-in] magic link error', error.message);
-    redirect(`/sign-in?error=${encodeURIComponent(error.message)}`);
+    // Log full context so the deploy log shows code + status, not just the
+    // generic "Error sending magic link email" string Supabase returns when
+    // SMTP delivery fails on their side.
+    console.error('[sign-in] magic-link signInWithOtp failed', {
+      name:    error.name,
+      message: error.message,
+      status:  (error as { status?: number }).status,
+      code:    (error as { code?: string }).code,
+    });
+
+    // The raw Supabase message is unhelpful to users (e.g. "Error sending
+    // magic link email") and can leak implementation detail. Map known
+    // failure modes to actionable copy; fall back to a generic friendly
+    // message otherwise.
+    redirect(`/sign-in?error=${encodeURIComponent(mapMagicLinkError(error.message))}`);
   }
 
   revalidatePath('/sign-in');
   redirect('/sign-in?sent=1');
+}
+
+/** Translate raw Supabase auth errors into user-friendly copy. */
+function mapMagicLinkError(raw: string): string {
+  const m = raw.toLowerCase();
+  if (m.includes('rate limit') || m.includes('too many')) {
+    return 'You requested a link too recently. Please wait a minute and try again.';
+  }
+  if (m.includes('invalid') && m.includes('email')) {
+    return 'That email address looks invalid. Please double-check and try again.';
+  }
+  if (m.includes('sending') || m.includes('smtp') || m.includes('delivery')) {
+    return 'We could not send the sign-in link right now. Try the password tab, or try again in a minute.';
+  }
+  return 'We could not send the sign-in link. Please try again or use the password tab.';
 }
 
 // ── Email + password ────────────────────────────────────────────────────────
