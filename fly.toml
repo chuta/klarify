@@ -59,8 +59,11 @@ primary_region = "jnb"
     hard_limit = 250
 
   # Fly-level health probe (independent of Docker HEALTHCHECK).
+  # grace_period: tsx loads ~1400 workspace deps before Hono can answer.
+  # Worst observed cold boot is ~4s; 30s buffer keeps Fly's edge from logging
+  # a spurious [error] during the boot race window.
   [[http_service.checks]]
-    grace_period = "20s"
+    grace_period = "30s"
     interval     = "30s"
     method       = "GET"
     timeout      = "10s"

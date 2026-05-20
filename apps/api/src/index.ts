@@ -56,6 +56,20 @@ app.use(
   }),
 );
 
+// Friendly banner at the root so platform sweeps (Fly edge, uptime probes,
+// curious humans hitting the bare hostname) get a structured response instead
+// of an unstyled 404. NOT for client use — the real surface is /api/*.
+app.get('/', (c) =>
+  c.json({
+    success: true,
+    data: {
+      name: 'klarify-api',
+      docs: 'https://klarify.africa',
+      health: '/api/health',
+    },
+  }),
+);
+
 // CLAUDE.md §9: GET /api/health
 app.get('/api/health', (c) => {
   const body: ApiSuccess<{ status: 'ok'; uptime: number }> = {
@@ -87,6 +101,20 @@ app.route('/api/auth', authRoutes);
 
 // Document analyser — Resend notifications when analysis completes (Sprint 3).
 app.route('/api/documents', documentRoutes);
+
+// Unknown route → consistent JSON envelope (CLAUDE.md §15 API standards).
+// Without this, Hono returns plain-text "404 Not Found" which breaks clients
+// that always expect application/json.
+app.notFound((c) =>
+  c.json(
+    {
+      success: false,
+      error: `Route not found: ${c.req.method} ${c.req.path}`,
+      code: 'NOT_FOUND',
+    } as const,
+    404,
+  ),
+);
 
 app.onError((err, c) => {
   console.error('[api] unhandled error', err);
