@@ -39,13 +39,14 @@ model User {
   plan      String   @default("free")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
-  ownedOrgs          Organisation[]        @relation("OrgOwner")
-  memberships        OrgMember[]
-  profile            UserProfile?
-  conversations      Conversation[]
-  generatedDocs      GeneratedDocument[]
-  uploadedDocs       UploadedDocument[]
-  ownedRoadmapTasks  RoadmapTask[]
+  ownedOrgs              Organisation[]            @relation("OrgOwner")
+  memberships            OrgMember[]
+  profile                UserProfile?
+  conversations          Conversation[]
+  generatedDocs          GeneratedDocument[]
+  uploadedDocs           UploadedDocument[]
+  ownedRoadmapTasks      RoadmapTask[]
+  productClassifications ProductClassification[]
 
   @@map("users")
 }
@@ -70,6 +71,7 @@ model Organisation {
   aripApplication        AripApplication?
   complianceEvents       ComplianceEvent[]
   subscriptions          Subscription[]
+  productClassifications ProductClassification[]
 
   @@index([ownerId])
   @@map("organisations")
@@ -90,14 +92,17 @@ model OrgMember {
 }
 
 model UserProfile {
-  userId                  String   @id @map("user_id") @db.Uuid
-  productTypes            String[] @default([]) @map("product_types")
-  targetMarkets           String[] @default([]) @map("target_markets")
+  userId                  String    @id @map("user_id") @db.Uuid
+  productTypes            String[]  @default([]) @map("product_types")
+  targetMarkets           String[]  @default([]) @map("target_markets")
   stage                   String?
-  teamSize                Int?     @map("team_size")
-  hasComplianceOfficer    Boolean  @default(false) @map("has_compliance_officer")
-  existingInfrastructure  String[] @default([]) @map("existing_infrastructure")
-  updatedAt               DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  teamSize                Int?      @map("team_size")
+  hasComplianceOfficer    Boolean   @default(false) @map("has_compliance_officer")
+  existingInfrastructure  String[]  @default([]) @map("existing_infrastructure")
+  // Sprint 2 (007 migration) — null until first POST /api/ai/classify.
+  // Used by the dashboard nudge banner for "Pre-Launch Founder" persona.
+  lastClassifiedAt        DateTime? @map("last_classified_at") @db.Timestamptz()
+  updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -199,12 +204,15 @@ model UploadedDocument {
 // AI conversations
 // =============================================================================
 model Conversation {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  orgId     String   @map("org_id") @db.Uuid
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  orgId     String    @map("org_id") @db.Uuid
   title     String?
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  // Sprint 2 (007 migration) — soft delete. Messages are preserved (no hard
+  // cascade) so audit trail survives a user's "delete conversation" action.
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz()
 
   user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   org      Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
@@ -362,4 +370,46 @@ model RegulatoryCorpus {
   @@index([jurisdiction])
   @@index([sourceDocument])
   @@map("regulatory_corpus")
+}
+
+// =============================================================================
+// Sprint 2 — ingestion logs + product classifications
+// =============================================================================
+
+// One row per corpus ingestion run. Lets the CLI in
+// packages/ai/scripts/ingest.ts resume cleanly and surface per-file failures.
+model IngestionLog {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  filename        String
+  chunkCount      Int       @default(0) @map("chunk_count")
+  embeddingModel  String    @map("embedding_model")
+  status          String    @default("pending")
+  errorMsg        String?   @map("error_msg")
+  startedAt       DateTime  @default(now()) @map("started_at") @db.Timestamptz()
+  completedAt     DateTime? @map("completed_at") @db.Timestamptz()
+
+  @@index([filename])
+  @@index([startedAt(sort: Desc)])
+  @@map("ingestion_log")
+}
+
+// One row per POST /api/ai/classify call. Immutable — re-classifying creates a
+// new row so the audit trail is preserved (CLAUDE.md §11.7).
+model ProductClassification {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId           String   @map("org_id") @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  description     String
+  result          Json
+  primaryCategory String   @map("primary_category")
+  riskLevel       String   @map("risk_level")
+  modelUsed       String   @map("model_used")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, createdAt(sort: Desc)])
+  @@index([userId])
+  @@map("product_classifications")
 }

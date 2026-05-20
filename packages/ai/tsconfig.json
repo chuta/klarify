@@ -2,7 +2,15 @@
   "extends": "@klarify/config/tsconfig/node.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    // The chat sub-tree includes a React hook (useKlarifyChat) that touches
+    // DOM globals: `window` for localStorage persistence, `fetch`/`Response`
+    // for the streaming client. Adding the `dom` lib here is the smallest
+    // possible change — the rest of the package (RAG, embeddings, prompts)
+    // never imports any DOM symbols, so this only widens the typecheck
+    // surface, never the runtime surface.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "preserve"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]

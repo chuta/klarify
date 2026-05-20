@@ -215,7 +215,7 @@ export default async function DashboardPage(): Promise<JSX.Element> {
             <QuickAction
               title="Classify your Product"
               description="Not sure if you need a DAX, DAOP, or DAC licence? Get an instant classification."
-              href="/dashboard/chat"
+              href="/dashboard/classify"
               accent="#D4A843"
             />
             <QuickAction

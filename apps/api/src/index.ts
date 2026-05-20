@@ -43,6 +43,9 @@ import { aripRoutes } from './routes/arip.js';
 import { authRoutes } from './routes/auth.js';
 import { regulatorRoutes } from './routes/regulators.js';
 import { documentRoutes } from './routes/documents.js';
+import { chatRoutes } from './routes/ai/chat.js';
+import { conversationRoutes } from './routes/ai/conversations.js';
+import { classifyRoutes } from './routes/ai/classify.js';
 
 const app = new Hono();
 
@@ -101,6 +104,13 @@ app.route('/api/auth', authRoutes);
 
 // Document analyser — Resend notifications when analysis completes (Sprint 3).
 app.route('/api/documents', documentRoutes);
+
+// FounderCounsel — Sprint 2 streaming AI chat (RAG + Claude SSE).
+app.route('/api/ai', chatRoutes);
+app.route('/api/ai/conversations', conversationRoutes);
+
+// Product classification — Sprint 2 Opus-powered Regulatory Identity Card.
+app.route('/api/ai', classifyRoutes);
 
 // Unknown route → consistent JSON envelope (CLAUDE.md §15 API standards).
 // Without this, Hono returns plain-text "404 Not Found" which breaks clients

@@ -9,6 +9,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./chat": "./src/chat/index.ts",
+    "./chat/useKlarifyChat": "./src/chat/useKlarifyChat.ts",
     "./classify": "./src/classify/index.ts",
     "./analyse": "./src/analyse/index.ts",
     "./scenarios": "./src/scenarios/index.ts",
@@ -19,15 +20,34 @@
   "scripts": {
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "ingest": "tsx scripts/ingest.ts",
+    "test:rag": "tsx scripts/test-rag.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",
-    "@klarify/core": "workspace:*"
+    "@klarify/core": "workspace:*",
+    "gpt-tokenizer": "^3.4.0",
+    "pdf-parse": "^2.4.5",
+    "pg": "^8.21.0"
   },
   "devDependencies": {
     "@klarify/config": "workspace:*",
     "@types/node": "^20.14.0",
-    "typescript": "^5.5.0"
+    "@types/pdf-parse": "^1.1.5",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^18.3.3",
+    "react": "^18.3.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.1.0"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   }
 }
