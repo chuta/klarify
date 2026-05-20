@@ -90,6 +90,26 @@ pnpm --filter @klarify/email preview
 
 (Requires `react-email` CLI dependency to be installed.)
 
+### Send a template through Resend (CLI — same API as production)
+
+Use the [Resend CLI](https://resend.com/docs/cli) to render a React Email template and
+dispatch it from your verified domain (useful before Sprint 3 analysis is wired):
+
+```bash
+export RESEND_API_KEY=re_...   # from .env
+
+resend emails send \
+  --from "Klarify <hello@klarify.africa>" \
+  --to delivered@resend.dev \
+  --subject "⛔ Action Required — Klarify has analysed your regulatory document" \
+  --react-email packages/email/src/templates/DocumentAnalysisCritical.preview.tsx \
+  --idempotency-key "demo/doc-analysis-critical-preview" \
+  --tags category=document_analysis_critical
+```
+
+Production sends use `notifyDocumentAnalysisComplete()` in `apps/api` (see
+`POST /api/documents/:id/notify-analysis`).
+
 ## Brand rules (CLAUDE.md §7, §16)
 
 - **Wordmark is mandatory** in every email header.

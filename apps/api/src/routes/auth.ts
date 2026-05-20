@@ -6,6 +6,7 @@
 //
 // Called from: /auth/callback (magic link), sign-in with password, sign-up.
 import { Hono } from 'hono';
+import { sendWelcomeEmail } from '@klarify/email';
 import { prisma } from '../db.js';
 import { requireAuth, type AuthVars } from '../middleware/auth.js';
 
@@ -34,6 +35,15 @@ authRoutes.post('/sync', requireAuth, async (c) => {
   }
 
   try {
+    // Detect "first time we've seen this user" so we can send the welcome
+    // email exactly once. We can't rely on upsert's return alone — Prisma
+    // returns the row whether it was created or updated. Look up first.
+    const existing = await prisma.user.findUnique({
+      where:  { id: userId },
+      select: { id: true },
+    });
+    const isNewUser = existing === null;
+
     // Upsert: create the user row if it doesn't exist yet; otherwise only
     // update mutable fields (email may change, name only if explicitly passed).
     const user = await prisma.user.upsert({
@@ -50,6 +60,18 @@ authRoutes.post('/sync', requireAuth, async (c) => {
         ...(avatar !== undefined && { avatar }),
       },
     });
+
+    // Fire-and-forget welcome email on first user creation.
+    // Failures must NOT break the auth flow — the user is signed in either way.
+    if (isNewUser) {
+      void sendWelcomeEmail({
+        to:              user.email,
+        name:            user.name ?? user.email,
+        idempotencyKey:  `welcome:${user.id}`,
+      }).catch((err) => {
+        console.error('[auth/sync] welcome email send failed', err);
+      });
+    }
 
     // Check if user has completed onboarding (has a profile row).
     const profile = await prisma.userProfile.findUnique({

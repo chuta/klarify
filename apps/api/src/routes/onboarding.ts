@@ -11,8 +11,26 @@ import {
   calculateReadinessScore,
   PHASE_1_TEMPLATES,
 } from '@klarify/core';
+import { sendOnboardingCompleteEmail } from '@klarify/email';
 import { prisma, withRls } from '../db.js';
 import { requireAuth, type AuthVars } from '../middleware/auth.js';
+
+/**
+ * Map a product-type code (e.g. "DAX") onto its primary Nigerian regulator
+ * for use in the post-onboarding email. This mirrors the classification
+ * logic in @klarify/ai/classify but is intentionally simpler — we only need
+ * a label here, not a full regulatory verdict.
+ */
+function primaryRegulatorLabel(productTypes: string[]): string {
+  const has = (code: string): boolean => productTypes.includes(code);
+  if (has('DAX') || has('DAOP') || has('DAC') || has('DAI')) {
+    return 'SEC Nigeria';
+  }
+  if (has('PAYMENT') || has('STABLECOIN')) {
+    return 'Central Bank of Nigeria';
+  }
+  return 'To be determined — classify your product to find out';
+}
 
 export const onboardingRoutes = new Hono<{ Variables: AuthVars }>();
 
@@ -150,6 +168,30 @@ onboardingRoutes.post(
 
         return { totalScore, dimensionScores };
       });
+
+      // Fire-and-forget "your Readiness Score is ready" email. Failures must
+      // not break the onboarding flow — the user is fully onboarded either way.
+      const me = await prisma.user.findUnique({
+        where:  { id: userId },
+        select: { email: true, name: true },
+      });
+      if (me?.email) {
+        const nextTasks = PHASE_1_TEMPLATES.slice(0, 3).map((tpl) => ({
+          title: tpl.title,
+          phase: tpl.phase,
+        }));
+        void sendOnboardingCompleteEmail({
+          to:               me.email,
+          name:             me.name ?? me.email,
+          score:            result.totalScore,
+          productTypes:     body.product_types,
+          primaryRegulator: primaryRegulatorLabel(body.product_types),
+          nextTasks,
+          idempotencyKey:   `onboarding-complete:${userId}:${orgId}`,
+        }).catch((err) => {
+          console.error('[onboarding] readiness-score email send failed', err);
+        });
+      }
 
       return c.json({
         success: true as const,
