@@ -64,8 +64,13 @@
   PNPM_VERSION    = "9"
   # NEXT_PUBLIC_APP_URL is baked into the client bundle at build time.
   NEXT_PUBLIC_APP_URL = "https://klarify.africa"
-  # API_URL (server-only) + NEXT_PUBLIC_API_URL (client fallback) both point
-  # to the same Netlify deployment — the Next.js Route Handlers at /api/*
-  # replace the separate Hono server entirely in production.
+  # Hybrid API surface (CLAUDE.md §3):
+  #   • API_URL (server-only) → Netlify-origin Route Handlers at /api/*.
+  #     Server Components / Server Actions use this via apps/web/src/lib/api.ts
+  #     for short-lived requests (user/me, compliance/score, roadmap, etc.).
+  #   • NEXT_PUBLIC_API_URL → the Hono service on Fly (api.klarify.africa).
+  #     Baked into the client bundle and used by browser-origin fetches that
+  #     need long-running connections (SSE chat, Opus 4 classification) or
+  #     that simply do not have a Netlify Route Handler mirror.
   API_URL             = "https://klarify.africa"
-  NEXT_PUBLIC_API_URL = "https://klarify.africa"
+  NEXT_PUBLIC_API_URL = "https://api.klarify.africa"
