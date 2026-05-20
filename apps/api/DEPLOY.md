@@ -11,15 +11,17 @@
 
 ```bash
 # from repo root, after secrets are set:
+fly deploy
+```
+
+(or, from anywhere in the repo:)
+
+```bash
 pnpm --filter @klarify/api deploy:fly
 ```
 
-That wraps:
-
-```bash
-fly deploy --config apps/api/fly.toml \
-           --dockerfile apps/api/Dockerfile .
-```
+`fly.toml` lives at the repo root — that's deliberate, see the note inside
+the file. The Dockerfile under `apps/api/` is referenced via `[build].dockerfile`.
 
 ---
 
@@ -37,58 +39,57 @@ fly deploy --config apps/api/fly.toml \
 ## 1. One-time app + volume setup
 
 ```bash
-# 1a. Create the app under the klarify org, in jnb (Johannesburg).
-fly apps create klarify-api --org klarify
+# 1a. Create the org (interactive — opens browser for payment method).
+fly orgs create
+#     Display name: Klarify
+#     → Fly assigns a slug like `klarify-75` because bare `klarify` is taken globally.
 
-# 1b. Confirm the region the app will deploy to.
-fly regions list --app klarify-api
-# → should show 'jnb' as primary (set by fly.toml).
+# 1b. Create the app under that org.
+fly apps create klarify-api --org klarify-75
+
+# 1c. Confirm the region.
+fly platform regions | grep jnb
+# → Johannesburg, South Africa │ jnb
 ```
 
 ---
 
 ## 2. Set secrets
 
-> **NEVER** commit secrets. `fly secrets set` encrypts at rest in Fly's vault and
-> injects them as env vars at runtime.
+> **NEVER** commit secrets. `fly secrets import` encrypts at rest in Fly's vault
+> and injects them as env vars at runtime.
 
-Set in one shot from your rotated `.env` values (do this in a private terminal —
-the values will appear in shell history, so clear it afterwards with
-`history -c` or use `fly secrets import < .env.production` instead):
+Use the helper script — it reads `.env` from the repo root, filters out
+client-only (`NEXT_PUBLIC_*`, `EXPO_PUBLIC_*`) and `fly.toml`-managed
+(`NODE_ENV`, `PORT`, `HOST`) values, previews the key names for review,
+then pipes the rest into `fly secrets import`:
 
 ```bash
-fly secrets set --config apps/api/fly.toml --app klarify-api \
-  DATABASE_URL='postgresql://postgres:[PWD]@db.ladnmszfzbfhthcmjuww.supabase.co:5432/postgres?sslmode=require' \
-  DIRECT_URL='postgresql://postgres:[PWD]@db.ladnmszfzbfhthcmjuww.supabase.co:5432/postgres?sslmode=require' \
-  SUPABASE_URL='https://ladnmszfzbfhthcmjuww.supabase.co' \
-  SUPABASE_SERVICE_ROLE_KEY='...' \
-  SUPABASE_JWT_SECRET='...' \
-  SUPABASE_ANON_KEY='...' \
-  ANTHROPIC_API_KEY='sk-ant-...' \
-  ANTHROPIC_MODEL_ADVISORY='claude-sonnet-4-5' \
-  ANTHROPIC_MODEL_ARCH='claude-opus-4' \
-  ANTHROPIC_MODEL_SIMPLE='claude-haiku-4-5' \
-  VOYAGE_API_KEY='...' \
-  AWS_ACCESS_KEY_ID='...' \
-  AWS_SECRET_ACCESS_KEY='...' \
-  AWS_S3_BUCKET='klarify-documents-afs' \
-  AWS_REGION='af-south-1' \
-  AWS_TEXTRACT_REGION='eu-west-1' \
-  RESEND_API_KEY='...' \
-  EMAIL_FROM='Klarify <hello@klarify.africa>' \
-  EMAIL_REPLY_TO='hello@klarify.africa' \
-  NEXT_PUBLIC_APP_URL='https://klarify.africa' \
-  JWT_SECRET='...'
+./apps/api/scripts/sync-fly-secrets.sh
 ```
 
-Verify the secret names made it (values are never echoed):
+Verify after (values never echoed, only digests):
 
 ```bash
 fly secrets list --app klarify-api
 ```
 
-> **Note:** Fly does **not** reserve the `AWS_` prefix the way Netlify does. The
-> AWS S3 + Textract creds belong here, not on Netlify.
+A "Staged" status means the value is in Fly's vault but not yet bound to a
+running machine — the next `fly deploy` promotes them automatically.
+
+> **Note:** Fly does **not** reserve the `AWS_` prefix the way Netlify does.
+> The AWS S3 + Textract creds belong here, not on Netlify.
+
+### Matching digests = matching values
+
+Fly hashes secret values deterministically. If two secrets show the same digest,
+they have the same value. Spot-check after import:
+
+- `AWS_REGION` and `AWS_TEXTRACT_REGION` MUST differ — bucket is `af-south-1`,
+  Textract is `eu-west-1` (af-south-1 has no Textract endpoint).
+- `JWT_SECRET` and `SUPABASE_JWT_SECRET` typically match — legacy alias.
+- Empty `FLUTTERWAVE_*`, `STRIPE_*`, `REDIS_URL`, `POSTHOG_API_KEY` all share
+  the digest for the empty string until you fill them in.
 
 ---
 
@@ -96,8 +97,7 @@ fly secrets list --app klarify-api
 
 ```bash
 # From the repo root.
-fly deploy --config apps/api/fly.toml \
-           --dockerfile apps/api/Dockerfile .
+fly deploy
 ```
 
 What this does:

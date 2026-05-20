@@ -2,22 +2,31 @@
 # Klarify Hono API — Fly.io deployment config.
 # Workspace package : @klarify/api  (apps/api)
 # Primary region    : jnb (Johannesburg, ZA) — closest Fly region to Lagos.
+# Org slug          : klarify-75 (display name "klarify"; bare "klarify" was
+#                     globally taken on Fly). Org binding lives in Fly's app
+#                     metadata, not here.
 # =============================================================================
+#
+# Why fly.toml is at the repo root (and NOT under apps/api/):
+# Fly resolves `[build].dockerfile`, the build context, and `--config`'s
+# directory all to the same WORKDIR. With fly.toml under apps/api/ the
+# context becomes apps/api/, which breaks our Dockerfile because it copies
+# from packages/, pnpm-workspace.yaml, etc. — all outside apps/api/. So
+# fly.toml lives at the repo root, and `[build].dockerfile` points down at
+# apps/api/Dockerfile.
 #
 # Deploy from the repo root:
 #
-#   fly deploy --config apps/api/fly.toml \
-#              --dockerfile apps/api/Dockerfile .
+#   fly deploy
 #
-# Set secrets (see DEPLOY.md for the full list):
+# (Optional explicit form: `fly deploy --app klarify-api .`)
 #
-#   fly secrets set --config apps/api/fly.toml \
-#     DATABASE_URL=...  SUPABASE_JWT_SECRET=...  ANTHROPIC_API_KEY=...  ...
+# Set / sync secrets:
+#
+#   ./apps/api/scripts/sync-fly-secrets.sh
 #
 # =============================================================================
 
-# Org slug: klarify-75 (display name "klarify"; bare "klarify" was globally
-# taken on Fly). Org binding is set at `fly apps create` time, not here.
 app            = "klarify-api"
 primary_region = "jnb"
 

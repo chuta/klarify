@@ -16,7 +16,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "deploy:fly": "cd ../.. && fly deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile ."
+    "deploy:fly": "cd ../.. && fly deploy"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",
