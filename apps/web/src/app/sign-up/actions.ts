@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
+import { getAppBaseUrl } from '@/lib/env';
 
 /**
  * Server Action: register a new Klarify account with email + password.
@@ -33,7 +34,7 @@ export async function signUp(formData: FormData): Promise<void> {
   if (password !== confirm)        redirect('/sign-up?error=Passwords+do+not+match.');
 
   const supabase = createClient();
-  const appUrl   = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const appUrl   = getAppBaseUrl();
 
   const { data, error } = await supabase.auth.signUp({
     email,

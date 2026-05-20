@@ -3,22 +3,23 @@
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { getAppBaseUrl } from '@/lib/env';
 
 function getRequestOrigin(): string {
   const h = headers();
   const origin = h.get('origin');
-  if (origin) return origin;
+  if (origin && origin !== 'null') return origin;
 
   const referer = h.get('referer');
   if (referer) {
     try {
       return new URL(referer).origin;
     } catch {
-      // malformed referer — fall through
+      // Malformed referer — fall through to validated env helper.
     }
   }
 
-  return process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  return getAppBaseUrl();
 }
 
 /**

@@ -9,14 +9,7 @@
  */
 
 import type { ApiSuccess, ApiError } from '@klarify/core';
-
-// API_URL is server-only (never sent to the browser). NEXT_PUBLIC_API_URL is
-// kept as a fallback for backward compatibility and for the client-side fetch
-// in ARIPRestrictionsWidget. In production both should point to the same origin.
-const API_URL =
-  process.env.API_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  'http://localhost:3000';
+import { getApiBaseUrl } from './env';
 
 export type ApiResult<T> = ApiSuccess<T> | ApiError;
 
@@ -25,9 +18,13 @@ export async function apiFetch<T>(
   accessToken: string,
   options: RequestInit = {},
 ): Promise<ApiResult<T>> {
+  // Resolve the API base URL on every call (cheap, ~µs) so that
+  // mis-configured envs surface as the validated localhost fallback
+  // with a console.warn rather than crashing with "Invalid URL".
+  const apiBase = getApiBaseUrl();
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, {
+    res = await fetch(`${apiBase}${path}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',

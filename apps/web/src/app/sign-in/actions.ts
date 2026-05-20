@@ -5,28 +5,35 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
+import { getAppBaseUrl } from '@/lib/env';
 
 /**
  * Derives the request origin dynamically so `emailRedirectTo` is always
  * correct regardless of environment (localhost, preview deploy, production).
- * Falls back to NEXT_PUBLIC_APP_URL, then to localhost.
+ *
+ * Resolution order:
+ *   1. `Origin` header (Server Actions reliably set this)
+ *   2. Parsed `Referer` header
+ *   3. `getAppBaseUrl()` — env-var validated + host-header fallback
+ *
+ * `getAppBaseUrl()` itself guards against the `"null"` and missing-env
+ * cases that previously crashed Next.js with `TypeError: Invalid URL`.
  */
 function getRequestOrigin(): string {
   const h = headers();
-  // Server Actions send an Origin header; Referer is the next best option.
   const origin = h.get('origin');
-  if (origin) return origin;
+  if (origin && origin !== 'null') return origin;
 
   const referer = h.get('referer');
   if (referer) {
     try {
       return new URL(referer).origin;
     } catch {
-      // malformed referer — fall through
+      // Malformed referer — fall through to validated env helper.
     }
   }
 
-  return process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  return getAppBaseUrl();
 }
 
 // ── Magic link ──────────────────────────────────────────────────────────────
