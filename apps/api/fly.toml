@@ -16,6 +16,8 @@
 #
 # =============================================================================
 
+# Org slug: klarify-75 (display name "klarify"; bare "klarify" was globally
+# taken on Fly). Org binding is set at `fly apps create` time, not here.
 app            = "klarify-api"
 primary_region = "jnb"
 
