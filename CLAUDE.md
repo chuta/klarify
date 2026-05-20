@@ -75,11 +75,12 @@ klarify/
 - **Distribution:** EAS Submit
 
 ### Backend (apps/api)
-- **Runtime:** Node.js
+- **Runtime:** Node.js 20 (via `tsx` — TypeScript-aware loader, no separate build step for workspace deps)
 - **Framework:** Hono (TypeScript-first, faster than Express)
 - **API style:** REST
 - **Auth:** JWT with 24-hour expiry + refresh token rotation
-- **Hosting:** Railway or Render
+- **Hosting:** Fly.io — primary region `jnb` (Johannesburg), closest Fly POP to Lagos. Custom domain: `api.klarify.africa`. Config in `apps/api/fly.toml`, image built from `apps/api/Dockerfile`. Deploy runbook: `apps/api/DEPLOY.md`.
+- **Hybrid surface:** short-lived Next.js Route Handlers (`apps/web/src/app/api/*`) stay on Netlify for browser-origin requests. Long-running/streaming/SSE/mobile-bearer endpoints live on Fly.
 
 ### Database
 - **Primary:** PostgreSQL with row-level security (RLS)

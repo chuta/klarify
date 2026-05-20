@@ -1,0 +1,74 @@
+# =============================================================================
+# Klarify API Docker build — context exclusions.
+# Applied only to `apps/api/Dockerfile` (Docker BuildKit picks up the
+# <Dockerfile-name>.dockerignore file automatically).
+# =============================================================================
+
+# ── Heavy / regenerated artefacts ────────────────────────────────────────────
+**/node_modules
+**/dist
+**/.turbo
+**/.next
+**/.expo
+**/.cache
+**/.eslintcache
+**/tsconfig.tsbuildinfo
+**/coverage
+
+# ── VCS / IDE / agent metadata ───────────────────────────────────────────────
+.git
+.gitignore
+.gitattributes
+.vscode
+.idea
+.cursor
+.cursorignore
+.claude
+
+# ── Local env (NEVER ship secrets into an image layer) ───────────────────────
+.env
+.env.*
+!.env.example
+*.local
+
+# ── Logs / OS junk ───────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+
+# ── Tests / fixtures — not needed at runtime ─────────────────────────────────
+**/__tests__
+**/__mocks__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/vitest.config.*
+**/jest.config.*
+
+# ── RAG corpus PDFs — ingested offline, not needed in the API runtime image ──
+# (Saves ~150MB+ from build context.)
+packages/ai/corpus/raw
+
+# ── Web / mobile build outputs (filtered install skips their src anyway) ─────
+apps/web/.next
+apps/web/out
+apps/web/public/sw.js*
+apps/mobile/.expo
+apps/mobile/ios
+apps/mobile/android
+apps/mobile/dist
+
+# ── Misc docs & markdown (lean image; CLAUDE.md is sourced separately) ───────
+README.md
+SUPABASE_EMAIL_SETUP.md
+docs
+
+# ── CI / git workflow files ──────────────────────────────────────────────────
+.github
+.netlify
+netlify.toml
+vercel.json

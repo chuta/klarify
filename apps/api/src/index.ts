@@ -42,6 +42,7 @@ import { complianceRoutes } from './routes/compliance.js';
 import { aripRoutes } from './routes/arip.js';
 import { authRoutes } from './routes/auth.js';
 import { regulatorRoutes } from './routes/regulators.js';
+import { documentRoutes } from './routes/documents.js';
 
 const app = new Hono();
 
@@ -84,6 +85,9 @@ app.route('/api/regulators', regulatorRoutes);
 // Auth sync (must be registered before requireAuth-guarded routes).
 app.route('/api/auth', authRoutes);
 
+// Document analyser — Resend notifications when analysis completes (Sprint 3).
+app.route('/api/documents', documentRoutes);
+
 app.onError((err, c) => {
   console.error('[api] unhandled error', err);
   return c.json(
@@ -92,9 +96,12 @@ app.onError((err, c) => {
   );
 });
 
+// Bind explicitly to 0.0.0.0 — Fly.io and most container platforms route to
+// `0.0.0.0:$PORT`. Defaulting to `localhost` would silently 502 in production.
 const port = Number(process.env.PORT ?? 3001);
-serve({ fetch: app.fetch, port }, ({ port: p }) => {
-  console.warn(`Klarify API listening on http://localhost:${p}`);
+const hostname = process.env.HOST ?? '0.0.0.0';
+serve({ fetch: app.fetch, port, hostname }, ({ port: p }) => {
+  console.warn(`Klarify API listening on ${hostname}:${p}`);
 });
 
 export type AppType = typeof app;

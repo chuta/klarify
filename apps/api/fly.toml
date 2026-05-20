@@ -1,0 +1,68 @@
+# =============================================================================
+# Klarify Hono API — Fly.io deployment config.
+# Workspace package : @klarify/api  (apps/api)
+# Primary region    : jnb (Johannesburg, ZA) — closest Fly region to Lagos.
+# =============================================================================
+#
+# Deploy from the repo root:
+#
+#   fly deploy --config apps/api/fly.toml \
+#              --dockerfile apps/api/Dockerfile .
+#
+# Set secrets (see DEPLOY.md for the full list):
+#
+#   fly secrets set --config apps/api/fly.toml \
+#     DATABASE_URL=...  SUPABASE_JWT_SECRET=...  ANTHROPIC_API_KEY=...  ...
+#
+# =============================================================================
+
+app            = "klarify-api"
+primary_region = "jnb"
+
+# ── Build ────────────────────────────────────────────────────────────────────
+[build]
+  dockerfile = "apps/api/Dockerfile"
+
+# ── Default env (non-secret) ─────────────────────────────────────────────────
+# Secrets (DATABASE_URL, ANTHROPIC_API_KEY, AWS_*, etc.) live in `fly secrets`
+# — NEVER add them here, this file is committed to git.
+[env]
+  NODE_ENV = "production"
+  PORT     = "3001"
+  HOST     = "0.0.0.0"
+  # Fly machine identity surfaces here for log correlation.
+  LOG_FORMAT = "json"
+
+# ── HTTP service ─────────────────────────────────────────────────────────────
+[http_service]
+  internal_port        = 3001
+  force_https          = true
+  auto_stop_machines   = "stop"   # idle machines stop (cold-start ~1.5s on Fly)
+  auto_start_machines  = true
+  min_machines_running = 0        # 0 → pure pay-per-use; bump to 1 once we have paying users
+  processes            = ["app"]
+
+  [http_service.concurrency]
+    type       = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+  # Fly-level health probe (independent of Docker HEALTHCHECK).
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval     = "30s"
+    method       = "GET"
+    timeout      = "10s"
+    path         = "/api/health"
+
+# ── Machine sizing ───────────────────────────────────────────────────────────
+# 512MB is comfortable for Hono + Prisma + Anthropic SDK. Scale up if RAG
+# embedding work moves on-API (currently it's a one-off CLI in packages/ai).
+[[vm]]
+  size   = "shared-cpu-1x"
+  memory = "512mb"
+  cpus   = 1
+
+# ── Deploy strategy ──────────────────────────────────────────────────────────
+[deploy]
+  strategy = "rolling"
