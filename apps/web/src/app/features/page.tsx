@@ -261,9 +261,9 @@ function RegulatorRelationshipCard(): JSX.Element {
   const capabilities = [
     { label: 'Meeting Preparation', desc: 'Pre-meeting briefings on regulator priorities, open enforcement actions, and institutional sensitivities' },
     { label: 'Communication Templates', desc: 'Jurisdiction-specific letter templates calibrated for tone, formality, and regulatory etiquette' },
-    { label: 'Response Drafting', desc: 'Structured, legally neutral responses to information requests — co-operative, not combative' },
+    { label: 'Response Drafting', desc: 'Structured, legally neutral responses to information requests, co-operative, not combative' },
     { label: 'Engagement Timelines', desc: 'Recommended sequencing: who to engage first, when, and in what order across SEC, CBN, NFIU, and NITDA' },
-    { label: '"What NOT to Say"', desc: 'Common mistakes that signal non-compliance or bad faith — avoid them before you walk into the room' },
+    { label: '"What NOT to Say"', desc: 'Common mistakes that signal non-compliance or bad faith, avoid them before you walk into the room' },
     { label: 'Institutional Maturity Scoring', desc: 'How does your organisation appear to a regulator right now? Score and fix gaps before your first formal meeting' },
   ];
 
@@ -329,12 +329,12 @@ function BankingReadinessCard(): JSX.Element {
     {
       icon: '📋',
       title: 'Institutional Due Diligence Pack',
-      body: 'Auto-generate the documentation package that banks, payment processors, and institutional partners request — KYC, UBO register, AML policy, source-of-funds narrative.',
+      body: 'Auto-generate the documentation package that banks, payment processors, and institutional partners request, KYC, UBO register, AML policy, source-of-funds narrative.',
     },
     {
       icon: '🎯',
       title: 'Risk Profile Optimisation',
-      body: 'Identify the exact flags that cause banks to decline or terminate accounts — and fix them before your application, not after rejection.',
+      body: 'Identify the exact flags that cause banks to decline or terminate accounts, and fix them before your application, not after rejection.',
     },
     {
       icon: '🔍',

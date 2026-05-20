@@ -90,9 +90,7 @@ export default async function ARIPTrackerPage(): Promise<JSX.Element> {
       {/* Legal disclaimer — mandatory per CLAUDE.md §16 */}
       <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
         <p className="text-xs text-amber-800">
-          This information is sourced from the ARIP Framework, SEC Nigeria (June 2024).
-          Klarify provides regulatory information, not legal advice. Verify all requirements
-          with your registered solicitor before submission.
+          Verify all requirements with your registered solicitor before submission.
         </p>
       </div>
 
