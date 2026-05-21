@@ -48,3 +48,42 @@ export const COMPANY = {
   supportEmail: 'hello@klarify.africa',
   website:    'https://klarify.africa',
 } as const;
+
+// =============================================================================
+// URL builders — single source of truth for in-app links inside emails.
+//
+// All template CTAs MUST use these helpers. Hardcoding the host (e.g.
+// `https://klarify.africa/...`) or constructing paths inline has caused
+// production incidents (Sprint 3 hotfix: document-analysis CTAs were linking
+// to `/dashboard/documents?id={uuid}` while the actual page lives at
+// `/dashboard/documents/{id}`). Routing through these helpers prevents
+// drift the next time the web app's routes change.
+// =============================================================================
+
+/**
+ * Join the configured app URL with a path. Tolerates trailing slashes on the
+ * base and leading slashes on the path; always returns a clean absolute URL.
+ *
+ * Examples:
+ *   buildAppUrl('/dashboard')             → "https://klarify.africa/dashboard"
+ *   buildAppUrl('dashboard/onboarding')   → "https://klarify.africa/dashboard/onboarding"
+ *   buildAppUrl('')                       → "https://klarify.africa"
+ */
+export function buildAppUrl(path: string): string {
+  const base = emailConfig.appUrl.replace(/\/+$/, '');
+  if (!path) return base;
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return `${base}${p}`;
+}
+
+/**
+ * Canonical CTA URL for the document analyser results page.
+ * Mirrors the Next.js route `apps/web/src/app/dashboard/documents/[id]/page.tsx`.
+ *
+ * The id is URI-encoded defensively — uploaded_documents.id is a UUID today,
+ * but if we ever introduce slug-style ids (e.g. from a share-link feature) we
+ * don't want to ship a broken link.
+ */
+export function buildDocumentAnalysisUrl(documentId: string): string {
+  return buildAppUrl(`/dashboard/documents/${encodeURIComponent(documentId)}`);
+}

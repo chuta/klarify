@@ -93,3 +93,19 @@ export function aiQueryCounterKey(userId: string, now: Date = new Date()): strin
   const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
   return `ai_queries:${userId}:${yyyy}:${mm}`;
 }
+
+
+/**
+ * Canonical key format for the monthly document-analysis counter
+ * (Sprint 3 hotfix — `PLAN_LIMITS.document_analyses`). Mirrors
+ * `aiQueryCounterKey` so the two limiters share a naming convention and
+ * are trivial to inspect in `redis-cli`.
+ */
+export function documentAnalysisCounterKey(
+  userId: string,
+  now: Date = new Date(),
+): string {
+  const yyyy = now.getUTCFullYear();
+  const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+  return `doc_analyses:${userId}:${yyyy}:${mm}`;
+}

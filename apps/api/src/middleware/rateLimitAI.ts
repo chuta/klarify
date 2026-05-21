@@ -57,7 +57,7 @@ const RESET_DATE_FORMAT = (now: Date): string => {
  * A user with both a free personal org and a compass-tier workspace gets the
  * compass quota — matches what they (or their employer) actually paid for.
  */
-async function resolvePlan(userId: string): Promise<Plan> {
+export async function resolvePlan(userId: string): Promise<Plan> {
   const rows = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.$executeRawUnsafe(
       `SELECT set_config('app.current_user_id', $1, true)`,

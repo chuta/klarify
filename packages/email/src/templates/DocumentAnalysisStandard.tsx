@@ -3,7 +3,7 @@ import { EmailLayout } from '../components/EmailLayout.js';
 import { Button } from '../components/Button.js';
 import { UrgencyBanner } from '../components/UrgencyBanner.js';
 import { emailColors, emailFonts } from '../components/tokens.js';
-import { emailConfig } from '../config.js';
+import { buildDocumentAnalysisUrl } from '../config.js';
 
 export interface DocumentAnalysisStandardProps {
   name: string;
@@ -56,7 +56,7 @@ export function DocumentAnalysisStandardEmail({
 
       <Section style={{ textAlign: 'center', margin: '24px 0 16px 0' }}>
         <Button
-          href={`${emailConfig.appUrl}/dashboard/documents?id=${encodeURIComponent(documentId)}`}
+          href={buildDocumentAnalysisUrl(documentId)}
         >
           View full analysis →
         </Button>

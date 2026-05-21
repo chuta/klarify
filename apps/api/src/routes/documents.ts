@@ -16,6 +16,10 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../db.js';
 import { requireAuth, type AuthVars } from '../middleware/auth.js';
 import {
+  rateLimitDocumentAnalyses,
+  type DocumentAnalysisRateLimitVars,
+} from '../middleware/rateLimitDocumentAnalyses.js';
+import {
   notifyDocumentAnalysisComplete,
   type StoredDocumentAnalysis,
 } from '../services/documentAnalysisNotify.js';
@@ -33,7 +37,7 @@ import {
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 
-export const documentRoutes = new Hono<{ Variables: AuthVars }>();
+export const documentRoutes = new Hono<{ Variables: AuthVars & Partial<DocumentAnalysisRateLimitVars> }>();
 
 /**
  * POST /api/documents/:id/notify-analysis
@@ -64,7 +68,7 @@ export const documentRoutes = new Hono<{ Variables: AuthVars }>();
  * The analysis itself runs asynchronously — the client polls pollUrl
  * every 2s until status becomes 'complete' or 'error'.
  */
-documentRoutes.post('/upload', requireAuth, async (c) => {
+documentRoutes.post('/upload', requireAuth, rateLimitDocumentAnalyses, async (c) => {
   const userId = c.get('userId');
 
   // Resolve the user's org. Multi-org users get their most-recent
@@ -155,6 +159,13 @@ documentRoutes.post('/upload', requireAuth, async (c) => {
     enqueueAnalysis(result.documentId).catch((err) => {
       console.error('[documents/upload] enqueueAnalysis failed', err);
     });
+
+    // Quota tick — only AFTER the row is durably created. A 4xx upload
+    // rejection (size/type) above has already short-circuited and never
+    // reaches this line, so the free-plan gate never burns a token on
+    // a request that wasn't actually analysed.
+    const consume = c.get('consumeDocumentAnalysisToken');
+    if (consume) await consume();
 
     return c.json(
       {
@@ -252,6 +263,7 @@ documentRoutes.get('/:id/status', requireAuth, async (c) => {
 documentRoutes.post(
   '/analyse',
   requireAuth,
+  rateLimitDocumentAnalyses,
   zValidator(
     'json',
     z.object({
@@ -281,6 +293,11 @@ documentRoutes.post(
       enqueueAnalysis(documentId).catch((err) => {
         console.error('[documents/analyse] enqueueAnalysis failed', err);
       });
+
+      // Quota tick — paste-text is a fresh analysis, charge once.
+      const consume = c.get('consumeDocumentAnalysisToken');
+      if (consume) await consume();
+
       return c.json(
         {
           success: true as const,
