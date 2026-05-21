@@ -9,3 +9,31 @@
 body {
   min-height: 100vh;
 }
+
+/* ── Document Analyser processing stepper ─────────────────────────────────
+ * Indeterminate progress bar animation used on the active "Analysing with
+ * Klarify AI..." step. Slides a 33%-wide segment across the track so the
+ * founder sees continuous motion during the 8–15s Claude wait.
+ */
+@keyframes klarify-indeterminate {
+  0%   { transform: translateX(-100%); }
+  50%  { transform: translateX(150%); }
+  100% { transform: translateX(400%); }
+}
+
+.klarify-indeterminate-bar {
+  animation: klarify-indeterminate 1.6s ease-in-out infinite;
+}
+
+/* Subtle scale-in when a step transitions to completed — gives the
+ * checkmark a tiny "settled" feeling. Runs once per state change.
+ */
+@keyframes klarify-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.klarify-pop {
+  animation: klarify-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
