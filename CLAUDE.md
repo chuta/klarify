@@ -1131,9 +1131,9 @@ These rules are non-negotiable. Violating them creates liability for the product
 
 ## 17. CURRENT SPRINT
 
-**Sprint:** Sprint 1 — UI Components, Onboarding, Dashboard Shell, Score Engine
-**Week:** 3–4
-**Goal:** Users can sign in, complete 5-step onboarding, see live Readiness Score
+**Sprint:** Sprint 3 — Document Analyser, Email Alerts, Dashboard Integration
+**Week:** 7–8
+**Goal:** A founder who receives a regulatory letter can upload it (or paste the text) and receive an AI-generated plain-language analysis, 72-hour action plan, draft acknowledgement, and email alert within 30 seconds — without ever leaving Klarify.
 
 **Completed in Sprint 0:**
 - Turborepo monorepo + pnpm workspaces ✅
@@ -1148,12 +1148,24 @@ These rules are non-negotiable. Violating them creates liability for the product
 - apps/api: POST /api/onboarding/complete (org creation + score seeding + Phase 1 roadmap), PUT /api/compliance/indicators ✅
 - apps/web: 5-step onboarding wizard, real dashboard shell (ScoreGauge + 8 dimension cards + quick actions), /profile page ✅
 
-**Next (Sprint 2):**
-- FounderCounsel AI chat (streaming, citations, conversation history)
-- Compliance Roadmap interactive board (Kanban, task completion → real-time score update)
-- Document analyser (upload regulator letter → AI analysis + 72-hour action plan)
-- Product classification engine (structured JSON output + regulator routing)
-- Mobile onboarding wizard + dashboard parity
+**Completed in Sprint 2:** (Core AI Live — see S2-C3 acceptance checklist)
+- packages/ai/rag: full RAG pipeline (pdf-parse → semantic chunker → Voyage AI `voyage-law-2` embeddings → pgvector search + jurisdiction re-rank → context assembly under 8k-token budget) ✅
+- Corpus ingestion of all Sprint-2 mandated documents — Founder's Guide, ISA 2025, SEC DAR (2022/2024/2025), MLPPA 2022, CBN VASP 2023, NFIU VASP 2024, NTAA 2025, BOFIA 2020, NDPA 2023, FATF Rec 15 + Targeted Updates 2023–2025, Ghana VASP Act 2025, Kenya VASP Act 2025 ✅
+- apps/api: POST /api/ai/chat (SSE streaming, RAG + multi-turn history + citation extraction + monthly query quota), POST /api/ai/classify (Opus 4 + temp=0 + structured JSON validation + profile projection), GET/DELETE /api/ai/conversations ✅
+- packages/ai/chat: framework-agnostic SSE parser + `useKlarifyChat` React hook + Anthropic error classifier (5 stable buckets: service_unavailable / overloaded / rate_limited / invalid_request / unknown, with provider-agnostic copy and a privacy-contract test) ✅
+- apps/web: FounderCounsel chat UI (sidebar + active chat + citation badges + 80% orange quota warning + 100% upgrade block), Regulatory Identity Card with dual-licence warning, dashboard nudge for unclassified products ✅
+- Live on Fly.io (`api.klarify.africa`) + Netlify (`klarify.africa`) with corrected hybrid surface routing ✅
+- Tests: `pnpm -r test` → 119 passing (core 21 / ai 81 / api 17 / ui 0–no-tests) | `pnpm -r typecheck` → zero errors ✅
+
+**Sprint 3 deliverables (in flight):**
+- Document upload service — multipart → S3 (SSE/KMS encrypted, signed URLs only) → status polling endpoint
+- OCR — pdf-parse for text PDFs with AWS Textract fallback for scanned PDFs and images
+- Document analyser — Opus 4 (`temperature=0`) + RAG context → plain-language summary, urgency level (CRITICAL/HIGH/MEDIUM/LOW), 72-hour action plan, draft acknowledgement letter, citations
+- Analysis queue (in-process) — upload → OCR → analyse → notify, with status transitions + error recovery
+- Document Analyser UI — three input tabs (upload / paste / recent), animated processing stepper, urgency banner, results layout (summary + asks + deadline countdown + action plan with checkable steps + draft response editor)
+- .docx export — letterhead, recipient block, draft body, AI-assistance footer, S3-signed download URL with 1h TTL
+- Email alerts — wire `@klarify/email` templates `DocumentAnalysisCritical` / `DocumentAnalysisStandard` into the queue with idempotency keys
+- Dashboard integration — recent-documents widget, persistent CRITICAL banner when deadline <7 days, "Upload a document" quick action
 
 *Update this section at the start of every new sprint.*
 
@@ -1171,7 +1183,7 @@ The following must not be modified without explicit instruction from the product
 
 ---
 
-*Last updated: May 19, 2026*
+*Last updated: May 21, 2026*
 *Product owner: Chimezie Chuta — chimeziechuta@gmail.com*
 *Company: Blockspace Technologies Limited, Lagos, Nigeria*
 *Repository: klarify (private)*

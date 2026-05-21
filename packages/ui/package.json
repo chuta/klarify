@@ -14,12 +14,13 @@
   "scripts": {
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "devDependencies": {
     "@klarify/config": "workspace:*",
     "@types/react": "^18.3.3",
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "vitest": "^2.1.0"
   },
   "dependencies": {
     "@klarify/core": "workspace:*",
