@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/db';
-import { getApiBaseUrl } from '@/lib/env';
+import { getPublicApiBaseUrl } from '@/lib/env';
 import { DocumentDetailClient } from './_client';
 
 /**
@@ -78,7 +78,7 @@ export default async function DocumentDetailPage({
           analysisResult: (doc.analysisResult as unknown) ?? null,
           filename: doc.filename,
         }}
-        apiBaseUrl={getApiBaseUrl()}
+        apiBaseUrl={getPublicApiBaseUrl()}
       />
     </div>
   );

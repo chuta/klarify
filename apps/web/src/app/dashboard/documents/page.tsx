@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { DocumentUploader } from '@/components/documents/DocumentUploader';
-import { getApiBaseUrl } from '@/lib/env';
+import { getPublicApiBaseUrl } from '@/lib/env';
 import { prisma } from '@/lib/db';
 
 /**
@@ -43,7 +43,7 @@ export default async function DocumentsPage(): Promise<JSX.Element> {
       </header>
 
       <DocumentUploader
-        apiBaseUrl={getApiBaseUrl()}
+        apiBaseUrl={getPublicApiBaseUrl()}
         recentDocs={recent}
       />
 

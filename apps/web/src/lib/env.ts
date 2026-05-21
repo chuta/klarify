@@ -87,13 +87,30 @@ export function getAppBaseUrl(): string {
 }
 
 /**
- * Returns the canonical base URL of the Hono API (no trailing slash).
+ * Returns the canonical base URL of the Hono API for SERVER-SIDE fetches
+ * (no trailing slash).
  *
  * Resolution order:
  *   1. `API_URL` (server-only env — preferred for SSR fetches).
  *   2. `NEXT_PUBLIC_API_URL` (legacy fallback; also used by Client
  *      Components that hit the API directly via fetch).
  *   3. `http://localhost:3001` as the dev default.
+ *
+ * IMPORTANT — use the right helper for the right caller:
+ *   * Server-side (Server Component, Server Action, Route Handler) calls
+ *     can target either origin in the hybrid surface (CLAUDE.md §3):
+ *       - short-lived /api/* Route Handlers on the Netlify origin, OR
+ *       - the Hono service on Fly.
+ *     `getApiBaseUrl()` honours `API_URL` so the deploy can pin SSR
+ *     fetches at the Netlify origin to skip the cross-origin hop.
+ *   * Client-side (anything that runs in a browser `fetch`) MUST target
+ *     the Fly origin for AI / classify / documents endpoints — those do
+ *     not exist on Netlify. Server components that hand a base URL to a
+ *     client component therefore MUST resolve it via
+ *     `getPublicApiBaseUrl()` (below), not this function. Passing a
+ *     Netlify origin to a client `fetch()` returns the Next.js SPA
+ *     fallback HTML and breaks JSON.parse() with the canonical
+ *     "Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON" error.
  *
  * Never derives from request headers — the API host is intentionally a
  * separate origin (api.klarify.africa) and cannot be inferred from the
@@ -109,6 +126,44 @@ export function getApiBaseUrl(): string {
     console.warn(
       '[env] getApiBaseUrl(): neither API_URL nor NEXT_PUBLIC_API_URL is a valid ' +
       'http(s) URL — falling back to http://localhost:3001. Set NEXT_PUBLIC_API_URL ' +
+      '= https://api.klarify.africa on the deploy target.',
+    );
+  }
+  return 'http://localhost:3001';
+}
+
+/**
+ * Returns the PUBLIC base URL of the Hono API — the one that browsers
+ * must hit (no trailing slash).
+ *
+ * Resolution order:
+ *   1. `NEXT_PUBLIC_API_URL` if it is a valid http(s) URL. Next.js inlines
+ *      this into the client bundle at build time, so calling this helper
+ *      from a Server Component returns exactly the URL the browser would
+ *      compute on its own.
+ *   2. `http://localhost:3001` as the dev default.
+ *
+ * Use this — NOT `getApiBaseUrl()` — anywhere a Server Component, Server
+ * Action, or Route Handler threads an API base URL into a Client
+ * Component as a prop or serialised state. The Client Component then
+ * fetches that URL from the browser, which means it must point at the
+ * cross-origin Fly host (api.klarify.africa), not the Netlify origin
+ * (klarify.africa) — Netlify only has Route Handlers for a subset of
+ * endpoints, so a request to e.g. `/api/documents/analyse` against the
+ * Netlify origin falls through to the Next.js SPA HTML fallback.
+ *
+ * Mirrors the resolution pattern already used inline by the classify
+ * page (apps/web/src/app/dashboard/classify/page.tsx) and the chat
+ * hook (packages/ai/src/chat/useKlarifyChat.ts).
+ */
+export function getPublicApiBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (isUsableUrl(envUrl)) return normalise(envUrl);
+
+  if (process.env.NODE_ENV === 'production') {
+    console.warn(
+      '[env] getPublicApiBaseUrl(): NEXT_PUBLIC_API_URL is not a valid http(s) URL ' +
+      '— falling back to http://localhost:3001. Set NEXT_PUBLIC_API_URL ' +
       '= https://api.klarify.africa on the deploy target.',
     );
   }
