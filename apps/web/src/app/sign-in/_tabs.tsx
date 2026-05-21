@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { signInWithMagicLink, signInWithPassword } from './actions';
 
 interface SignInTabsProps {
@@ -82,12 +83,7 @@ function MagicLinkForm(): JSX.Element {
           />
         </div>
 
-        <button
-          type="submit"
-          className="w-full rounded-lg bg-[#0B6E6E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0D2B45] active:scale-[0.98]"
-        >
-          Send magic link
-        </button>
+        <SubmitButton label="Send magic link" pendingLabel="Sending your link…" />
       </form>
     </>
   );
@@ -95,19 +91,15 @@ function MagicLinkForm(): JSX.Element {
 
 function PasswordForm(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
 
   async function handleSubmit(formData: FormData): Promise<void> {
     setError(null);
-    setPending(true);
     try {
       await signInWithPassword(formData);
     } catch (e) {
       // Server action redirects on success — catch is for client-visible errors.
       const msg = e instanceof Error ? e.message : 'Sign-in failed. Please try again.';
       setError(msg);
-    } finally {
-      setPending(false);
     }
   }
 
@@ -163,13 +155,7 @@ function PasswordForm(): JSX.Element {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full rounded-lg bg-[#0B6E6E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0D2B45] disabled:opacity-60 active:scale-[0.98]"
-        >
-          {pending ? 'Signing in…' : 'Sign in'}
-        </button>
+        <SubmitButton label="Sign in" pendingLabel="Signing you in…" />
       </form>
     </>
   );

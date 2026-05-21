@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getOptionalUser } from '@/lib/supabase/server';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { requestPasswordReset } from './actions';
 
 interface ForgotPasswordPageProps {
@@ -105,12 +106,10 @@ export default async function ForgotPasswordPage({
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full rounded-lg bg-[#0B6E6E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0D2B45] active:scale-[0.98]"
-                >
-                  Send reset link
-                </button>
+                <SubmitButton
+                  label="Send reset link"
+                  pendingLabel="Sending your reset link…"
+                />
               </form>
 
               <p className="mt-6 text-center text-sm text-[#555555]">

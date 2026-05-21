@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { signUp } from './actions';
 
 interface SignUpFormProps {
@@ -9,7 +10,6 @@ interface SignUpFormProps {
 
 export function SignUpForm({ error: initialError }: SignUpFormProps): JSX.Element {
   const [clientError, setClientError] = useState<string | null>(null);
-  const [pending, setPending]         = useState(false);
   const [showPw, setShowPw]           = useState(false);
 
   const error = clientError ?? initialError;
@@ -34,14 +34,11 @@ export function SignUpForm({ error: initialError }: SignUpFormProps): JSX.Elemen
       setClientError(validationError);
       return;
     }
-    setPending(true);
     try {
       await signUp(formData);
     } catch {
       // signUp redirects on success — any caught error is unexpected.
       setClientError('Something went wrong. Please try again.');
-    } finally {
-      setPending(false);
     }
   }
 
@@ -140,13 +137,7 @@ export function SignUpForm({ error: initialError }: SignUpFormProps): JSX.Elemen
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full rounded-lg bg-[#0B6E6E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0D2B45] disabled:opacity-60 active:scale-[0.98]"
-        >
-          {pending ? 'Creating account…' : 'Create account'}
-        </button>
+        <SubmitButton label="Create account" pendingLabel="Creating your account…" />
       </form>
     </>
   );
