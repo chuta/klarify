@@ -181,22 +181,31 @@ model GeneratedDocument {
 }
 
 model UploadedDocument {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orgId          String    @map("org_id") @db.Uuid
-  userId         String    @map("user_id") @db.Uuid
-  filename       String
-  fileType       String?   @map("file_type")
-  s3Key          String    @map("s3_key")
-  analysisResult Json?     @map("analysis_result")
-  urgencyLevel   String?   @map("urgency_level")
-  actionItems    Json?     @map("action_items")
-  uploadedAt     DateTime  @default(now()) @map("uploaded_at") @db.Timestamptz()
-  analysedAt     DateTime? @map("analysed_at") @db.Timestamptz()
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId            String    @map("org_id") @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  filename         String
+  originalFilename String?   @map("original_filename")
+  fileType         String?   @map("file_type")
+  fileSize         Int?      @map("file_size")
+  s3Key            String    @map("s3_key")
+  extractedText    String?   @map("extracted_text")
+  ocrMethod        String?   @map("ocr_method")
+  ocrCompletedAt   DateTime? @map("ocr_completed_at") @db.Timestamptz()
+  analysisResult   Json?     @map("analysis_result")
+  urgencyLevel     String?   @map("urgency_level")
+  actionItems      Json?     @map("action_items")
+  draftResponse    String?   @map("draft_response")
+  status           String    @default("pending")
+  errorMessage     String?   @map("error_message")
+  uploadedAt       DateTime  @default(now()) @map("uploaded_at") @db.Timestamptz()
+  analysedAt       DateTime? @map("analysed_at") @db.Timestamptz()
 
   org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   user User         @relation(fields: [userId], references: [id])
 
   @@index([orgId])
+  @@index([orgId, uploadedAt(sort: Desc)])
   @@map("uploaded_documents")
 }
 
