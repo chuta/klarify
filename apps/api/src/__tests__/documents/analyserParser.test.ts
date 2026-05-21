@@ -137,6 +137,119 @@ describe('parseAnalyserOutput — required summary', () => {
   });
 });
 
+// Regression: Opus drifts into markdown roughly 1 in 3 generations even when
+// the §6 prompt explicitly demands "LABEL:". The 2026-05-21 BlockEX paste-text
+// smoke test reproduced this when the live response began with
+// `# REGULATORY DOCUMENT ANALYSIS\n## PLAIN LANGUAGE SUMMARY\n...` and our
+// parser threw "PLAIN LANGUAGE SUMMARY is missing." Lock the markdown form in.
+const SAMPLE_MARKDOWN_DRIFT = `# REGULATORY DOCUMENT ANALYSIS
+
+## PLAIN LANGUAGE SUMMARY
+
+The Central Bank of Nigeria is telling BlockEX Trade Limited to immediately stop all its core business operations because the company is operating without the required CBN licences [CBN VASP Guidelines 2023, Section 4.2].
+
+## ISSUING REGULATOR
+
+Central Bank of Nigeria — Payments System Management Department
+
+## URGENCY LEVEL
+
+**CRITICAL**
+
+The notice threatens immediate account freezing and references criminal liability under BOFIA 2020.
+
+## WHAT THE REGULATOR IS ASKING FOR
+
+- Immediate cessation of all Naira-to-stablecoin conversion services
+- Submission of full transaction records covering the past 12 months
+- Identification of all bank accounts used by the platform
+
+## RESPONSE DEADLINE
+
+**21 June 2026**
+
+## 72-HOUR ACTION PLAN
+
+1. Today: Stop accepting new Naira deposits and notify users via in-app banner.
+2. Today: Engage a CBN-experienced regulatory counsel before any written response.
+3. This week: Prepare the full transaction ledger requested by the CBN.
+
+## DRAFT ACKNOWLEDGMENT RESPONSE
+
+Dear Sir/Ma,
+
+We acknowledge receipt of your notice and have engaged regulatory counsel to assist us in preparing a full response within the stipulated window.
+
+Yours sincerely,
+Compliance Officer
+On behalf of BlockEX Trade Limited
+
+## DISCLAIMER
+
+This analysis is not legal advice.`;
+
+describe('parseAnalyserOutput — markdown heading drift (BlockEX repro)', () => {
+  const result = parseAnalyserOutput(SAMPLE_MARKDOWN_DRIFT);
+
+  it('extracts the summary despite the `## PLAIN LANGUAGE SUMMARY` heading', () => {
+    expect(result.plain_language_summary).toMatch(
+      /Central Bank of Nigeria is telling BlockEX/,
+    );
+  });
+
+  it('identifies the regulator under `## ISSUING REGULATOR`', () => {
+    expect(result.issuing_regulator.code).toBe('CBN');
+    expect(result.issuing_regulator.name).toBe('Central Bank of Nigeria');
+    expect(result.issuing_regulator.department).toBe(
+      'Payments System Management Department',
+    );
+  });
+
+  it('strips `**CRITICAL**` bold markers from urgency', () => {
+    expect(result.urgency_level).toBe('CRITICAL');
+    expect(result.urgency_reasoning).toMatch(/threatens immediate account freezing/);
+    expect(result.urgency_reasoning).not.toMatch(/\*\*/);
+  });
+
+  it('strips `**21 June 2026**` bold markers from the deadline', () => {
+    expect(result.response_deadline.is_specified).toBe(true);
+    expect(result.response_deadline.date_string).toBe('21 June 2026');
+    expect(result.response_deadline.days_remaining).not.toBeNull();
+  });
+
+  it('parses the bullet ask list', () => {
+    expect(result.regulatory_ask.length).toBeGreaterThanOrEqual(3);
+    expect(result.regulatory_ask[0]).toMatch(/cessation of all Naira/i);
+  });
+
+  it('parses the numbered action plan', () => {
+    expect(result.action_plan.length).toBeGreaterThanOrEqual(3);
+    expect(result.action_plan[0]!.urgency).toBe('IMMEDIATE');
+  });
+
+  it('keeps the draft response (bold preserved for formal emphasis)', () => {
+    expect(result.draft_response).toMatch(/Dear Sir\/Ma/);
+    expect(result.draft_response).toMatch(/BlockEX Trade Limited/);
+  });
+
+  it('still extracts inline citations from the markdown body', () => {
+    expect(result.citations.length).toBeGreaterThanOrEqual(1);
+    expect(result.citations[0]!.regulation).toMatch(/CBN VASP Guidelines 2023/);
+  });
+});
+
+describe('parseAnalyserOutput — bold-wrapped headers (`**LABEL:**`)', () => {
+  it('accepts headers wrapped entirely in bold markers', () => {
+    const raw = `**PLAIN LANGUAGE SUMMARY:** A short summary.
+
+**URGENCY LEVEL:** HIGH
+reasoning text.`;
+    const result = parseAnalyserOutput(raw);
+    expect(result.plain_language_summary).toMatch(/A short summary/);
+    expect(result.urgency_level).toBe('HIGH');
+  });
+});
+
 describe('parseDeadline', () => {
   it('parses "21 June 2026" format', () => {
     const r = parseDeadline('21 June 2026');

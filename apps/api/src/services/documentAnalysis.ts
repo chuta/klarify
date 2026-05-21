@@ -342,42 +342,71 @@ export function parseAnalyserOutput(raw: string): DocumentAnalysisResult {
   };
 }
 
-/** Build a Map of section-label → body using the §6 header set. */
+/** Build a Map of section-label → body using the §6 header set.
+ *
+ * Tolerates both formats Claude emits in practice:
+ *   1. The verbatim §6 form:           `PLAIN LANGUAGE SUMMARY:`
+ *   2. The markdown-styled drift form: `## PLAIN LANGUAGE SUMMARY`
+ *      (also `# LABEL` / `### LABEL`, with or without a trailing colon)
+ *   3. Bold-emphasised drift:          `**PLAIN LANGUAGE SUMMARY:**`
+ *
+ * Empirically: even with the §6 prompt explicitly demanding "LABEL:",
+ * Opus drifts into markdown roughly 1 in 3 generations. Rather than
+ * fight the prompt forever, we just accept the drift here — every
+ * header form anchors on a line start, allows optional leading `#`
+ * markers + bold markers, and an optional trailing colon.
+ */
 function splitSections(raw: string): Map<string, string> {
   const out = new Map<string, string>();
-  // Build a regex that matches any of the canonical labels followed by
-  // ":" — used as section boundaries. Case-insensitive because Claude
-  // occasionally lower-cases the "72-HOUR" label.
   const labelPattern = SECTION_LABELS.map((l) => escapeRegex(l)).join('|');
-  const re = new RegExp(`^\\s*(${labelPattern})\\s*:`, 'im');
+  // Anchored to line start. Accepts every header form we've observed:
+  //   - Canonical:     `PLAIN LANGUAGE SUMMARY: body on same line`
+  //   - Canonical alone: `PLAIN LANGUAGE SUMMARY:`  (body on next line)
+  //   - Markdown drift:  `## PLAIN LANGUAGE SUMMARY`
+  //   - Markdown + colon:`### PLAIN LANGUAGE SUMMARY:`
+  //   - Bold-wrapped:    `**PLAIN LANGUAGE SUMMARY:**`
+  //   - Mixed:           `## **PLAIN LANGUAGE SUMMARY**`
+  //
+  // After the (captured) label, we require EITHER a `:` (with optional
+  // closing `**`) OR end-of-line — this prevents false matches against
+  // paragraph text that happens to contain a label substring.
+  const re = new RegExp(
+    `^[ \\t]*` +
+      `(?:#{1,6}[ \\t]*)?` + // optional markdown heading prefix
+      `\\*{0,2}` + // optional opening bold
+      `(${labelPattern})` + // the canonical label
+      `\\*{0,2}` + // optional closing bold (markdown heading form)
+      `[ \\t]*` +
+      `(?::\\*{0,2}|$)`, // `:` (with optional closing **) OR end-of-line
+    'im',
+  );
 
-  let remaining = raw;
-  let currentLabel: string | null = null;
-  let currentStart = 0;
-
-  // Walk through the text scanning for section headers.
-  let m: RegExpExecArray | null;
   const headers: Array<{ label: string; start: number; end: number }> = [];
   const globalRe = new RegExp(re.source, 'gim');
-  while ((m = globalRe.exec(remaining)) !== null) {
+  let m: RegExpExecArray | null;
+  while ((m = globalRe.exec(raw)) !== null) {
     headers.push({
       label: m[1]!.toUpperCase().replace(/\s+/g, ' '),
       start: m.index,
       end: m.index + m[0].length,
     });
   }
-  if (headers.length === 0) {
-    // No headers found — return the whole thing as the summary so we at
-    // least surface something. The validator in analyseDocument will
-    // throw on missing summary; this branch is just defensive.
-    return out;
-  }
+  if (headers.length === 0) return out;
 
   for (let i = 0; i < headers.length; i++) {
     const h = headers[i]!;
     const next = headers[i + 1];
-    const body = remaining.slice(h.end, next ? next.start : remaining.length);
-    out.set(h.label, body.trim());
+    const body = raw.slice(h.end, next ? next.start : raw.length);
+    // Strip markdown bold emphasis (`**...**`) from every section EXCEPT the
+    // draft response, where emphasis is part of the letter content and the
+    // user might genuinely want it preserved when copying into Word.
+    // Without this strip, downstream parsers see `**CRITICAL**` instead of
+    // `CRITICAL`, `**21 June 2026**` instead of a parseable date, etc.
+    const isDraft = h.label === 'DRAFT ACKNOWLEDGMENT RESPONSE';
+    const cleaned = isDraft
+      ? body.trim()
+      : body.trim().replace(/\*\*(.+?)\*\*/g, '$1');
+    out.set(h.label, cleaned);
   }
   return out;
 }
