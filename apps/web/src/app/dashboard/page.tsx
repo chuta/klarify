@@ -2,8 +2,14 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
+import { prisma } from '@/lib/db';
 import { ScoreGauge } from '@/components/ScoreGauge';
 import { ARIPRestrictionsWidget } from '@/components/dashboard/ARIPRestrictionsWidget';
+import {
+  RecentDocumentsWidget,
+  type RecentDoc,
+} from '@/components/dashboard/RecentDocumentsWidget';
+import { CriticalDocumentBanner } from '@/components/dashboard/CriticalDocumentBanner';
 // Import the label map from the pure-data module, NOT from the widget itself.
 // The widget is `'use client'`, and named exports from client modules become
 // opaque client references inside Server Components — reading a property off
@@ -85,9 +91,10 @@ export default async function DashboardPage(): Promise<JSX.Element> {
   // eu-north-1 and Netlify functions likely in us-east-1, each call is a
   // transatlantic round-trip — running them serially roughly doubled the
   // dashboard's TTFB.
-  const [scoreResult, aripResult] = await Promise.all([
+  const [scoreResult, aripResult, recentDocs] = await Promise.all([
     apiFetch<ComplianceScoreData>('/api/compliance/score', accessToken),
     apiFetch<ARIPData>('/api/arip', accessToken),
+    loadRecentDocs(user.id),
   ]);
 
   const score: ComplianceScoreData | null = scoreResult.success ? scoreResult.data : null;
@@ -96,6 +103,8 @@ export default async function DashboardPage(): Promise<JSX.Element> {
   const arip: ARIPData | null = aripResult.success ? aripResult.data : null;
   const isAIPActive =
     arip?.current_stage === 'aip_active' && arip?.stage_status === 'active';
+
+  const criticalDoc = await pickCriticalDoc(user.id);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -111,7 +120,10 @@ export default async function DashboardPage(): Promise<JSX.Element> {
         </p>
       </div>
 
-      {/* ── AIP Restrictions Widget (ABOVE everything — highest urgency) ── */}
+      {/* ── CRITICAL document banner (highest priority — supersedes ARIP) ── */}
+      <CriticalDocumentBanner doc={criticalDoc} />
+
+      {/* ── AIP Restrictions Widget (next-highest urgency) ── */}
       {isAIPActive && arip && (
         <ARIPRestrictionsWidget arip={arip} accessToken={accessToken} />
       )}
@@ -194,6 +206,11 @@ export default async function DashboardPage(): Promise<JSX.Element> {
                 />
               );
             })}
+          </div>
+
+          {/* Recent documents widget — S3-C2 */}
+          <div className="mb-8">
+            <RecentDocumentsWidget docs={recentDocs} />
           </div>
 
           {/* Quick actions */}
@@ -282,6 +299,84 @@ interface QuickActionProps {
   accent: string;
   urgent?: boolean;
   aripStageBadge?: string | null;
+}
+
+// ── Server-side data loaders ────────────────────────────────────────────────
+
+/** Last 10 uploaded documents for the current user. RLS-scoped via the userId filter. */
+async function loadRecentDocs(userId: string): Promise<RecentDoc[]> {
+  try {
+    const docs = await prisma.uploadedDocument.findMany({
+      where: { userId },
+      orderBy: { uploadedAt: 'desc' },
+      take: 10,
+      select: {
+        id: true,
+        filename: true,
+        urgencyLevel: true,
+        uploadedAt: true,
+        status: true,
+      },
+    });
+    return docs.map((d): RecentDoc => ({
+      id: d.id,
+      filename: d.filename,
+      urgencyLevel: d.urgencyLevel as RecentDoc['urgencyLevel'],
+      uploadedAt: d.uploadedAt.toISOString(),
+      status: d.status,
+    }));
+  } catch (err) {
+    console.warn('[dashboard] recent docs query failed', err);
+    return [];
+  }
+}
+
+interface CriticalDoc {
+  id: string;
+  filename: string;
+  daysRemaining: number | null;
+}
+
+/**
+ * Pick the most actionable CRITICAL document for the persistent banner.
+ * Triggers when: urgency='CRITICAL' AND (deadline < 7d OR no deadline).
+ *
+ * We read `days_remaining` from analysis_result JSON because it is the
+ * authoritative parsed value — the table doesn't have a dedicated column
+ * for it (the column would have to be recomputed daily).
+ */
+async function pickCriticalDoc(userId: string): Promise<CriticalDoc | null> {
+  try {
+    const candidates = await prisma.uploadedDocument.findMany({
+      where: { userId, urgencyLevel: 'CRITICAL', status: 'complete' },
+      orderBy: { uploadedAt: 'desc' },
+      take: 5,
+      select: {
+        id: true,
+        filename: true,
+        analysisResult: true,
+      },
+    });
+    for (const c of candidates) {
+      const days = extractDaysRemaining(c.analysisResult);
+      if (days === null || days < 7) {
+        return { id: c.id, filename: c.filename, daysRemaining: days };
+      }
+    }
+    return null;
+  } catch (err) {
+    console.warn('[dashboard] critical-doc query failed', err);
+    return null;
+  }
+}
+
+function extractDaysRemaining(analysis: unknown): number | null {
+  if (!analysis || typeof analysis !== 'object') return null;
+  const obj = analysis as Record<string, unknown>;
+  const deadline = obj['response_deadline'];
+  if (!deadline || typeof deadline !== 'object') return null;
+  const days = (deadline as Record<string, unknown>)['days_remaining'];
+  return typeof days === 'number' ? days : null;
 }
 
 function QuickAction({ title, description, href, accent, urgent, aripStageBadge }: QuickActionProps): JSX.Element {

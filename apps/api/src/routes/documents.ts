@@ -26,6 +26,10 @@ import {
   MAX_FILE_BYTES,
 } from '../services/documentUpload.js';
 import { enqueueAnalysis } from '../services/analysisQueue.js';
+import {
+  exportDraftAsDocx,
+  ExportDraftError,
+} from '../services/exportDraft.js';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 
@@ -359,6 +363,50 @@ documentRoutes.get('/:id', requireAuth, async (c) => {
       analysedAt: doc.analysedAt?.toISOString() ?? null,
     },
   });
+});
+
+/**
+ * POST /api/documents/:id/export-draft — render the draft response as .docx (S3-B3).
+ *
+ * Streams nothing back through the API itself. We render the docx, upload
+ * it to S3 under {orgId}/{userId}/drafts/, then return a 1-hour signed URL.
+ * The client redirects the browser at that URL — S3 streams the bytes
+ * directly, bypassing our API server.
+ */
+documentRoutes.post('/:id/export-draft', requireAuth, async (c) => {
+  const userId = c.get('userId');
+  const documentId = c.req.param('id');
+
+  try {
+    const result = await exportDraftAsDocx(documentId, userId);
+    return c.json({
+      success: true as const,
+      data: {
+        downloadUrl: result.downloadUrl,
+        expiresAt: result.expiresAt,
+      },
+    });
+  } catch (err) {
+    if (err instanceof ExportDraftError) {
+      return c.json(
+        {
+          success: false as const,
+          error: err.message,
+          code: err.code,
+        },
+        err.httpStatus as 404 | 409,
+      );
+    }
+    console.error('[documents/export-draft] unexpected error', err);
+    return c.json(
+      {
+        success: false as const,
+        error: 'Klarify could not export the draft. Please try again.',
+        code: 'EXPORT_FAILED',
+      },
+      500,
+    );
+  }
 });
 
 /**
