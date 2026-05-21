@@ -42,7 +42,11 @@ import {
 import { retrieveRelevantChunks } from '@klarify/ai/rag';
 import { assembleContext } from '@klarify/ai/rag';
 import type { JurisdictionCode } from '@klarify/ai/rag';
-import { extractCitations, type Citation } from '@klarify/ai/chat';
+import {
+  extractCitations,
+  classifyAnthropicError,
+  type Citation,
+} from '@klarify/ai/chat';
 import { prisma } from '../../db.js';
 import { requireAuth } from '../../middleware/auth.js';
 import { rateLimitAI, type RateLimitVars } from '../../middleware/rateLimitAI.js';
@@ -439,15 +443,24 @@ chatRoutes.post(
             }),
           });
         } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          console.error('[ai/chat] stream error:', msg);
+          // Classify so the client gets a category-specific friendly message
+          // (billing vs. capacity vs. rate-limit) AND ops gets the upstream
+          // signals in logs for monitoring.
+          const classified = classifyAnthropicError(err);
+          const raw = err instanceof Error ? err.message : String(err);
+          console.error(
+            '[ai/chat] stream error: category=%s upstreamType=%s upstreamStatus=%s raw=%s',
+            classified.category,
+            classified.upstreamType,
+            classified.upstreamStatus,
+            raw,
+          );
           await stream.writeSSE({
             event: 'error',
             data: JSON.stringify({
               type: 'error',
-              code: 'STREAM_ERROR',
-              message:
-                'Klarify ran into a problem generating that response. Please try again in a moment.',
+              code: classified.category,
+              message: classified.message,
             }),
           });
         }

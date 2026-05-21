@@ -38,6 +38,7 @@ import {
 import { retrieveRelevantChunks } from '@klarify/ai/rag';
 import { assembleContext } from '@klarify/ai/rag';
 import type { JurisdictionCode } from '@klarify/ai/rag';
+import { classifyAnthropicError } from '@klarify/ai/chat';
 import { prisma } from '../../db.js';
 import { requireAuth } from '../../middleware/auth.js';
 import { rateLimitAI, type RateLimitVars } from '../../middleware/rateLimitAI.js';
@@ -241,16 +242,22 @@ classifyRoutes.post(
       inputTokens = completion.usage?.input_tokens ?? 0;
       outputTokens = completion.usage?.output_tokens ?? 0;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error('[ai/classify] anthropic error:', msg);
+      const classified = classifyAnthropicError(err);
+      const raw = err instanceof Error ? err.message : String(err);
+      console.error(
+        '[ai/classify] anthropic error: category=%s upstreamType=%s upstreamStatus=%s raw=%s',
+        classified.category,
+        classified.upstreamType,
+        classified.upstreamStatus,
+        raw,
+      );
       return c.json(
         {
           success: false as const,
-          error:
-            'Klarify ran into a problem while classifying your product. Please try again.',
-          code: 'CLASSIFICATION_ERROR',
+          error: classified.message,
+          code: classified.category,
         },
-        503,
+        classified.httpStatus,
       );
     }
 
