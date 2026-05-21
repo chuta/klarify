@@ -15,7 +15,8 @@
     "./scenarios": "./src/scenarios/index.ts",
     "./jurisdiction": "./src/jurisdiction/index.ts",
     "./rag": "./src/rag/index.ts",
-    "./prompts": "./src/prompts/index.ts"
+    "./prompts": "./src/prompts/index.ts",
+    "./prompts/documents": "./src/prompts/documents/index.ts"
   },
   "scripts": {
     "lint": "eslint src",

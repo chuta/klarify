@@ -43,6 +43,7 @@ import { aripRoutes } from './routes/arip.js';
 import { authRoutes } from './routes/auth.js';
 import { regulatorRoutes } from './routes/regulators.js';
 import { documentRoutes } from './routes/documents.js';
+import { documentGeneratorRoutes } from './routes/documents/generate.js';
 import { chatRoutes } from './routes/ai/chat.js';
 import { conversationRoutes } from './routes/ai/conversations.js';
 import { classifyRoutes } from './routes/ai/classify.js';
@@ -103,6 +104,10 @@ app.route('/api/regulators', regulatorRoutes);
 app.route('/api/auth', authRoutes);
 
 // Document analyser — Resend notifications when analysis completes (Sprint 3).
+// Sprint 4 — Document Generator MUST mount before the analyser routes because the
+// analyser owns /api/documents/:id and would otherwise greedily catch literal
+// prefixes like /api/documents/generated.
+app.route('/api/documents', documentGeneratorRoutes);
 app.route('/api/documents', documentRoutes);
 
 // FounderCounsel — Sprint 2 streaming AI chat (RAG + Claude SSE).

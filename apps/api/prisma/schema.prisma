@@ -195,21 +195,35 @@ model RoadmapTaskTemplate {
 // Documents
 // =============================================================================
 model GeneratedDocument {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orgId        String   @map("org_id") @db.Uuid
-  userId       String   @map("user_id") @db.Uuid
-  templateType String   @map("template_type")
-  title        String
-  content      Json     @default("{}")
-  version      Int      @default(1)
-  s3Key        String?  @map("s3_key")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId           String    @map("org_id") @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  templateType    String    @map("template_type")
+  title           String
+  // The parsed markdown sections array — [{ title, content, regulatoryBasis }]
+  // Used to re-render the in-browser preview without re-fetching the .docx.
+  content         Json      @default("{}")
+  // The exact form values the user submitted — lets "Regenerate" pre-fill the
+  // form without forcing a retype.
+  formData        Json      @default("{}") @map("form_data")
+  version         Int       @default(1)
+  s3Key           String?   @map("s3_key")
+  // Verbatim from the template definition (CLAUDE.md §14) so list views can
+  // render it without joining application config.
+  regulatoryBasis String?   @map("regulatory_basis")
+  // Exactly one version per (orgId, templateType) is marked current. Older
+  // versions stay queryable via listVersions() for the audit trail.
+  isCurrent       Boolean   @default(true) @map("is_current")
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz()
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   user User         @relation(fields: [userId], references: [id])
 
+  @@unique([orgId, templateType, version], map: "uq_gen_docs_org_template_version")
   @@index([orgId])
+  @@index([orgId, templateType, isCurrent])
   @@map("generated_documents")
 }
 
