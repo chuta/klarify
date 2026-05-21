@@ -213,3 +213,167 @@ export function stripMarkdownToPlainText(draft: string): string {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
+
+// =============================================================================
+// Markdown ↔ HTML bridge for the TinyMCE draft editor.
+//
+// TinyMCE works in HTML. Our AI draft + .docx exporter work in markdown. We
+// keep markdown as the single source of truth (it's what the AI emits and
+// what we render to Word). When the user opens the editor we convert
+// markdown → HTML; when they save we convert HTML → markdown.
+//
+// Both converters target a deliberately small subset so the round-trip is
+// stable: paragraphs, headings (h1–h6), bold, italic, underline, bullet/
+// numbered lists, horizontal rules, hard line breaks. Anything else
+// TinyMCE produces is degraded to plain text rather than thrown away —
+// safer for legal correspondence than silent data loss.
+// =============================================================================
+
+/**
+ * Convert a draft body (markdown) into the HTML form TinyMCE expects on
+ * `initialValue` / `value`. Uses `parseDraftBody` so the editor opens with
+ * the exact same paragraph + bold structure as the read-only preview.
+ *
+ * Output guarantees:
+ *   * Every paragraph is wrapped in `<p>` so TinyMCE treats Enter-to-new-
+ *     paragraph naturally.
+ *   * Headings (`#`, `##`, …) become `<h2>` so the visual hierarchy
+ *     matches the preview.
+ *   * Address-block multi-line paragraphs use `<p>` per line (parseDraftBody
+ *     already returns them as separate paragraphs).
+ *   * All text is HTML-escaped — protects against any stray `<` / `&` in the
+ *     AI output ending up as malformed HTML in the editor.
+ */
+export function markdownToHtml(markdown: string): string {
+  const paragraphs = parseDraftBody(markdown);
+  if (paragraphs.length === 0) return '<p></p>';
+  return paragraphs
+    .map((para) => {
+      if (para.segments.length === 0) return '<p></p>';
+      const inner = para.segments
+        .map((seg) => {
+          const escaped = escapeHtml(seg.text);
+          return seg.bold ? `<strong>${escaped}</strong>` : escaped;
+        })
+        .join('');
+      return para.isHeading ? `<h2>${inner}</h2>` : `<p>${inner}</p>`;
+    })
+    .join('\n');
+}
+
+/**
+ * Convert TinyMCE's HTML back into markdown for our storage / .docx pipeline.
+ *
+ * Implementation notes:
+ *   * Uses a regex-driven tag walker rather than DOMParser so this works
+ *     both in the browser (TinyMCE) and in Node (tests). The HTML subset
+ *     we accept is tiny and TinyMCE's output is well-formed.
+ *   * Unknown tags are dropped but their text content is preserved.
+ *   * Whitespace inside paragraphs is collapsed; paragraph boundaries
+ *     become blank lines in the markdown output.
+ *   * `<br>` becomes a single newline within the current paragraph.
+ *   * Heading levels 1–3 round-trip to `## ` (we don't need finer
+ *     distinction in regulator letters and our exporter only renders one
+ *     heading style anyway).
+ */
+export function htmlToMarkdown(html: string): string {
+  if (!html || html.trim() === '') return '';
+
+  // IMPORTANT: entities are decoded LAST, not first.
+  // If we decoded `&lt;` → `<` up front, the later `<[^>]+>` strip step
+  // would treat a legitimate "<" in body text (e.g. "5 < 10") as the start
+  // of a tag and silently eat it. By keeping entities encoded through all
+  // tag-processing passes, we guarantee body text is never misread.
+  let s = html.replace(/\r\n/g, '\n').replace(/&nbsp;/gi, ' ');
+
+  // <br> → soft line break inside the current paragraph.
+  s = s.replace(/<br\s*\/?>/gi, '\n');
+
+  // <hr> → markdown horizontal rule on its own paragraph.
+  s = s.replace(/<hr\s*\/?>/gi, '\n\n---\n\n');
+
+  // Headings → `## ` (single canonical level — see comment above).
+  s = s.replace(
+    /<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi,
+    (_, inner: string) => `\n\n## ${stripTagsInline(inner)}\n\n`,
+  );
+
+  // Bullet list items → `- item`.
+  s = s.replace(
+    /<li[^>]*>([\s\S]*?)<\/li>/gi,
+    (_, inner: string) => `- ${stripTagsInline(inner)}\n`,
+  );
+  s = s.replace(/<\/?(ul|ol)[^>]*>/gi, '\n');
+
+  // Bold: <strong> or <b>.
+  s = s.replace(
+    /<(strong|b)[^>]*>([\s\S]*?)<\/\1>/gi,
+    (_, _tag: string, inner: string) => {
+      const t = stripTagsInline(inner).trim();
+      return t ? `**${t}**` : '';
+    },
+  );
+
+  // Italic: <em> or <i> — we still emit single-asterisk markers for the
+  // editor user's intent even though our markdown parser ignores italics.
+  s = s.replace(
+    /<(em|i)[^>]*>([\s\S]*?)<\/\1>/gi,
+    (_, _tag: string, inner: string) => {
+      const t = stripTagsInline(inner).trim();
+      return t ? `*${t}*` : '';
+    },
+  );
+
+  // Underline / span — strip the tag, keep the contents.
+  s = s.replace(/<\/?(u|span|font)[^>]*>/gi, '');
+
+  // Paragraphs → text + blank line.
+  s = s.replace(
+    /<p[^>]*>([\s\S]*?)<\/p>/gi,
+    (_, inner: string) => `${stripTagsInline(inner).trim()}\n\n`,
+  );
+
+  // Strip any remaining tags as a safety net.
+  s = s.replace(/<[^>]+>/g, '');
+
+  // Decode entities now that no further tag parsing will happen — see
+  // comment at the top of the function.
+  s = s
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'");
+
+  // Collapse 3+ blank lines and trim.
+  return s
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/** HTML-escape a string for safe embedding in attribute or text contexts. */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Remove inline tags from a captured group, preserving emphasis markers.
+ *
+ * Entity decoding stays deferred to the outer caller (`htmlToMarkdown`)
+ * so we don't accidentally re-introduce raw `<` / `>` that the final tag
+ * strip pass would eat. See the comment at the top of `htmlToMarkdown`.
+ */
+function stripTagsInline(s: string): string {
+  return s
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?(strong|b)[^>]*>/gi, '**')
+    .replace(/<\/?(em|i)[^>]*>/gi, '*')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/gi, ' ');
+}

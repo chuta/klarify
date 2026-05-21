@@ -372,13 +372,50 @@ documentRoutes.get('/:id', requireAuth, async (c) => {
  * it to S3 under {orgId}/{userId}/drafts/, then return a 1-hour signed URL.
  * The client redirects the browser at that URL — S3 streams the bytes
  * directly, bypassing our API server.
+ *
+ * Optional body: { body: string }
+ *
+ *   When the user has edited the AI draft in the TinyMCE editor, the client
+ *   sends the current (markdown) draft body here. The exporter uses this
+ *   instead of the stored AI draft. We DO NOT persist the override to the
+ *   database — multiple exports of different edits should each render
+ *   independently, and we don't want one user's edits to overwrite the
+ *   original AI draft visible elsewhere. Persisting edits is a separate
+ *   product feature with its own audit story.
+ *
+ * The body is optional + size-capped (32 KB) — large enough for any
+ * regulator letter, small enough to avoid abuse.
  */
+const exportDraftBodySchema = z
+  .object({
+    body: z.string().max(32_000).optional(),
+  })
+  .optional();
+
 documentRoutes.post('/:id/export-draft', requireAuth, async (c) => {
   const userId = c.get('userId');
   const documentId = c.req.param('id');
 
+  // Body is optional — parse defensively. A missing/empty body just means
+  // "export the stored AI draft as-is" (the legacy behaviour).
+  let overrideBody: string | undefined;
   try {
-    const result = await exportDraftAsDocx(documentId, userId);
+    const contentType = c.req.header('content-type') ?? '';
+    if (contentType.includes('application/json')) {
+      const raw = await c.req.json().catch(() => undefined);
+      const parsed = exportDraftBodySchema.safeParse(raw);
+      if (parsed.success && parsed.data?.body && parsed.data.body.trim().length > 0) {
+        overrideBody = parsed.data.body;
+      }
+    }
+  } catch (err) {
+    console.error('[documents/export-draft] body parse failed', err);
+  }
+
+  try {
+    const result = await exportDraftAsDocx(documentId, userId, {
+      overrideBody,
+    });
     return c.json({
       success: true as const,
       data: {

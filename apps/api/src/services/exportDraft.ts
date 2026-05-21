@@ -49,10 +49,16 @@ export class ExportDraftError extends Error {
   }
 }
 
+export interface ExportDraftOptions {
+  /** User-edited draft body (markdown) — overrides the stored AI draft. */
+  overrideBody?: string;
+}
+
 /** Build the Word document for a completed document analysis + persist it. */
 export async function exportDraftAsDocx(
   documentId: string,
   userId: string,
+  options: ExportDraftOptions = {},
 ): Promise<ExportDraftResult> {
   const doc = await prisma.uploadedDocument.findFirst({
     where: { id: documentId, userId },
@@ -67,7 +73,11 @@ export async function exportDraftAsDocx(
       404,
     );
   }
-  if (!doc.draftResponse || doc.draftResponse.trim().length === 0) {
+  // Prefer the user-edited body if supplied; otherwise fall back to the
+  // AI draft from the database. We require either source to exist.
+  const draftBody =
+    options.overrideBody?.trim() || doc.draftResponse?.trim() || '';
+  if (draftBody.length === 0) {
     throw new ExportDraftError(
       'No draft response available yet. Wait for analysis to complete.',
       'NO_DRAFT',
@@ -100,7 +110,7 @@ export async function exportDraftAsDocx(
     org: orgContext,
     recipient,
     reference,
-    draftBody: doc.draftResponse,
+    draftBody,
   });
 
   const s3Key = `${doc.orgId}/${userId}/drafts/${randomUUID()}_draft.docx`;

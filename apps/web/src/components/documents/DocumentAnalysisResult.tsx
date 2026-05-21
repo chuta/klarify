@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   parseDraftBody,
   stripMarkdownToPlainText,
+  markdownToHtml,
+  htmlToMarkdown,
   type DraftParagraph,
   type InlineSegment,
 } from '@klarify/core';
 import { UrgencyBanner } from './UrgencyBanner';
+import { TinyEditor } from './TinyEditor';
 
 export type Urgency = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 export type ActionUrgency = 'IMMEDIATE' | 'TODAY' | 'THIS_WEEK';
@@ -302,11 +305,30 @@ function DraftResponseCard({
   draft: string;
   apiBaseUrl: string;
 }): JSX.Element {
+  // `draftText` is the canonical markdown form — what we send to the .docx
+  // exporter and what the clipboard receives (after stripping). TinyMCE
+  // operates on HTML internally; we convert on entry and on every change.
   const [draftText, setDraftText] = useState(draft);
   const [editing, setEditing] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Cache the HTML that initialised the editor so we don't re-render the
+  // editor (and lose cursor position) every time draftText changes.
+  const initialHtmlRef = useRef<string>('');
+
+  const onEnterEdit = (): void => {
+    initialHtmlRef.current = markdownToHtml(draftText);
+    setEditing(true);
+  };
+
+  const onExitEdit = (): void => {
+    setEditing(false);
+  };
+
+  const onEditorChange = (html: string): void => {
+    setDraftText(htmlToMarkdown(html));
+  };
 
   const onCopy = async (): Promise<void> => {
     try {
@@ -331,7 +353,16 @@ function DraftResponseCard({
       if (!token) throw new Error('You must be signed in to download.');
       const res = await fetch(
         `${apiBaseUrl}/api/documents/${documentId}/export-draft`,
-        { method: 'POST', headers: { Authorization: `Bearer ${token}` } },
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          // Send the CURRENT (possibly edited) markdown — the API will
+          // prefer this over the original AI draft stored in the DB.
+          body: JSON.stringify({ body: draftText }),
+        },
       );
       const body = (await res.json()) as
         | { success: true; data: { downloadUrl: string } }
@@ -345,27 +376,38 @@ function DraftResponseCard({
     }
   };
 
+  const tinyApiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY ?? 'no-api-key';
+
   return (
     <Card title="Draft acknowledgement response">
       {editing ? (
-        <textarea
-          value={draftText}
-          onChange={(e) => setDraftText(e.target.value)}
-          rows={14}
-          className="w-full resize-y rounded-lg border border-[#CCCCCC] bg-white p-3 font-mono text-xs leading-relaxed text-[#1A1A1A] focus:border-[#0B6E6E] focus:outline-none"
+        <TinyEditor
+          apiKey={tinyApiKey}
+          initialValue={initialHtmlRef.current}
+          onEditorChange={onEditorChange}
         />
       ) : (
         <DraftLetterPreview draft={draftText} />
       )}
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setEditing((v) => !v)}
-          className="rounded-lg border border-[#CCCCCC] bg-white px-3 py-1.5 text-xs font-medium text-[#1A1A1A] hover:bg-[#F5F5F5]"
-        >
-          {editing ? 'Done editing' : 'Edit draft'}
-        </button>
+        {editing ? (
+          <button
+            type="button"
+            onClick={onExitEdit}
+            className="rounded-lg bg-[#0B6E6E] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#0a5a5a]"
+          >
+            Done editing
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onEnterEdit}
+            className="rounded-lg border border-[#CCCCCC] bg-white px-3 py-1.5 text-xs font-medium text-[#1A1A1A] hover:bg-[#F5F5F5]"
+          >
+            Edit draft
+          </button>
+        )}
         <button
           type="button"
           onClick={() => void onCopy()}

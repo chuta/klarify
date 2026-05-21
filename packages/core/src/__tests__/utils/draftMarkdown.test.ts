@@ -17,6 +17,8 @@ import {
   parseDraftBody,
   draftIncludesLetterhead,
   stripMarkdownToPlainText,
+  markdownToHtml,
+  htmlToMarkdown,
 } from '../../utils/draftMarkdown.js';
 
 describe('parseInlineMarkdown', () => {
@@ -221,6 +223,150 @@ Compliance Officer`;
 
   it('returns false for an empty draft', () => {
     expect(draftIncludesLetterhead('')).toBe(false);
+  });
+});
+
+describe('markdownToHtml', () => {
+  it('wraps plain prose in <p>', () => {
+    expect(markdownToHtml('Hello world.')).toBe('<p>Hello world.</p>');
+  });
+
+  it('renders **bold** as <strong>', () => {
+    expect(markdownToHtml('Hello **world**.')).toBe(
+      '<p>Hello <strong>world</strong>.</p>',
+    );
+  });
+
+  it('renders headings as <h2>', () => {
+    expect(markdownToHtml('## Section')).toBe('<h2>Section</h2>');
+  });
+
+  it('produces one <p> per address-block line', () => {
+    const md = `**BlockEX Trade Limited**
+14 Admiralty Way, Lagos
+chimezie@blockex.ng`;
+    const html = markdownToHtml(md);
+    expect(html).toContain('<p><strong>BlockEX Trade Limited</strong></p>');
+    expect(html).toContain('<p>14 Admiralty Way, Lagos</p>');
+    expect(html).toContain('<p>chimezie@blockex.ng</p>');
+  });
+
+  it('escapes HTML special chars in the source', () => {
+    expect(markdownToHtml('5 < 10 & 6 > 2')).toContain('5 &lt; 10 &amp; 6 &gt; 2');
+  });
+
+  it('drops `---` horizontal rules cleanly', () => {
+    const html = markdownToHtml('Paragraph A.\n\n---\n\nParagraph B.');
+    expect(html).not.toContain('---');
+    expect(html).toContain('Paragraph A');
+    expect(html).toContain('Paragraph B');
+  });
+
+  it('returns a single empty <p> for empty input', () => {
+    expect(markdownToHtml('')).toBe('<p></p>');
+  });
+});
+
+describe('htmlToMarkdown', () => {
+  it('unwraps a single paragraph', () => {
+    expect(htmlToMarkdown('<p>Hello world.</p>')).toBe('Hello world.');
+  });
+
+  it('converts <strong> to **bold**', () => {
+    expect(htmlToMarkdown('<p>Hello <strong>world</strong>.</p>')).toBe(
+      'Hello **world**.',
+    );
+  });
+
+  it('also handles <b>', () => {
+    expect(htmlToMarkdown('<p>Hello <b>world</b>.</p>')).toBe(
+      'Hello **world**.',
+    );
+  });
+
+  it('converts <em>/<i> to single-asterisk italic', () => {
+    expect(htmlToMarkdown('<p>Note <em>well</em>.</p>')).toBe('Note *well*.');
+    expect(htmlToMarkdown('<p>Note <i>well</i>.</p>')).toBe('Note *well*.');
+  });
+
+  it('separates paragraphs with blank lines', () => {
+    expect(htmlToMarkdown('<p>A</p><p>B</p>')).toBe('A\n\nB');
+  });
+
+  it('converts <h1>–<h6> all to `## `', () => {
+    expect(htmlToMarkdown('<h1>Title</h1>')).toBe('## Title');
+    expect(htmlToMarkdown('<h3>Title</h3>')).toBe('## Title');
+    expect(htmlToMarkdown('<h6>Title</h6>')).toBe('## Title');
+  });
+
+  it('converts <hr> to ---', () => {
+    expect(htmlToMarkdown('<p>A</p><hr><p>B</p>')).toBe('A\n\n---\n\nB');
+  });
+
+  it('converts list items to dash bullets', () => {
+    const html = '<ul><li>First</li><li>Second</li></ul>';
+    const md = htmlToMarkdown(html);
+    expect(md).toMatch(/- First/);
+    expect(md).toMatch(/- Second/);
+  });
+
+  it('decodes &nbsp; / &amp; / &lt; entities', () => {
+    expect(htmlToMarkdown('<p>5 &lt; 10 &amp; 6 &gt; 2</p>')).toBe(
+      '5 < 10 & 6 > 2',
+    );
+  });
+
+  it('drops empty paragraphs cleanly', () => {
+    expect(htmlToMarkdown('<p>A</p><p>&nbsp;</p><p>B</p>')).toMatch(/A[\s\S]*B/);
+    expect(htmlToMarkdown('<p>A</p><p>&nbsp;</p><p>B</p>')).not.toMatch(
+      /\n\n\n/,
+    );
+  });
+
+  it('strips unknown tags but keeps their text', () => {
+    expect(htmlToMarkdown('<p><span class="x">Hello</span></p>')).toBe('Hello');
+  });
+
+  it('returns empty string for empty/whitespace input', () => {
+    expect(htmlToMarkdown('')).toBe('');
+    expect(htmlToMarkdown('   ')).toBe('');
+  });
+});
+
+describe('markdown ↔ HTML round-trip stability', () => {
+  it('preserves the BlockEX letter through md → html → md', () => {
+    const md = `**BlockEX Trade Limited**
+
+Dear Mrs. Okonkwo,
+
+We **acknowledge receipt** of your notice and have engaged regulatory counsel to assist us in preparing a full response.
+
+Yours sincerely,
+
+Compliance Officer`;
+    const html = markdownToHtml(md);
+    const roundTrip = htmlToMarkdown(html);
+    // All key content survives.
+    expect(roundTrip).toMatch(/\*\*BlockEX Trade Limited\*\*/);
+    expect(roundTrip).toMatch(/Dear Mrs\. Okonkwo,/);
+    expect(roundTrip).toMatch(/\*\*acknowledge receipt\*\*/);
+    expect(roundTrip).toMatch(/Yours sincerely,/);
+    expect(roundTrip).toMatch(/Compliance Officer/);
+    // No HTML leaks into the markdown result.
+    expect(roundTrip).not.toMatch(/<[a-z]/i);
+  });
+
+  it('lets the AI draft round-trip without losing bold runs', () => {
+    const md = `**Re: Acknowledgment of Regulatory Inquiry**
+
+Dear Sir,
+
+Body.
+
+Yours sincerely,`;
+    expect(htmlToMarkdown(markdownToHtml(md))).toMatch(
+      /\*\*Re: Acknowledgment of Regulatory Inquiry\*\*/,
+    );
   });
 });
 
