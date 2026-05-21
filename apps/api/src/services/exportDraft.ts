@@ -23,6 +23,12 @@ import {
   Paragraph,
   TextRun,
 } from 'docx';
+import {
+  draftIncludesLetterhead,
+  parseDraftBody,
+  type DraftParagraph,
+  type InlineSegment,
+} from '@klarify/core';
 import { prisma } from '../db.js';
 import { getSignedDownloadUrl, putObject } from './s3.js';
 
@@ -120,107 +126,140 @@ interface RenderArgs {
   draftBody: string;
 }
 
-/** Compose the docx Buffer using `docx`. Pure — exposed for unit testing. */
+/** Compose the docx Buffer using `docx`. Pure — exposed for unit testing.
+ *
+ * Two render paths based on the AI draft:
+ *
+ *   1. SELF-CONTAINED LETTER — Opus generated a full formal letter
+ *      (sender block, recipient, salutation, body, sign-off). We skip the
+ *      synthetic scaffolding and just render the AI's letter verbatim
+ *      with markdown → bold runs.
+ *
+ *   2. BODY-ONLY DRAFT       — Opus generated only the body paragraphs.
+ *      We wrap them in our default letterhead + recipient block + sign-off
+ *      so the user gets a sendable document.
+ *
+ * The mandatory AI-assistance footer is appended in both cases.
+ *
+ * This split was added on 2026-05-21 after a live test showed the
+ * exporter doubling up the letterhead because the analyser prompt
+ * elicits a complete letter from Opus by default.
+ */
 export async function renderDocx(args: RenderArgs): Promise<Buffer> {
+  const children = draftIncludesLetterhead(args.draftBody)
+    ? renderSelfContainedLetter(args.draftBody)
+    : renderBodyOnlyDraft(args);
+
+  children.push(aiAssistanceFooter());
+
+  const document = new Document({
+    sections: [{ properties: {}, children }],
+  });
+
+  return Packer.toBuffer(document);
+}
+
+/** Render an AI-generated complete letter — no synthetic scaffolding. */
+function renderSelfContainedLetter(draftBody: string): Paragraph[] {
+  const paragraphs: Paragraph[] = [];
+  for (const para of parseDraftBody(draftBody)) {
+    paragraphs.push(paragraphFromDraftParagraph(para));
+  }
+  // One blank line before the AI footer for breathing room.
+  paragraphs.push(new Paragraph({ children: [text('')], spacing: { after: 200 } }));
+  return paragraphs;
+}
+
+/** Wrap a body-only AI draft in our default letterhead + sign-off block. */
+function renderBodyOnlyDraft(args: RenderArgs): Paragraph[] {
   const today = new Date().toLocaleDateString('en-NG', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
 
-  // The draft itself comes back with paragraph breaks; split on blank
-  // lines so each paragraph renders as its own <w:p> rather than a
-  // single multi-line paragraph (preserves leading bullets / indentation
-  // that the analyser sometimes adds).
-  const draftParas = args.draftBody
-    .split(/\n{2,}/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-
-  const document = new Document({
-    sections: [
-      {
-        properties: {},
-        children: [
-          // Company letterhead
+  const children: Paragraph[] = [
+    new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      children: [bold(args.org.companyName)],
+    }),
+    ...(args.org.signatoryEmail
+      ? [
           new Paragraph({
-            heading: HeadingLevel.HEADING_1,
-            children: [bold(args.org.companyName)],
-          }),
-          ...(args.org.signatoryEmail
-            ? [
-                new Paragraph({
-                  children: [text(args.org.signatoryEmail)],
-                  spacing: { after: 200 },
-                }),
-              ]
-            : []),
-
-          // Date
-          new Paragraph({
-            children: [text(today)],
+            children: [text(args.org.signatoryEmail)],
             spacing: { after: 200 },
           }),
+        ]
+      : []),
+    new Paragraph({ children: [text(today)], spacing: { after: 200 } }),
+    new Paragraph({ children: [text(args.recipient.name)] }),
+    ...(args.recipient.department
+      ? [new Paragraph({ children: [text(args.recipient.department)] })]
+      : []),
+    new Paragraph({ children: [text('')], spacing: { after: 200 } }),
+    new Paragraph({
+      children: [bold(`RE: ${args.reference}`)],
+      spacing: { after: 200 },
+    }),
+    new Paragraph({ children: [text('Dear Sir/Ma,')] }),
+    new Paragraph({ children: [text('')] }),
+  ];
 
-          // Recipient block
-          new Paragraph({
-            children: [text(args.recipient.name)],
-          }),
-          ...(args.recipient.department
-            ? [new Paragraph({ children: [text(args.recipient.department)] })]
-            : []),
-          new Paragraph({ children: [text('')], spacing: { after: 200 } }),
+  for (const para of parseDraftBody(args.draftBody)) {
+    children.push(paragraphFromDraftParagraph(para));
+  }
 
-          // Subject line
-          new Paragraph({
-            children: [bold(`RE: ${args.reference}`)],
-            spacing: { after: 200 },
-          }),
+  children.push(
+    new Paragraph({ children: [text('')] }),
+    new Paragraph({ children: [text('Yours sincerely,')] }),
+    new Paragraph({ children: [text('')] }),
+    new Paragraph({ children: [text('')] }),
+    new Paragraph({ children: [bold(args.org.signatoryName)] }),
+    new Paragraph({
+      children: [text(`On behalf of ${args.org.companyName}`)],
+      spacing: { after: 400 },
+    }),
+  );
 
-          // Salutation
-          new Paragraph({ children: [text('Dear Sir/Ma,')] }),
-          new Paragraph({ children: [text('')] }),
+  return children;
+}
 
-          // Body paragraphs
-          ...draftParas.map(
-            (p) =>
-              new Paragraph({
-                children: [text(p)],
-                spacing: { after: 160 },
-              }),
-          ),
+/** Convert a DraftParagraph (with inline bold runs) into a docx Paragraph. */
+function paragraphFromDraftParagraph(para: DraftParagraph): Paragraph {
+  const runs = para.segments.length === 0
+    ? [text('')]
+    : para.segments.map((seg) => segmentToRun(seg, para.isHeading));
+  return new Paragraph({
+    children: runs,
+    spacing: { after: para.isHeading ? 240 : 160 },
+    ...(para.isHeading ? { heading: HeadingLevel.HEADING_2 } : {}),
+  });
+}
 
-          // Sign-off
-          new Paragraph({ children: [text('')] }),
-          new Paragraph({ children: [text('Yours sincerely,')] }),
-          new Paragraph({ children: [text('')] }),
-          new Paragraph({ children: [text('')] }),
-          new Paragraph({ children: [bold(args.org.signatoryName)] }),
-          new Paragraph({
-            children: [text(`On behalf of ${args.org.companyName}`)],
-            spacing: { after: 400 },
-          }),
+function segmentToRun(seg: InlineSegment, paragraphIsHeading: boolean): TextRun {
+  return new TextRun({
+    text: seg.text,
+    // Headings render bold by Word's default styling, but explicit `bold`
+    // ensures consistent rendering across Word / Google Docs / Pages.
+    bold: seg.bold === true || paragraphIsHeading,
+  });
+}
 
-          // AI-assistance footer — italic + muted, never removable.
-          new Paragraph({
-            alignment: AlignmentType.CENTER,
-            children: [
-              new TextRun({
-                text:
-                  'This response was drafted with the assistance of Klarify regulatory advisory platform. ' +
-                  'It has been reviewed and approved for submission.',
-                italics: true,
-                size: 18, // 9pt
-                color: '777777',
-              }),
-            ],
-          }),
-        ],
-      },
+/** The mandatory AI-assistance footer — appended to every exported letter. */
+function aiAssistanceFooter(): Paragraph {
+  return new Paragraph({
+    alignment: AlignmentType.CENTER,
+    children: [
+      new TextRun({
+        text:
+          'This response was drafted with the assistance of Klarify regulatory advisory platform. ' +
+          'It has been reviewed and approved for submission.',
+        italics: true,
+        size: 18, // 9pt
+        color: '777777',
+      }),
     ],
   });
-
-  return Packer.toBuffer(document);
 }
 
 function bold(t: string): TextRun {

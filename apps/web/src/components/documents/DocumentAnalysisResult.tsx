@@ -1,6 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import {
+  parseDraftBody,
+  stripMarkdownToPlainText,
+  type DraftParagraph,
+  type InlineSegment,
+} from '@klarify/core';
 import { UrgencyBanner } from './UrgencyBanner';
 
 export type Urgency = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -304,7 +310,9 @@ function DraftResponseCard({
 
   const onCopy = async (): Promise<void> => {
     try {
-      await navigator.clipboard.writeText(draftText);
+      // Strip markdown markers (`**`, `---`, heading `#`) so the user pastes
+      // a clean, sendable letter into Word/Gmail rather than raw markdown.
+      await navigator.clipboard.writeText(stripMarkdownToPlainText(draftText));
       setCopyState('copied');
       setTimeout(() => setCopyState('idle'), 2000);
     } catch {
@@ -343,15 +351,11 @@ function DraftResponseCard({
         <textarea
           value={draftText}
           onChange={(e) => setDraftText(e.target.value)}
-          rows={12}
+          rows={14}
           className="w-full resize-y rounded-lg border border-[#CCCCCC] bg-white p-3 font-mono text-xs leading-relaxed text-[#1A1A1A] focus:border-[#0B6E6E] focus:outline-none"
         />
       ) : (
-        <div className="max-h-96 overflow-y-auto rounded-lg border border-[#E5E5E5] bg-[#FAFAFA] p-3">
-          <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-[#1A1A1A]">
-            {draftText}
-          </pre>
-        </div>
+        <DraftLetterPreview draft={draftText} />
       )}
 
       <div className="mt-3 flex flex-wrap gap-2">
@@ -390,6 +394,68 @@ function DraftResponseCard({
       </p>
     </Card>
   );
+}
+
+/**
+ * Render the AI-generated draft as a properly formatted letter preview.
+ *
+ * Uses the shared `parseDraftBody` helper from `@klarify/core` so the web
+ * preview matches what the .docx exporter produces — same paragraph
+ * boundaries, same bold runs, same `---` stripping.
+ *
+ * Rendered inside the `Draft acknowledgement response` card. Sized so a
+ * typical 30-paragraph letter scrolls cleanly without dominating the
+ * viewport.
+ */
+function DraftLetterPreview({ draft }: { draft: string }): JSX.Element {
+  const paragraphs: DraftParagraph[] = parseDraftBody(draft);
+  if (paragraphs.length === 0) {
+    return (
+      <div className="rounded-lg border border-[#E5E5E5] bg-[#FAFAFA] p-3">
+        <p className="text-sm italic text-[#777]">
+          The draft response is empty. Try regenerating the analysis.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="max-h-[28rem] overflow-y-auto rounded-lg border border-[#E5E5E5] bg-white p-5 font-serif text-[13px] leading-relaxed text-[#1A1A1A] shadow-inner">
+      {paragraphs.map((para, idx) => {
+        const isEmpty =
+          para.segments.length === 0 ||
+          para.segments.every((s) => s.text.trim() === '');
+        if (isEmpty) {
+          return <div key={idx} className="h-3" aria-hidden="true" />;
+        }
+        if (para.isHeading) {
+          return (
+            <p
+              key={idx}
+              className="mb-2 text-sm font-semibold uppercase tracking-wide text-[#0D2B45]"
+            >
+              {para.segments.map((seg, i) => renderSegment(seg, i))}
+            </p>
+          );
+        }
+        return (
+          <p key={idx} className="mb-2 last:mb-0">
+            {para.segments.map((seg, i) => renderSegment(seg, i))}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+function renderSegment(seg: InlineSegment, key: number): JSX.Element {
+  if (seg.bold) {
+    return (
+      <strong key={key} className="font-semibold text-[#0D2B45]">
+        {seg.text}
+      </strong>
+    );
+  }
+  return <span key={key}>{seg.text}</span>;
 }
 
 function FollowUpChatLink({
