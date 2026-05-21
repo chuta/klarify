@@ -1,26 +1,27 @@
 // Compliance endpoints — CLAUDE.md §9 (ComplianceOS routes).
 // §16 Rule 6: score MUST update in real time on every indicator change.
+// Sprint 4 — Smart Compliance Roadmap (US-007) extensions.
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
-import { Prisma } from '@prisma/client';
 import {
   type DimensionKey,
   DIMENSION_WEIGHTS,
-  type IndicatorState,
-  createEmptyIndicatorState,
-  applyExistingInfrastructure,
-  indicatorsToDimensionScores,
-  calculateReadinessScore,
   DIMENSION_INDICATORS,
 } from '@klarify/core';
 import { prisma, withRls } from '../db.js';
 import { requireAuth, type AuthVars } from '../middleware/auth.js';
+import {
+  flipIndicatorAndRecalc,
+  loadFullRoadmap,
+  materialiseRoadmapIfEmpty,
+  reconcileLockState,
+} from '../services/roadmapService.js';
 
 export const complianceRoutes = new Hono<{ Variables: AuthVars }>();
 
 // ========================================================================== //
-// Helper — resolve the user's orgId (first membership).                       //
+// Helper — resolve the user's orgId (first membership) + profile.             //
 // ========================================================================== //
 async function resolveOrgId(userId: string): Promise<string | null> {
   const membership = await prisma.orgMember.findFirst({
@@ -31,29 +32,12 @@ async function resolveOrgId(userId: string): Promise<string | null> {
   return membership?.orgId ?? null;
 }
 
-// ========================================================================== //
-// Helper — safe cast of JSON snapshot to IndicatorState.                      //
-// ========================================================================== //
-function parseSnapshotToIndicatorState(snapshot: unknown): IndicatorState {
-  if (snapshot === null || typeof snapshot !== 'object') {
-    return createEmptyIndicatorState();
-  }
-  const dimensionKeys = Object.keys(DIMENSION_WEIGHTS) as DimensionKey[];
-  const base = createEmptyIndicatorState();
-  for (const dim of dimensionKeys) {
-    const raw = (snapshot as Record<string, unknown>)[dim];
-    if (raw !== null && typeof raw === 'object') {
-      const indicators = DIMENSION_INDICATORS[dim] as readonly string[];
-      for (const ind of indicators) {
-        const val = (raw as Record<string, unknown>)[ind];
-        if (typeof val === 'boolean') {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (base[dim] as any)[ind] = val;
-        }
-      }
-    }
-  }
-  return base;
+async function resolveProductTypes(userId: string): Promise<string[]> {
+  const profile = await prisma.userProfile.findUnique({
+    where: { userId },
+    select: { productTypes: true },
+  });
+  return profile?.productTypes ?? [];
 }
 
 // ========================================================================== //
@@ -124,7 +108,7 @@ complianceRoutes.get('/score', requireAuth, async (c) => {
 });
 
 // ========================================================================== //
-// PUT /indicators — update a single indicator, recalculate score in real time.//
+// PUT /indicators — update a single indicator + recalc + re-check lock state. //
 // CLAUDE.md §16 Rule 6.                                                        //
 // ========================================================================== //
 const updateIndicatorSchema = z.object({
@@ -150,6 +134,18 @@ complianceRoutes.put(
     const userId = c.get('userId');
     const { dimension, indicator, value } = c.req.valid('json');
 
+    const validIndicators = DIMENSION_INDICATORS[dimension] as readonly string[];
+    if (!validIndicators.includes(indicator)) {
+      return c.json(
+        {
+          success: false as const,
+          error: `Indicator "${indicator}" is not valid for dimension "${dimension}".`,
+          code: 'INVALID_INDICATOR',
+        },
+        400,
+      );
+    }
+
     try {
       const orgId = await resolveOrgId(userId);
       if (orgId === null) {
@@ -159,60 +155,16 @@ complianceRoutes.put(
         );
       }
 
-      // Validate that the indicator key belongs to the dimension.
-      const validIndicators = DIMENSION_INDICATORS[dimension as DimensionKey] as readonly string[];
-      if (!validIndicators.includes(indicator)) {
-        return c.json(
-          {
-            success: false as const,
-            error: `Indicator "${indicator}" is not valid for dimension "${dimension}".`,
-            code: 'INVALID_INDICATOR',
-          },
-          400,
-        );
-      }
-
       const result = await withRls({ userId, orgId }, async (tx) => {
-        // Load most recent snapshot.
-        const latest = await tx.readinessScore.findFirst({
-          where: { orgId },
-          orderBy: { calculatedAt: 'desc' },
-        });
-
-        const currentState = parseSnapshotToIndicatorState(latest?.snapshot ?? null);
-
-        // Update the single indicator.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (currentState[dimension as DimensionKey] as any)[indicator] = value;
-
-        // Recalculate.
-        const dimensionScores = indicatorsToDimensionScores(currentState);
-        const totalScore = calculateReadinessScore(dimensionScores);
-
-        // Persist new score record.
-        const newRecord = await tx.readinessScore.create({
-          data: {
-            orgId,
-            totalScore,
-            corporateStructure: dimensionScores.corporate_structure,
-            capitalLicensing: dimensionScores.capital_licensing,
-            kycInfrastructure: dimensionScores.kyc_infrastructure,
-            amlCftProgramme: dimensionScores.aml_cft_programme,
-            transactionMonitoring: dimensionScores.transaction_monitoring,
-            regulatoryReporting: dimensionScores.regulatory_reporting,
-            regulatoryRelationships: dimensionScores.regulatory_relationships,
-            productClassification: dimensionScores.product_classification,
-            snapshot: currentState as unknown as Prisma.InputJsonValue,
-          },
-        });
-
-        return { totalScore, dimensionScores, calculatedAt: newRecord.calculatedAt };
+        const { scoreUpdate, nextState } = await flipIndicatorAndRecalc(
+          tx, orgId, dimension, indicator, value,
+        );
+        // Indicator flips (e.g. registered_solicitor_engaged) can unlock tasks.
+        const lockChanges = await reconcileLockState(tx, orgId, nextState);
+        return { scoreUpdate, lockChanges };
       });
 
-      return c.json({
-        success: true as const,
-        data: result,
-      });
+      return c.json({ success: true as const, data: result });
     } catch (err) {
       console.error('[compliance/indicators] error', err);
       return c.json(
@@ -228,9 +180,209 @@ complianceRoutes.put(
 );
 
 // ========================================================================== //
-// PATCH /roadmap/task/:id — mark a task complete, update indicator, recalc.   //
-// CLAUDE.md §16 Rule 6: score MUST update in real time.                       //
+// GET /roadmap — full task list grouped by phase, with progress + lock state. //
+// Lazy-materialises the roadmap on first read (Sprint 4 wipe-and-reseed).     //
 // ========================================================================== //
+complianceRoutes.get('/roadmap', requireAuth, async (c) => {
+  const userId = c.get('userId');
+
+  try {
+    const orgId = await resolveOrgId(userId);
+    if (orgId === null) {
+      return c.json({ success: true as const, data: { tasks: [], grouped: {}, phaseProgress: [], orgId: null } });
+    }
+
+    const productTypes = await resolveProductTypes(userId);
+
+    const data = await withRls({ userId, orgId }, async (tx) => {
+      await materialiseRoadmapIfEmpty(tx, { orgId, productTypes });
+      // Reconcile lock state once on read — fixes anything that fell behind.
+      await reconcileLockState(tx, orgId);
+      return loadFullRoadmap(tx, orgId);
+    });
+
+    return c.json({ success: true as const, data });
+  } catch (err) {
+    console.error('[compliance/roadmap] error', err);
+    return c.json(
+      { success: false as const, error: 'Failed to fetch roadmap.', code: 'ROADMAP_FETCH_ERROR' },
+      500,
+    );
+  }
+});
+
+// ========================================================================== //
+// POST /roadmap/task — create a custom user task.                              //
+// ========================================================================== //
+const createTaskSchema = z.object({
+  phase: z.number().int().min(1).max(4),
+  title: z.string().min(3).max(200),
+  description: z.string().max(2000).optional(),
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  ownerUserId: z.string().uuid().optional(),
+});
+
+complianceRoutes.post('/roadmap/task', requireAuth, zValidator('json', createTaskSchema), async (c) => {
+  const userId = c.get('userId');
+  const body = c.req.valid('json');
+
+  try {
+    const orgId = await resolveOrgId(userId);
+    if (orgId === null) {
+      return c.json(
+        { success: false as const, error: 'Organisation not found.', code: 'ORG_NOT_FOUND' },
+        404,
+      );
+    }
+
+    const created = await withRls({ userId, orgId }, async (tx) =>
+      tx.roadmapTask.create({
+        data: {
+          orgId,
+          phase: body.phase,
+          title: body.title,
+          description: body.description ?? null,
+          regulatoryBasis: null,
+          templateId: null,
+          indicatorKey: null,
+          templateRefId: null,
+          isLocked: false,
+          isBlocker: false,
+          isCustom: true,
+          status: 'not_started',
+          dueDate: body.dueDate ? new Date(body.dueDate) : null,
+          ownerUserId: body.ownerUserId ?? null,
+        },
+      }),
+    );
+
+    return c.json({ success: true as const, data: { task: created } }, 201);
+  } catch (err) {
+    console.error('[compliance/roadmap POST] error', err);
+    return c.json(
+      { success: false as const, error: 'Failed to create task.', code: 'TASK_CREATE_ERROR' },
+      500,
+    );
+  }
+});
+
+// ========================================================================== //
+// PUT /roadmap/task/:id — update status/owner/dueDate/notes.                  //
+// On completion: propagate indicator + recalc score + re-check lock state.    //
+// ========================================================================== //
+const updateTaskSchema = z.object({
+  status: z.enum(['not_started', 'in_progress', 'complete', 'blocked']).optional(),
+  ownerUserId: z.string().uuid().nullable().optional(),
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+});
+
+complianceRoutes.put(
+  '/roadmap/task/:id',
+  requireAuth,
+  zValidator('json', updateTaskSchema),
+  async (c) => {
+    const userId = c.get('userId');
+    const taskId = c.req.param('id');
+    const body = c.req.valid('json');
+
+    try {
+      const orgId = await resolveOrgId(userId);
+      if (orgId === null) {
+        return c.json(
+          { success: false as const, error: 'Organisation not found.', code: 'ORG_NOT_FOUND' },
+          404,
+        );
+      }
+
+      const result = await withRls({ userId, orgId }, async (tx) => {
+        const task = await tx.roadmapTask.findFirst({
+          where: { id: taskId, orgId, deletedAt: null },
+        });
+        if (task === null) return { task: null, scoreUpdate: null };
+        if (task.isLocked && body.status === 'complete') {
+          return { task: 'locked' as const, scoreUpdate: null };
+        }
+
+        const becameComplete =
+          body.status === 'complete' && task.status !== 'complete';
+
+        const updated = await tx.roadmapTask.update({
+          where: { id: taskId },
+          data: {
+            status: body.status ?? task.status,
+            completedAt: becameComplete
+              ? new Date()
+              : body.status !== undefined && body.status !== 'complete'
+                ? null
+                : task.completedAt,
+            ownerUserId:
+              body.ownerUserId === undefined ? task.ownerUserId : body.ownerUserId,
+            dueDate:
+              body.dueDate === undefined
+                ? task.dueDate
+                : body.dueDate === null
+                  ? null
+                  : new Date(body.dueDate),
+            notes: body.notes === undefined ? task.notes : body.notes,
+          },
+        });
+
+        let scoreUpdate: Awaited<ReturnType<typeof flipIndicatorAndRecalc>>['scoreUpdate'] | null = null;
+        if (becameComplete && updated.indicatorKey) {
+          const parts = updated.indicatorKey.split('.');
+          const dim = parts[0] as DimensionKey;
+          const ind = parts[1];
+          const validDims = Object.keys(DIMENSION_WEIGHTS) as DimensionKey[];
+          if (
+            ind &&
+            validDims.includes(dim) &&
+            (DIMENSION_INDICATORS[dim] as readonly string[]).includes(ind)
+          ) {
+            const flip = await flipIndicatorAndRecalc(tx, orgId, dim, ind, true);
+            scoreUpdate = flip.scoreUpdate;
+          }
+        }
+
+        if (becameComplete) {
+          // Phase 1 completing all tasks → unlock Phase 2, etc.
+          await reconcileLockState(tx, orgId);
+        }
+
+        return { task: updated, scoreUpdate };
+      });
+
+      if (result.task === null) {
+        return c.json(
+          { success: false as const, error: 'Task not found.', code: 'TASK_NOT_FOUND' },
+          404,
+        );
+      }
+      if (result.task === 'locked') {
+        return c.json(
+          {
+            success: false as const,
+            error: 'This task is locked. Complete the prerequisite phase first.',
+            code: 'TASK_LOCKED',
+          },
+          409,
+        );
+      }
+      return c.json({
+        success: true as const,
+        data: { task: result.task, scoreUpdate: result.scoreUpdate },
+      });
+    } catch (err) {
+      console.error('[compliance/roadmap/task PUT] error', err);
+      return c.json(
+        { success: false as const, error: 'Failed to update task.', code: 'TASK_UPDATE_ERROR' },
+        500,
+      );
+    }
+  },
+);
+
+// Legacy PATCH (used by Sprint 1 UI). Kept for backward-compat: marks complete.
 complianceRoutes.patch('/roadmap/task/:id', requireAuth, async (c) => {
   const userId = c.get('userId');
   const taskId = c.req.param('id');
@@ -245,88 +397,31 @@ complianceRoutes.patch('/roadmap/task/:id', requireAuth, async (c) => {
     }
 
     const result = await withRls({ userId, orgId }, async (tx) => {
-      // Verify task belongs to this org.
       const task = await tx.roadmapTask.findFirst({
-        where: { id: taskId, orgId },
+        where: { id: taskId, orgId, deletedAt: null },
       });
-      if (task === null) {
-        return null;
-      }
+      if (task === null) return null;
+      if (task.isLocked) return 'locked' as const;
 
-      // Mark task complete.
       const updated = await tx.roadmapTask.update({
         where: { id: taskId },
-        data: {
-          status: 'complete',
-          completedAt: new Date(),
-        },
+        data: { status: 'complete', completedAt: new Date() },
       });
 
-      // If task has an indicator_key (e.g. "aml_cft_programme.bwra_documented"),
-      // update that indicator and recalculate the readiness score.
-      let scoreUpdate: {
-        totalScore: number;
-        dimensions: Record<string, number>;
-      } | null = null;
-
-      // Cast through unknown — indicatorKey is in the Prisma schema but the
-      // generated client may be stale until `prisma generate` is re-run.
-      const indicatorKeyValue = (updated as unknown as { indicatorKey?: string | null }).indicatorKey;
-      if (indicatorKeyValue) {
-        const parts = indicatorKeyValue.split('.');
-        const dimension = parts[0] as DimensionKey;
-        const indicator = parts[1];
-
-        const validDimensions = Object.keys(DIMENSION_WEIGHTS) as DimensionKey[];
+      let scoreUpdate: Awaited<ReturnType<typeof flipIndicatorAndRecalc>>['scoreUpdate'] | null = null;
+      if (updated.indicatorKey) {
+        const [dim, ind] = updated.indicatorKey.split('.');
+        const validDims = Object.keys(DIMENSION_WEIGHTS) as DimensionKey[];
         if (
-          indicator &&
-          validDimensions.includes(dimension) &&
-          (DIMENSION_INDICATORS[dimension] as readonly string[]).includes(indicator)
+          dim && ind &&
+          validDims.includes(dim as DimensionKey) &&
+          (DIMENSION_INDICATORS[dim as DimensionKey] as readonly string[]).includes(ind)
         ) {
-          const latest = await tx.readinessScore.findFirst({
-            where: { orgId },
-            orderBy: { calculatedAt: 'desc' },
-          });
-
-          const currentState = parseSnapshotToIndicatorState(latest?.snapshot ?? null);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (currentState[dimension] as any)[indicator] = true;
-
-          const dimensionScores = indicatorsToDimensionScores(currentState);
-          const totalScore = calculateReadinessScore(dimensionScores);
-
-          await tx.readinessScore.create({
-            data: {
-              orgId,
-              totalScore,
-              corporateStructure: dimensionScores.corporate_structure,
-              capitalLicensing: dimensionScores.capital_licensing,
-              kycInfrastructure: dimensionScores.kyc_infrastructure,
-              amlCftProgramme: dimensionScores.aml_cft_programme,
-              transactionMonitoring: dimensionScores.transaction_monitoring,
-              regulatoryReporting: dimensionScores.regulatory_reporting,
-              regulatoryRelationships: dimensionScores.regulatory_relationships,
-              productClassification: dimensionScores.product_classification,
-              snapshot: currentState as unknown as Prisma.InputJsonValue,
-            },
-          });
-
-          scoreUpdate = {
-            totalScore,
-            dimensions: {
-              corporate_structure: dimensionScores.corporate_structure,
-              capital_licensing: dimensionScores.capital_licensing,
-              kyc_infrastructure: dimensionScores.kyc_infrastructure,
-              aml_cft_programme: dimensionScores.aml_cft_programme,
-              transaction_monitoring: dimensionScores.transaction_monitoring,
-              regulatory_reporting: dimensionScores.regulatory_reporting,
-              regulatory_relationships: dimensionScores.regulatory_relationships,
-              product_classification: dimensionScores.product_classification,
-            },
-          };
+          const flip = await flipIndicatorAndRecalc(tx, orgId, dim as DimensionKey, ind, true);
+          scoreUpdate = flip.scoreUpdate;
         }
       }
-
+      await reconcileLockState(tx, orgId);
       return { task: updated, scoreUpdate };
     });
 
@@ -336,10 +431,19 @@ complianceRoutes.patch('/roadmap/task/:id', requireAuth, async (c) => {
         404,
       );
     }
-
+    if (result === 'locked') {
+      return c.json(
+        {
+          success: false as const,
+          error: 'This task is locked. Complete the prerequisite phase first.',
+          code: 'TASK_LOCKED',
+        },
+        409,
+      );
+    }
     return c.json({ success: true as const, data: result });
   } catch (err) {
-    console.error('[compliance/roadmap/task] error', err);
+    console.error('[compliance/roadmap/task PATCH] error', err);
     return c.json(
       { success: false as const, error: 'Failed to update task.', code: 'TASK_UPDATE_ERROR' },
       500,
@@ -348,45 +452,55 @@ complianceRoutes.patch('/roadmap/task/:id', requireAuth, async (c) => {
 });
 
 // ========================================================================== //
-// GET /roadmap — all roadmap tasks for the org, grouped by phase.             //
+// DELETE /roadmap/task/:id — soft delete custom tasks only.                    //
 // ========================================================================== //
-complianceRoutes.get('/roadmap', requireAuth, async (c) => {
+complianceRoutes.delete('/roadmap/task/:id', requireAuth, async (c) => {
   const userId = c.get('userId');
+  const taskId = c.req.param('id');
 
   try {
     const orgId = await resolveOrgId(userId);
     if (orgId === null) {
-      return c.json({ success: true as const, data: { tasks: [], orgId: null } });
+      return c.json(
+        { success: false as const, error: 'Organisation not found.', code: 'ORG_NOT_FOUND' },
+        404,
+      );
     }
 
-    const tasks = await withRls({ userId, orgId }, (tx) =>
-      tx.roadmapTask.findMany({
-        where: { orgId },
-        orderBy: [{ phase: 'asc' }, { createdAt: 'asc' }],
-      }),
-    );
-
-    // Group by phase.
-    const grouped: Record<number, typeof tasks> = {};
-    for (const task of tasks) {
-      if (grouped[task.phase] === undefined) {
-        grouped[task.phase] = [];
-      }
-      grouped[task.phase]!.push(task);
-    }
-
-    return c.json({
-      success: true as const,
-      data: { tasks, grouped, orgId },
+    const result = await withRls({ userId, orgId }, async (tx) => {
+      const task = await tx.roadmapTask.findFirst({
+        where: { id: taskId, orgId, deletedAt: null },
+      });
+      if (task === null) return 'not_found' as const;
+      if (!task.isCustom) return 'seed_protected' as const;
+      await tx.roadmapTask.update({
+        where: { id: taskId },
+        data: { deletedAt: new Date() },
+      });
+      return 'deleted' as const;
     });
+
+    if (result === 'not_found') {
+      return c.json(
+        { success: false as const, error: 'Task not found.', code: 'TASK_NOT_FOUND' },
+        404,
+      );
+    }
+    if (result === 'seed_protected') {
+      return c.json(
+        {
+          success: false as const,
+          error: 'Seed tasks cannot be deleted — they are part of the regulatory checklist.',
+          code: 'SEED_TASK_PROTECTED',
+        },
+        403,
+      );
+    }
+    return c.json({ success: true as const, data: { deleted: true } });
   } catch (err) {
-    console.error('[compliance/roadmap] error', err);
+    console.error('[compliance/roadmap/task DELETE] error', err);
     return c.json(
-      {
-        success: false as const,
-        error: 'Failed to fetch roadmap.',
-        code: 'ROADMAP_FETCH_ERROR',
-      },
+      { success: false as const, error: 'Failed to delete task.', code: 'TASK_DELETE_ERROR' },
       500,
     );
   }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { DIMENSION_WEIGHTS, type DimensionKey } from '@klarify/core';
-import { prisma, resolveOrgId, withRls } from '@/lib/db';
+import { resolveOrgId, withRls } from '@/lib/db';
 import { authenticateRouteHandler, unauthenticated } from '@/lib/route-auth';
 
 const ZERO_DIMENSIONS = Object.fromEntries(

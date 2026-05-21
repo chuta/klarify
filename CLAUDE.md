@@ -2157,3 +2157,1884 @@ ALL FIVE SERVICES must be set up before Sprint 2 Phase B can begin. S2-A1 covers
 
 ─────────────────────────────────────────────────────── Klarify — Sprint 2 & 3 Task Breakdown v1.0 Prepared by Chimezie Chuta | Blockspace Technologies May 2026 | klarify.africa ───────────────────────────────────────────────────────
 
+═══════════════════════════════════════════════════════════════
+KLARIFY — SPRINT 4 & SPRINT 5
+EXECUTABLE TASK BREAKDOWN FOR CLAUDE CODE
+Source: Klarify_PRD_v1.1 + CLAUDE.md (May 2026)
+═══════════════════════════════════════════════════════════════
+
+HOW TO USE THIS FILE
+─────────────────────
+Each task block between ═══ dividers is a self-contained
+Claude Code prompt. Copy the entire block and paste directly
+into Claude Code as a single instruction.
+
+TASK TYPES:
+  🤖 CLAUDE CODE   → Paste directly into Claude Code
+  🖐  MANUAL        → You must do this yourself (external
+                      service, account, configuration)
+  🔍 VERIFY         → Run this check before proceeding
+
+MODEL GUIDE:
+  Architecture / hard problems → Opus 4
+  All implementation work      → Sonnet 4.5
+  Debugging after 2 attempts   → Escalate to Opus 4
+
+SPRINT PREREQUISITES — confirm before starting Sprint 4:
+  ✅ Sprint 2 complete: AI Q&A engine live, RAG pipeline working
+  ✅ Sprint 3 complete: Document analyser live, S3 uploads working
+  ✅ All tests passing: pnpm test
+  ✅ Zero TypeScript errors: pnpm tsc --noEmit
+  ✅ CLAUDE.md updated to Sprint 4 in Section 17
+
+
+╔═══════════════════════════════════════════════════════════╗
+║  SPRINT 4 — WEEKS 9–10                                    ║
+║  GOAL: COMPLIANCEOS v1 LIVE                               ║
+║                                                           ║
+║  Delivers: US-007 (Smart Compliance Roadmap),             ║
+║            US-008 (Document Generator — 9 templates),    ║
+║            US-006 enhancements (live score updates,       ║
+║            history chart, PDF export)                     ║
+╚═══════════════════════════════════════════════════════════╝
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SPRINT 4 — PHASE A: SMART COMPLIANCE ROADMAP (US-007)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+──────────────────────────────────────────────────────────
+TASK S4-A1 🤖 CLAUDE CODE — Roadmap Data Layer & Seed Tasks
+──────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════
+Read CLAUDE.md Sections 5 (schema), 8 (readiness score),
+and 15 (coding standards) before starting.
+Read PRD v1.1 Section 3.2 US-007 fully — especially the
+Phase 3 task library with all 11 ARIP tasks.
+Use Sonnet 4.5 for this implementation task.
+
+Build the roadmap data layer and seed task library.
+
+1. DATABASE MIGRATION
+   Create: prisma/migrations/add_roadmap_seed_tasks.sql
+
+   New table:
+   roadmap_task_templates (
+     id TEXT PRIMARY KEY,           -- e.g. 'P1-01', 'P3-01'
+     phase INT NOT NULL,            -- 1, 2, 3, or 4
+     title TEXT NOT NULL,
+     description TEXT NOT NULL,
+     regulatory_basis TEXT,
+     effort_days_min INT,
+     effort_days_max INT,
+     template_id TEXT,              -- links to document template
+     is_blocker BOOLEAN DEFAULT false,
+     depends_on TEXT[],             -- array of task IDs
+     product_types TEXT[],          -- ['ALL'] or specific types
+     created_at TIMESTAMPTZ DEFAULT NOW()
+   )
+
+   Run: pnpm prisma migrate dev
+
+2. SEED FILE
+   Create: packages/core/src/roadmap/seedTasks.ts
+
+   Seed ALL four phases of tasks.
+
+   PHASE 1 — Foundation (Corporate Structure):
+   P1-01: Register with the Corporate Affairs Commission (CAC)
+     Basis: CAMA 2020
+     Effort: 5–14 days
+     Blocker: true (nothing else proceeds without CAC)
+
+   P1-02: Establish correct share structure and beneficial ownership register
+     Basis: CAMA 2020, Section 119
+     Effort: 3–7 days
+     Depends on: P1-01
+
+   P1-03: Confirm Nigerian CEO/MD is resident in Nigeria
+     Basis: ARIP Framework Section 6(i), June 2024
+     Effort: 1 day
+
+   P1-04: Open a corporate bank account with a deposit money bank
+     Basis: CBN VASP Guidelines 2023
+     Effort: 7–21 days
+     Depends on: P1-01
+
+   P1-05: Obtain Tax Identification Number (TIN) from FIRS
+     Basis: NTAA 2025
+     Effort: 3–7 days
+     Depends on: P1-01
+
+   P1-06: Appoint a Compliance Officer
+     Basis: MLPPA 2022, Section 12
+     Effort: 7–30 days
+     Blocker: true (required for Phase 2)
+
+   P1-07: Classify your product (use Klarify Product Classifier)
+     Basis: ISA 2025, SEC Digital Asset Rules 2024
+     Effort: 1 day
+     template_id: null (use AI classification feature)
+
+   PHASE 2 — Compliance Infrastructure:
+   P2-01: Register on NFIU goAML portal
+     Basis: MLPPA 2022, Section 9; NFIU AML/CFT Framework
+     URL: https://goaml.nfiu.gov.ng
+     Effort: 3–7 days
+
+   P2-02: Document your Business-Wide Risk Assessment (BWRA)
+     Basis: NFIU AML/CFT Compliance Framework for VASPs (Dec 2024)
+     Effort: 7–14 days
+     template_id: 'BWRA'
+     Depends on: P2-01
+
+   P2-03: Draft your AML/CFT Policy Manual
+     Basis: MLPPA 2022
+     Effort: 7–14 days
+     template_id: 'AML_POLICY'
+     Depends on: P2-02
+
+   P2-04: Implement KYC Tiering Framework (NIN/BVN verification)
+     Basis: NFIU Guidelines, CBN KYC Regulations
+     Effort: 14–30 days
+     template_id: 'KYC_TIERS'
+
+   P2-05: Configure transaction monitoring system
+     Basis: MLPPA 2022, Section 11; NFIU AML/CFT Framework
+     Effort: 14–30 days
+
+   P2-06: Test STR and CTR filing workflow on goAML
+     Basis: MLPPA 2022, Sections 6–8
+     Effort: 3–7 days
+     Depends on: P2-01, P2-05
+
+   P2-07: Maintain PEP register and conduct initial screening
+     Basis: MLPPA 2022, Section 14
+     Effort: 3–7 days
+     template_id: 'PEP_REGISTER'
+
+   P2-08: Deliver initial AML/CFT team training
+     Basis: NFIU AML/CFT Compliance Framework
+     Effort: 1–3 days
+     Depends on: P2-03
+
+   PHASE 3 — ARIP Application:
+   (All 11 tasks from PRD v1.1 Section 3.2 US-007
+    Phase 3 Task Library — use exact text from PRD:
+    P3-01 through P3-11 as specified. All product_types: ['ALL'])
+
+   PHASE 4 — AIP Period Operations:
+   P4-01: Record customer baseline count on AIP receipt date
+     Basis: Section 29d, ARIP Framework June 2024
+     Blocker: true
+     Description: Record EXACT customer count on day AIP received.
+     This is the baseline for the 10% growth cap. Cannot be
+     reconstructed later.
+
+   P4-02: Brief all team members on AIP restrictions
+     Basis: Section 29, ARIP Framework June 2024
+     Description: Marketing, sales, customer success must know the
+     promotional ban applies to ALL communications.
+
+   P4-03: Set up weekly trading statistics report to SEC
+     Basis: Section 21a, ARIP Framework June 2024
+     Recurrence: weekly
+
+   P4-04: Set up monthly trading statistics report to SEC
+     Basis: Section 21a, ARIP Framework June 2024
+     Recurrence: monthly
+
+   P4-05: File quarterly financial and compliance reports to SEC
+     Basis: Section 21b, ARIP Framework June 2024
+     Recurrence: quarterly
+
+   P4-06: Annual BWRA review and update
+     Basis: NFIU AML/CFT Compliance Framework
+     Recurrence: annual
+
+3. ROADMAP GENERATOR
+   Create: packages/core/src/roadmap/generateRoadmap.ts
+
+   generateRoadmap(userProfile: UserProfile): RoadmapTask[]
+
+   Logic:
+   a. Load all task templates from DB
+   b. Filter by product_types matching user's product_types
+      (if template product_types includes 'ALL', always include)
+   c. For each template, create a roadmap_tasks record for the
+      org with:
+      - status: 'not_started'
+      - is_locked: true if phase > 1 (phases unlock as previous
+        phase reaches 100% completion)
+      - P3-01 additionally locked until
+        registered_solicitor_engaged indicator is true
+   d. Return sorted array grouped by phase
+
+4. PHASE UNLOCK SERVICE
+   Create: packages/core/src/roadmap/phaseUnlock.ts
+
+   checkAndUnlockPhases(orgId: string): Promise<void>
+
+   Logic:
+   - Count completed tasks in Phase 1
+   - If all Phase 1 tasks complete: unlock Phase 2 tasks
+   - If all Phase 2 tasks complete: unlock Phase 3 tasks
+   - Phase 4 unlocks when arip_applications.stage = 'aip_active'
+   - Call this function after every task status update
+
+5. API ENDPOINTS
+   Create: apps/api/src/routes/compliance/roadmap.ts
+
+   GET  /api/compliance/roadmap
+        Returns all tasks grouped by phase with lock status
+        Include progress: { total, complete, pct } per phase
+
+   POST /api/compliance/roadmap/task
+        Create custom task (user-defined, any phase)
+
+   PUT  /api/compliance/roadmap/task/:id
+        Update task: status, owner_user_id, due_date, notes
+        After update: call checkAndUnlockPhases()
+        After update: call recalculateReadinessScore()
+
+   DELETE /api/compliance/roadmap/task/:id
+        Only custom tasks can be deleted (seed tasks cannot)
+
+6. TESTS
+   Create: packages/core/src/__tests__/roadmap/
+
+   - generateRoadmap() returns tasks for all 4 phases
+   - Phase 1 tasks are unlocked, Phase 2-4 locked on generation
+   - DAX product gets DAX-specific tasks
+   - Completing all Phase 1 tasks unlocks Phase 2
+   - P3-01 remains blocked until solicitor_engaged = true
+   - Phase 4 tasks lock until AIP received
+   - Readiness score recalculates after task completion
+   - Custom tasks can be created and deleted
+   - Seed tasks cannot be deleted (returns 403)
+
+   pnpm add -D @faker-js/faker (for test data generation)
+═══════════════════════════════════════════════════════
+
+
+──────────────────────────────────────────────────────────
+TASK S4-A2 🤖 CLAUDE CODE — Roadmap Kanban UI (Web)
+──────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════
+Read CLAUDE.md Section 7 (brand tokens) and PRD v1.1
+Section 5.3 (visual design language) before starting.
+Use Sonnet 4.5.
+
+Build the Smart Compliance Roadmap Kanban interface.
+
+1. PAGE
+   Create: apps/web/src/app/(dashboard)/roadmap/page.tsx
+
+2. PHASE HEADER STRIP (top of page, horizontal)
+   Four phase cards in a horizontal row:
+   - Phase 1: Foundation (Corporate Structure & Capital)
+   - Phase 2: Compliance Infrastructure
+   - Phase 3: ARIP Application
+   - Phase 4: AIP Period Operations
+
+   Each phase card shows:
+   - Phase name and subtitle
+   - Progress bar: X/Y tasks complete
+   - Completion percentage
+   - Lock icon (🔒) if phase is locked
+   - Color: teal for active/complete, grey for locked
+   - Clicking a locked phase shows: \"Complete Phase N first\"
+
+3. TASK BOARD (below phase header)
+   Show tasks for the currently selected phase.
+   Default: show lowest incomplete phase.
+
+   TASK CARD COMPONENT: RoadmapTaskCard
+   File: packages/ui/src/components/RoadmapTaskCard.tsx
+
+   Card contains:
+   - Checkbox (left): clicking marks task complete/incomplete
+     Checked state: teal background, strikethrough title
+   - Task title (bold)
+   - Regulatory basis (small italic, JetBrains Mono font,
+     klarifyTeal colour)
+   - Estimated effort: \"Est. 3–7 days\"
+   - Owner avatar + name (if assigned)
+   - Due date (red if overdue, amber if due within 7 days)
+   - \"Updates score\" badge (klarifyTeal pill) if task affects
+     the readiness score
+   - \"BLOCKER\" badge (red pill) for is_blocker tasks
+   - \"Locked\" overlay with lock icon if is_locked = true
+   - Expand arrow → opens task detail drawer
+
+   TASK DETAIL DRAWER (slides in from right):
+   - Full description
+   - Regulatory basis with citation
+   - Depends on (linked task IDs)
+   - Owner assignment dropdown (team members)
+   - Due date picker
+   - Notes textarea (auto-saved)
+   - \"Generate document\" button (if template_id exists)
+     → routes to /compliance/documents/generate/:templateId
+   - \"Ask Klarify about this task\" button
+     → opens chat with task context pre-loaded
+
+4. PHASE LOCKING UI
+   Locked phase overlay:
+   - Semi-transparent grey overlay on all locked task cards
+   - Lock icon + message: \"Complete Phase [N] to unlock these tasks\"
+   - Progress of blocking phase shown: \"Phase 2 is 60% complete\"
+
+   P3-01 special blocker:
+   - Even if Phase 2 is 100% complete, P3-01 card shows:
+     amber banner: \"SOLICITOR REQUIRED BEFORE PROCEEDING —
+     Application MUST be filed through a registered solicitor
+     or adviser (Section 16, ARIP Framework). Cannot self-file.\"
+   - Task cannot be marked complete without solicitor fields filled
+
+5. HEADER ACTIONS
+   - \"Add custom task\" button (opens inline form):
+     Fields: title, description, phase, due date, owner
+   - \"Filter by owner\" dropdown
+   - \"Hide completed\" toggle
+   - Phase selector tabs on mobile
+
+6. ROADMAP PROGRESS SUMMARY (collapsible, top of page):
+   Overall completion bar: \"X of Y total tasks complete (Z%)\"
+   \"Estimated time to ARIP-ready: ~N weeks\" (calculated from
+   incomplete task effort estimates)
+
+7. MOBILE BEHAVIOUR
+   - Phase headers become horizontal scrollable pills on mobile
+   - Tasks stack vertically (no side-by-side columns)
+   - Task detail opens as full-screen bottom sheet on mobile
+   - Drag-to-reorder disabled on mobile (tap to expand only)
+
+8. TESTS
+   Create: apps/web/src/__tests__/roadmap/
+
+   - Phase 1 cards render without lock overlay
+   - Phase 2 cards render with lock overlay when P1 incomplete
+   - Completing a task calls PUT /api/compliance/roadmap/task/:id
+   - Locked task checkbox is disabled
+   - BLOCKER badge renders on P3-01
+   - \"Add custom task\" form submits and refreshes board
+   - Due date shows red when overdue
+   - \"Generate document\" button only visible when template_id set
+   - Mobile: phase selector renders as pill tabs
+═══════════════════════════════════════════════════════
+
+
+──────────────────────────────────────────────────────────
+TASK S4-A3 🔍 VERIFY — Roadmap End-to-End Test
+──────────────────────────────────────────────────────────
+
+Before building the document generator, manually verify:
+
+1. Log in, go to /roadmap
+2. Confirm Phase 1 tasks are visible and unlocked
+3. Confirm Phase 2 tasks are locked (lock overlay visible)
+4. Check off all Phase 1 tasks one by one
+5. Verify: Phase 2 tasks unlock automatically
+6. Verify: Readiness Score updates after each completion
+7. Click a task with a template_id → \"Generate document\"
+   button should appear in detail drawer
+8. On mobile (or 360px viewport): phases render as pills,
+   tasks stack vertically
+
+□ Phase 1 unlocked on fresh account
+□ Phase 2 locked until Phase 1 complete
+□ Score updates in real time on task completion
+□ P3-01 BLOCKER badge visible
+□ Custom task can be added and deleted
+□ Mobile layout correct at 360px
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SPRINT 4 — PHASE B: DOCUMENT GENERATOR (US-008, 9 TEMPLATES)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+──────────────────────────────────────────────────────────
+TASK S4-B1 🤖 CLAUDE CODE — Document Generation Engine
+──────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════
+Read CLAUDE.md Section 14 (document templates table)
+and PRD v1.1 Section 3.2 US-008 (both the original 9
+templates and the Sprint 4 delivery scope).
+Use Opus 4 for the AI prompt design in step 3.
+Use Sonnet 4.5 for all implementation.
+
+Build the document generation engine for all 9 Sprint 4
+templates. (4 ARIP templates are Sprint 5 — do not build
+them yet.)
+
+SPRINT 4 TEMPLATES (9 total):
+  BWRA            Business-Wide Risk Assessment
+  AML_POLICY      AML/CFT Policy Manual
+  KYC_TIERS       KYC Tiering Framework
+  TOKEN_MEMO      Token Classification Legal Memo
+  ARIP_WHITEPAPER ARIP White Paper Outline
+  STR_TEMPLATE    STR Filing Template
+  PEP_REGISTER    PEP Register Template
+  CO_APPOINTMENT  Compliance Officer Appointment Letter
+  REG_BRIEF       Regulator Engagement Brief
+
+1. CREATE PROMPT FILES
+   Directory: packages/ai/prompts/documents/
+   Create one file per template: BWRA.ts, AML_POLICY.ts,
+   KYC_TIERS.ts, TOKEN_MEMO.ts, ARIP_WHITEPAPER.ts,
+   STR_TEMPLATE.ts, PEP_REGISTER.ts, CO_APPOINTMENT.ts,
+   REG_BRIEF.ts
+
+   Each prompt file exports:
+   {
+     templateId: string,
+     documentName: string,
+     regulatoryBasis: string,
+     requiredFields: DocumentField[],
+     systemPrompt: string,
+     outputInstructions: string,
+   }
+
+   DOCUMENT FIELD INTERFACE:
+   {
+     key: string,
+     label: string,
+     type: 'text' | 'textarea' | 'select' | 'date' | 'boolean',
+     required: boolean,
+     helpText: string,
+     options?: string[], // for select type
+     prefilledFrom?: string, // org profile field to pre-fill from
+   }
+
+   BWRA required fields (example):
+   - company_name (prefilledFrom: org.name)
+   - product_types (prefilledFrom: org.product_types)
+   - target_markets (prefilledFrom: org.target_markets)
+   - business_description (textarea)
+   - key_risk_areas (select multiple: exchange, custody,
+     payments, lending, token_issuance, other)
+   - customer_base_size (select: 0-100, 101-1000, 1001-10000, 10000+)
+   - existing_controls (textarea)
+   - compliance_officer_name (prefilledFrom: org.co_name)
+   - assessment_date (date, default: today)
+
+   Build similar field definitions for all 9 templates.
+   Every field with prefilledFrom MUST auto-populate from
+   the user's org profile — never ask for information
+   Klarify already has.
+
+2. DOCUMENT GENERATION SERVICE
+   Create: apps/api/src/services/documentGeneration.ts
+
+   generateDocument(templateId, orgId, userId, formData):
+
+   a. Load template prompt file
+   b. Load org profile (for pre-filled fields)
+   c. Build Claude prompt:
+      - System: \"You are generating a professional Nigerian
+        regulatory compliance document. Output must be
+        complete, professionally structured, and ready for
+        legal review before use.\"
+      - Include all regulatory basis context from corpus RAG
+        (retrieve relevant chunks for the template type)
+      - User: formData + template-specific instructions
+   d. Call Claude (ANTHROPIC_MODEL_ADVISORY):
+      - Temperature: 0.2 (structured documents, low creativity)
+      - Max tokens: 4000
+   e. Parse response into structured JSON:
+      { sections: [{ title, content, regulatoryBasis }] }
+   f. Generate Word (.docx) using docx npm package
+      - Company letterhead (company name + address from org)
+      - Document title + date
+      - Regulatory basis footer on every page
+      - Disclaimer footer: \"This document was generated with
+        AI assistance. Review and customise before use. This
+        is not legal advice.\"
+      - Version number: \"v1.0 — Generated [date]\"
+   g. Generate PDF (html-pdf-node or puppeteer)
+   h. Upload both files to S3:
+      Path: {orgId}/{userId}/documents/{uuid}/
+      Files: {templateId}_v1.docx + {templateId}_v1.pdf
+   i. Save to generated_documents table:
+      { org_id, user_id, template_type, title,
+        content (full JSON), s3_key, version: 1 }
+   j. Return: { documentId, downloadUrls: { docx, pdf } }
+
+3. VERSION HISTORY SERVICE
+   Create: apps/api/src/services/documentVersions.ts
+
+   When user regenerates a document:
+   - Increment version number
+   - Keep ALL previous versions in S3 and database
+   - Mark new version as current
+   - Return full version history
+
+4. API ENDPOINTS
+   Create: apps/api/src/routes/documents/generate.ts
+
+   POST /api/documents/generate
+   Body: { templateId, formData }
+   - Authenticate + check plan limits (Navigator: 3 templates)
+   - Call generateDocument service
+   - Return { documentId, downloadUrls }
+
+   GET /api/documents
+   - Returns list of all generated documents for org
+   - Include: templateType, title, version, createdAt,
+     downloadUrls, regulatoryBasis
+
+   GET /api/documents/:id
+   - Returns single document with full version history
+
+   GET /api/documents/:id/versions
+   - Returns all versions with download URLs
+
+   DELETE /api/documents/:id
+   - Soft delete (marks as deleted, keeps in S3)
+
+5. INSTALL REQUIRED PACKAGES
+   cd apps/api
+   pnpm add docx html-pdf-node
+   pnpm add -D @types/html-pdf-node
+
+6. TESTS
+   Create: apps/api/src/__tests__/documents/generate.test.ts
+
+   - BWRA generation with minimal valid form data
+   - AML_POLICY generation pre-fills company name from org
+   - Generated .docx is a valid ZIP (passes zipfile check)
+   - Generated document contains regulatory basis citation
+   - Generated document contains disclaimer footer
+   - Version increments correctly on regeneration
+   - Navigator plan blocked after 3 documents (402 response)
+   - Download URL expires after 1 hour
+   - S3 key contains orgId (no cross-org exposure)
+═══════════════════════════════════════════════════════
+
+
+──────────────────────────────────────────────────────────
+TASK S4-B2 🤖 CLAUDE CODE — Document Generator UI (Web)
+──────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════
+Read CLAUDE.md Section 7 (brand tokens).
+Use Sonnet 4.5.
+
+Build the Document Generator UI.
+
+1. DOCUMENT LIBRARY PAGE
+   Create: apps/web/src/app/(dashboard)/compliance/documents/page.tsx
+
+   LAYOUT:
+   - Left sidebar: template categories
+     All Templates | AML/CFT | KYC | Licensing | ARIP | Other
+   - Main area: template cards grid
+
+   TEMPLATE CARD (for each of 9 templates):
+   Component: DocumentTemplateCard
+   - Template icon (document icon with colour by category)
+   - Template name (bold)
+   - Regulatory basis (small, teal, monospace)
+   - \"Generate\" button (teal)
+   - \"View generated\" badge (gold) if doc already generated
+   - Plan gate: navigator users see lock on templates 4-9
+     with \"Upgrade to Compass\" tooltip
+
+2. GENERATED DOCUMENTS LIST
+   Below template grid, show previously generated documents:
+   - Columns: Document name | Version | Generated | Actions
+   - Actions: Download .docx | Download PDF | Regenerate |
+              View history
+   - Empty state: \"No documents generated yet. Choose a
+     template above to get started.\"
+
+3. DOCUMENT FORM PAGE
+   Create: apps/web/src/app/(dashboard)/compliance/documents/
+           generate/[templateId]/page.tsx
+
+   Layout: Two-column
+   Left (40%): Form fields
+   Right (60%): Live preview area (see step 4)
+
+   FORM BEHAVIOUR:
+   - Load form field definitions from template
+   - Pre-fill fields where prefilledFrom is set
+   - Show help text below each field (collapsible)
+   - Group fields into logical sections with headers
+   - Required field validation before submission
+   - \"Generate Document\" button (disabled until all required
+     fields filled)
+   - Loading state: \"Generating your [document name]...
+     This takes about 15–20 seconds.\"
+
+4. DOCUMENT PREVIEW
+   After generation, right column shows:
+   - Rendered document preview (iframe or formatted HTML)
+   - Download buttons: \"Download .docx\" | \"Download PDF\"
+   - \"Regenerate\" button (with warning: \"This will create
+     a new version. Previous version is saved.\")
+   - \"Ask Klarify about this document\" → chat with context
+
+5. VERSION HISTORY MODAL
+   On clicking \"View history\":
+   - Modal showing version table: Version | Date | Actions
+   - Each version has: Download .docx | Download PDF
+   - Current version highlighted
+
+6. INTEGRATION WITH ROADMAP
+   When user clicks \"Generate document\" from a roadmap
+   task card:
+   - Route to /compliance/documents/generate/:templateId
+   - After generation, offer \"Mark roadmap task as complete\"
+
+7. PLAN GATE UI
+   For locked templates on Navigator plan:
+   - Template card has gold lock overlay
+   - \"Available on Compass plan\" text
+   - \"Upgrade\" button links to /billing/upgrade
+
+8. TESTS
+   - Template grid renders all 9 templates
+   - Pre-filled fields show org data correctly
+   - Required field validation blocks submission
+   - Download buttons call correct S3 URLs
+   - Version history modal shows all versions
+   - Navigator plan sees lock on templates 4-9
+   - Loading state shown during generation (15-20s)
+   - Roadmap integration: \"Mark task complete\" appears
+     after generation
+═══════════════════════════════════════════════════════
+
+
+──────────────────────────────────────────────────────────
+TASK S4-B3 🖐  MANUAL — Test All 9 Document Templates
+──────────────────────────────────────────────────────────
+
+Generate a test document for each of the 9 templates
+using test data. Verify each output manually:
+
+For each generated document check:
+□ Company name is pre-filled correctly from org profile
+□ Document structure matches regulatory requirements
+□ Regulatory basis citation appears in footer
+□ Disclaimer appears in footer
+□ Word (.docx) file opens in Microsoft Word/Google Docs
+□ PDF renders correctly
+□ No placeholder text left unfilled (e.g. [INSERT X HERE])
+□ Version shows \"v1.0 — Generated [today's date]\"
+
+Priority order for testing:
+1. BWRA (most complex — test first)
+2. AML_POLICY
+3. KYC_TIERS
+4. CO_APPOINTMENT
+5. STR_TEMPLATE
+6. PEP_REGISTER
+7. TOKEN_MEMO
+8. ARIP_WHITEPAPER
+9. REG_BRIEF
+
+Log any structural issues as GitHub issues before
+proceeding to Sprint 4 Phase C.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SPRINT 4 — PHASE C: READINESS SCORE ENHANCEMENTS (US-006)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+──────────────────────────────────────────────────────────
+TASK S4-C1 🤖 CLAUDE CODE — Live Score + History + Export
+──────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════
+Read CLAUDE.md Section 8 (readiness score calculation)
+and PRD v1.1 Section 3.2 US-006 acceptance criteria.
+Use Sonnet 4.5.
+
+Enhance the Readiness Score dashboard with live updates,
+history chart, and PDF export.
+
+1. REAL-TIME SCORE RECALCULATION
+   Create: apps/api/src/services/scoreRecalculation.ts
+
+   recalculateAndSave(orgId: string): Promise<ReadinessScore>
+
+   Triggers (call this function after each of these):
+   - Roadmap task marked complete/incomplete
+   - Document uploaded and analysed
+   - Compliance indicator updated manually
+   - ARIP stage changes
+
+   Process:
+   a. Load all compliance indicators for org from DB
+   b. Calculate each dimension score (0-100) based on
+      indicator completion % for that dimension
+   c. Apply dimension weights from CLAUDE.md Section 8:
+      corporate_structure: 0.10
+      capital_licensing: 0.20
+      kyc_infrastructure: 0.15
+      aml_cft_programme: 0.20
+      transaction_monitoring: 0.10
+      regulatory_reporting: 0.10
+      regulatory_relationships: 0.10
+      product_classification: 0.05
+   d. Calculate weighted total (0-100, rounded)
+   e. Save snapshot to readiness_scores table with
+      calculated_at timestamp
+   f. Return new score
+
+   IMPORTANT: The score calculation logic in
+   packages/core/src/compliance/readinessScore.ts
+   (from CLAUDE.md Section 8) is the canonical source.
+   Do not create a separate calculation — call that function.
+
+2. SCORE HISTORY API
+   Update: apps/api/src/routes/compliance/score.ts
+
+   GET /api/compliance/score/history
+   Query params: ?days=30 (default), ?days=60, ?days=90
+   Returns: Array<{ date, total_score, dimension_scores }>
+   Used to power the history line chart on dashboard.
+
+3. SCORE HISTORY CHART COMPONENT
+   Create: packages/ui/src/components/ScoreHistoryChart.tsx
+
+   Using Recharts (already in CLAUDE.md tech stack):
+   - Line chart showing score over time (last 30 days default)
+   - X axis: dates, Y axis: 0-100
+   - Line colour: getScoreColor(latestScore) from color tokens
+   - Area fill below the line (semi-transparent)
+   - Tooltip: \"Score: X on [date]\"
+   - Time period selector: 30 days | 60 days | 90 days
+   - Empty state: \"Track your score for 7+ days to see
+     your compliance trajectory\"
+
+4. DIMENSION BREAKDOWN COMPONENT
+   Create: packages/ui/src/components/DimensionBreakdown.tsx
+
+   Shows all 8 dimensions in an expandable list:
+   Each dimension row:
+   - Dimension name
+   - Sub-score progress bar (colour coded by score)
+   - Sub-score number (e.g. \"60/100\")
+   - Weight label (e.g. \"20% of total\")
+   - Expand arrow → shows individual indicators for that
+     dimension as checkboxes
+
+   Clicking an unchecked indicator:
+   - Opens a drawer: \"What is this?\" (plain English explanation)
+   - \"How to complete this\" guidance
+   - Link to relevant roadmap task (if exists)
+   - \"Mark as complete\" button (calls PUT /api/compliance/indicators)
+
+5. COMPLIANCE REPORT PDF EXPORT
+   Create: apps/api/src/routes/compliance/export.ts
+
+   GET /api/compliance/score/export?format=pdf
+
+   Generates a PDF compliance status report containing:
+   - Company name + logo area
+   - Report date
+   - Overall Readiness Score (large, colour-coded)
+   - Score interpretation: \"Good Standing\"
+   - 8-dimension breakdown table with scores
+   - Score trajectory chart (last 30 days)
+   - Outstanding action items (top 5 by priority)
+   - Next regulatory deadline
+   - Disclaimer: \"This report is a self-assessment tool.
+     It does not constitute a regulatory opinion or guarantee
+     of compliance.\"
+   - Footer: \"Generated by Klarify Africa — klarify.africa\"
+
+   Plan gate: Compass+ only. Navigator sees \"Upgrade\" prompt.
+   File expires after 1 hour (signed S3 URL).
+
+6. DASHBOARD UPDATE
+   Update: apps/web/src/app/(dashboard)/page.tsx
+
+   Add to dashboard below the Readiness Score gauge:
+   - ScoreHistoryChart component (collapsed by default,
+     \"View score history\" expander)
+   - DimensionBreakdown component (replacing any static
+     dimension display from Sprint 1)
+   - \"Export compliance report\" button (Compass+ only,
+     calls GET /api/compliance/score/export)
+
+7. TESTS
+   - Score recalculates when task is marked complete
+   - Score history returns correct number of data points
+   - ScoreHistoryChart renders with Recharts
+   - DimensionBreakdown shows correct weights
+   - Clicking indicator opens explanation drawer
+   - PDF export returns valid PDF (check Content-Type header)
+   - PDF export blocked for Navigator plan (402 response)
+   - Score never exceeds 100 or goes below 0
+═══════════════════════════════════════════════════════
+
+
+──────────────────────────────────────────────────────────
+TASK S4-C2 🔍 VERIFY — Sprint 4 Complete Checkpoint
+──────────────────────────────────────────────────────────
+
+Run full Sprint 4 verification before closing sprint:
+
+ROADMAP:
+□ All 4 phases render with correct tasks
+□ Phase locking works correctly (Phase 2 locked until P1 done)
+□ P3-01 shows BLOCKER badge and solicitor warning
+□ Completing a task updates score in real time
+□ Custom tasks can be created and deleted
+□ Seed tasks cannot be deleted (403 returned)
+□ Phase progress percentage is accurate
+□ Roadmap→document generator link works
+
+DOCUMENT GENERATOR:
+□ All 9 templates accessible from document library
+□ Pre-fill works: company name from org profile
+□ All required fields validated before submission
+□ Generated .docx opens correctly in Word
+□ Generated PDF renders correctly
+□ Regulatory basis appears in document footer
+□ Disclaimer appears in document footer
+□ Version history saves correctly
+□ Navigator plan limited to 3 templates
+□ Compass+ gets all 9 templates
+
+READINESS SCORE:
+□ Score updates in real time on task completion
+□ Score history chart renders with data
+□ All 8 dimensions show with correct weights
+□ Dimension indicators can be toggled
+□ PDF export works for Compass+ users
+□ PDF export blocked for Navigator (402)
+
+SECURITY:
+□ Generated documents not accessible across orgs (RLS)
+□ S3 URLs expire after 1 hour
+
+PERFORMANCE:
+□ Document generation under 20 seconds
+□ Roadmap page loads under 2 seconds
+□ Score recalculation under 500ms
+
+TESTS:
+□ pnpm test — all passing
+□ pnpm tsc --noEmit — zero TypeScript errors
+□ pnpm lint — zero lint errors
+
+SPRINT 4 MILESTONE: \"ComplianceOS v1 Live\" ✅
+
+Update CLAUDE.md Section 17 to Sprint 5 before
+starting Sprint 5 tasks.
+
+
+╔═══════════════════════════════════════════════════════════╗
+║  SPRINT 5 — WEEKS 11–12                                   ║
+║  GOAL: BILLING + NOTIFICATIONS LIVE                       ║
+║                                                           ║
+║  Delivers: Subscription billing (Flutterwave + Stripe),   ║
+║            Feature tier-gating, ARIP tracker (US-009),   ║
+║            Regulator CRM (US-010),                        ║
+║            Email notifications,                           ║
+║            4 ARIP document templates (US-008 completion)  ║
+╚═══════════════════════════════════════════════════════════╝
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SPRINT 5 — PHASE A: SUBSCRIPTION BILLING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+──────────────────────────────────────────────────────────
+TASK S5-A1 🖐  MANUAL — Set Up Payment Provider Accounts
+──────────────────────────────────────────────────────────
+
+Complete before S5-A2. Both are required.
+
+1. FLUTTERWAVE (Africa-first — primary for Nigerian users)
+   - Sign up at: https://dashboard.flutterwave.com
+   - Complete business verification (Blockspace Technologies)
+   - Enable: Subscriptions, Card payments, Bank transfers,
+     USSD, Mobile money
+   - Get API keys from Dashboard → Settings → API Keys:
+     FLUTTERWAVE_PUBLIC_KEY=FLWPUBK_TEST-...
+     FLUTTERWAVE_SECRET_KEY=FLWSECK_TEST-...
+     FLUTTERWAVE_ENCRYPTION_KEY=...
+   - Set webhook URL to:
+     https://api.klarify.africa/api/billing/webhook/flutterwave
+   - Add all keys to .env.local
+
+2. STRIPE (international users — outside Africa)
+   - Sign up at: https://dashboard.stripe.com
+   - Enable: Subscriptions, Cards, international payments
+   - Get API keys from Developers → API Keys:
+     STRIPE_PUBLIC_KEY=pk_test_...
+     STRIPE_SECRET_KEY=sk_test_...
+     STRIPE_WEBHOOK_SECRET=whsec_...
+   - Create products and prices in Stripe dashboard:
+     Navigator: $29/month recurring + $278/year recurring
+     Compass: $99/month recurring + $950/year recurring
+     Flagship: $299/month recurring + $2870/year recurring
+     ARIP Package: $499 one-time
+   - Note all Price IDs (price_xxx) — needed in code
+   - Set webhook URL to:
+     https://api.klarify.africa/api/billing/webhook/stripe
+   - Add all keys and price IDs to .env.local
+
+3. ENVIRONMENT VARIABLES TO ADD:
+   FLUTTERWAVE_PUBLIC_KEY=
+   FLUTTERWAVE_SECRET_KEY=
+   FLUTTERWAVE_ENCRYPTION_KEY=
+   STRIPE_PUBLIC_KEY=
+   STRIPE_SECRET_KEY=
+   STRIPE_WEBHOOK_SECRET=
+   # Stripe Price IDs
+   STRIPE_PRICE_NAVIGATOR_MONTHLY=
+   STRIPE_PRICE_NAVIGATOR_ANNUAL=
+   STRIPE_PRICE_COMPASS_MONTHLY=
+   STRIPE_PRICE_COMPASS_ANNUAL=
+   STRIPE_PRICE_FLAGSHIP_MONTHLY=
+   STRIPE_PRICE_FLAGSHIP_ANNUAL=
+   STRIPE_PRICE_ARIP_PACKAGE=
+
+
+──────────────────────────────────────────────────────────
+TASK S5-A2 🤖 CLAUDE CODE — Billing Backend
+──────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════
+Read CLAUDE.md Section 10 (PLAN_LIMITS and PLAN_PRICING)
+and PRD v1.1 Section 6 (pricing table) before starting.
+Use Sonnet 4.5 for this implementation.
+Do NOT hardcode prices — read from PLAN_PRICING in
+packages/core/src/types/subscription.ts.
+
+1. BILLING SERVICE
+   Create: apps/api/src/services/billing.ts
+
+   createSubscription(orgId, plan, billingCycle, provider):
+   - provider: 'flutterwave' (NG users) or 'stripe' (others)
+   - For Flutterwave: use Flutterwave Subscriptions API
+   - For Stripe: use Stripe Subscriptions API with Price ID
+   - On success: save to subscriptions table
+   - Return: { subscriptionId, paymentUrl }
+
+   cancelSubscription(orgId):
+   - Cancel with respective provider
+   - Update subscriptions.status = 'cancelled'
+   - Access continues until current_period_end
+
+   getSubscriptionStatus(orgId):
+   - Returns: { plan, status, current_period_end, seats_used }
+
+   upgradeSubscription(orgId, newPlan):
+   - Prorate billing with respective provider
+   - Update subscriptions table immediately (not at renewal)
+   - Trigger feature-gate refresh
+
+2. WEBHOOK HANDLERS
+   Create: apps/api/src/routes/billing/webhooks.ts
+
+   POST /api/billing/webhook/flutterwave
+   Events to handle:
+   - subscription.create → update subscriptions table
+   - subscription.activated → set status 'active'
+   - subscription.cancelled → set status 'cancelled'
+   - charge.completed → log payment success
+   - charge.failed → set status 'past_due', send email
+
+   POST /api/billing/webhook/stripe
+   Events to handle:
+   - customer.subscription.created → update table
+   - customer.subscription.updated → sync plan changes
+   - customer.subscription.deleted → set cancelled
+   - invoice.paid → set active, update period end
+   - invoice.payment_failed → set past_due, send email
+   - checkout.session.completed → activate ARIP package
+
+   WEBHOOK SECURITY:
+   - Flutterwave: verify webhook hash
+   - Stripe: verify stripe-signature header using
+     STRIPE_WEBHOOK_SECRET
+
+3. BILLING API ROUTES
+   Create: apps/api/src/routes/billing/index.ts
+
+   POST /api/billing/subscribe
+   Body: { plan, billingCycle, provider }
+   Returns: { paymentUrl } — redirect user here to pay
+
+   POST /api/billing/cancel
+   Cancels current subscription (access until period end)
+
+   GET /api/billing/status
+   Returns current subscription state for the org
+
+   POST /api/billing/upgrade
+   Body: { newPlan }
+   Upgrades immediately with proration
+
+4. FEATURE GATE MIDDLEWARE
+   Create: apps/api/src/middleware/featureGate.ts
+
+   requireFeature(feature: keyof PlanLimits):
+   - Check user's current plan from subscriptions table
+   - Check PLAN_LIMITS[plan][feature]
+   - If false or over limit: return 402 with:
+     { error: 'Plan upgrade required',
+       code: 'PLAN_LIMIT_REACHED',
+       requiredPlan: 'compass',
+       upgradeUrl: '/billing/upgrade' }
+
+   Apply to these endpoints:
+   - POST /api/ai/scenario → requireFeature('scenario_simulator')
+   - POST /api/ai/jurisdiction-gap → no gate (all plans)
+   - GET /api/arip → requireFeature('arip_tracker')
+   - GET /api/regulators/interactions → requireFeature('regulator_crm')
+   - GET /api/compliance/score/export → Compass+ only
+   - Document templates 4-9 → Navigator gets 3 only
+
+5. FREE TIER
+   Users who register without subscribing get:
+   - Plan: 'free' (set on registration)
+   - 10 AI queries/month
+   - Readiness Score (view only)
+   - Smart Roadmap (Phase 1 only — view only)
+   - Nigeria only
+   No credit card required for free tier.
+
+6. TESTS
+   - createSubscription() creates record in DB
+   - Stripe webhook updates plan on invoice.paid
+   - Flutterwave webhook updates plan on charge.completed
+   - featureGate blocks scenario simulator for free plan
+   - featureGate allows scenario simulator for compass plan
+   - Cancel sets status='cancelled' not deleted
+   - Free tier user gets 402 on AI query #11
+   - Webhook signature verification rejects invalid payloads
+
+   Install: pnpm add stripe @flutterwave-node-v3/node
+═══════════════════════════════════════════════════════
+
+
+──────────────────────────────────────────────────────────
+TASK S5-A3 🤖 CLAUDE CODE — Billing UI
+──────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════
+Read PRD v1.1 Section 6 (pricing table) before starting.
+Use Sonnet 4.5.
+
+Build the billing and upgrade UI.
+
+1. PRICING PAGE (public — no auth required)
+   Create: apps/web/src/app/(marketing)/pricing/page.tsx
+
+   Three-column pricing table (Navigator | Compass | Flagship)
+   matching PRD v1.1 Section 6 table exactly.
+   Monthly/Annual toggle at top (annual shows 20% savings).
+   \"Compass\" column highlighted as \"Most Popular\".
+   CTA buttons:
+   - Free tier: \"Get started free\" → /register
+   - Navigator: \"Start Navigator\" → /billing/subscribe?plan=navigator
+   - Compass: \"Start free trial\" → /billing/subscribe?plan=compass
+   - Flagship: \"Contact us\" → mailto:hello@klarify.africa
+
+   Below table:
+   - \"ARIP Application Package — $499 one-time\"
+     Description: Full ARIP document set + 30-day AI support
+   - FAQ section (5 common questions)
+
+2. SUBSCRIPTION PAGE (authenticated)
+   Create: apps/web/src/app/(dashboard)/billing/page.tsx
+
+   Sections:
+   a. CURRENT PLAN
+      - Plan name badge (colour coded)
+      - Status: Active / Cancelled / Past Due
+      - Billing cycle: Monthly / Annual
+      - Next renewal: [date]
+      - Seats: used/total
+      - \"Cancel subscription\" button (shows confirmation modal)
+
+   b. UPGRADE / CHANGE PLAN
+      - Same 3-column table from pricing page
+      - Current plan highlighted
+      - \"Upgrade\" button on higher tiers
+      - \"Switch to annual\" button for monthly subscribers
+        (shows savings calculation)
+
+   c. PAYMENT PROVIDER SELECTOR
+      - \"Pay with Flutterwave (Nigerian cards, bank transfer,
+         USSD)\" — default for NG users
+      - \"Pay with Stripe (international cards)\"
+      - Selection stored in localStorage
+
+   d. ARIP APPLICATION PACKAGE
+      - Separate purchase card: \"$499 one-time\"
+      - \"Buy ARIP Package\" button
+
+3. UPGRADE PROMPT COMPONENT
+   Create: packages/ui/src/components/UpgradePrompt.tsx
+
+   Shown inline when user hits a feature gate.
+   Props: { feature, requiredPlan, upgradeUrl }
+   Display:
+   - Lock icon + \"Available on [Compass/Flagship] plan\"
+   - 2 key features of the required plan
+   - \"Upgrade now\" button (links to /billing?upgrade=true)
+   - \"See all features\" link to /pricing
+
+   Use this component everywhere feature gates fire in UI.
+
+4. TESTS
+   - Pricing table renders all 3 plans with correct prices
+   - Annual toggle shows discounted prices
+   - Flutterwave payment flow redirects to payment URL
+   - Stripe payment flow redirects to Stripe checkout
+   - UpgradePrompt renders with correct plan name
+   - Cancel confirmation modal appears before cancelling
+   - Current plan highlighted on billing page
+   - Past due status shows amber warning banner
+═══════════════════════════════════════════════════════
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SPRINT 5 — PHASE B: ARIP TRACKER (US-009)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+──────────────────────────────────────────────────────────
+TASK S5-B1 🤖 CLAUDE CODE — ARIP Tracker Backend
+──────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════
+Read CLAUDE.md Section 5 (arip_applications schema —
+the full updated schema with all growth tracking columns)
+and PRD v1.1 Section 3.2 US-009 fully.
+This is the most regulatory-sensitive feature in Sprint 5.
+Use Opus 4 for the database migration design.
+Use Sonnet 4.5 for all implementation.
+
+The ARIP tracker implements the CORRECT 5-stage process
+from the ARIP Framework (SEC Nigeria, June 2024).
+NEVER use the old 7-stage model (pre_screening,
+aip_operations, full_registration are WRONG stage names).
+
+1. DATABASE MIGRATION
+   Ensure the arip_applications table matches CLAUDE.md
+   Section 5 exactly, including ALL of these columns:
+   - current_stage (5 stages only)
+   - stage_status
+   - arip_entry_customer_count
+   - current_customer_count
+   - growth_cap_percentage (DEFAULT 10.00)
+   - growth_alert_threshold (DEFAULT 8.00)
+   - customer_count_last_updated
+   - growth_cap_breached BOOLEAN
+   - solicitor_name, solicitor_firm, solicitor_email
+   - processing_fee_paid BOOLEAN
+   - processing_fee_paid_date
+   - processing_fee_reference
+   - fidelity_bond_in_place BOOLEAN
+   - fidelity_bond_coverage_pct
+   - fidelity_bond_insurer, fidelity_bond_expiry
+   - transition_outcome
+
+   Also ensure arip_restrictions_log table exists:
+   (id, org_id, arip_application_id, restriction_type,
+    detected_at, description, severity, resolved,
+    resolved_at, notes)
+
+2. ARIP SERVICE
+   Create: apps/api/src/services/aripTracker.ts
+
+   getARIPApplication(orgId): existing app or null
+
+   createARIPApplication(orgId, licenceType):
+   - Creates new record with stage 1, not_started status
+   - Returns the created application
+
+   updateARIPStage(orgId, stage, status, data):
+   - Validates stage transitions (can only advance, not skip)
+   - On stage 4 (AIP) becoming 'active':
+     * Trigger Phase 4 roadmap task unlocking
+     * Create compliance calendar events (weekly, monthly,
+       quarterly SEC filings per Section 21, ARIP Framework)
+   - Returns updated application
+
+   updateCustomerCount(orgId, currentCount):
+   - Updates current_customer_count
+   - Calculates growth_pct
+   - If growth_pct >= alert_threshold: create notification
+   - If growth_pct >= 10.00:
+     * Set growth_cap_breached = true
+     * Log to arip_restrictions_log
+     * Send critical notification
+   - Returns { growth_pct, alert_level, breached }
+
+   getGrowthStatus(orgId):
+   Returns {
+     baseline: arip_entry_customer_count,
+     current: current_customer_count,
+     growth_pct: calculated,
+     cap: 10.00,
+     alert_threshold: 8.00,
+     alert_level: 'green'|'amber'|'red',
+     breached: boolean,
+     baseline_date: aip_issued_date
+   }
+
+3. API ENDPOINTS
+   Create: apps/api/src/routes/regulators/arip.ts
+
+   GET  /api/arip
+   PUT  /api/arip          (update stage, status, fields)
+   GET  /api/arip/checklist
+   PUT  /api/arip/customer-count   (update current count)
+   GET  /api/arip/growth-status    (returns growth calculation)
+   POST /api/arip/incident         (log a restriction breach)
+
+   All endpoints: requireFeature('arip_tracker')
+   (Compass+ only per CLAUDE.md Section 10)
+
+4. COMPLIANCE CALENDAR AUTOMATION
+   When AIP becomes active, auto-create these events
+   in compliance_events table:
+   - Type: ARIP_WEEKLY_STATS
+     Title: \"Weekly Trading Statistics — SEC Filing\"
+     Recurrence: weekly
+     Created for: next 52 weeks
+   - Type: ARIP_MONTHLY_STATS
+     Title: \"Monthly Reporting — SEC Filing\"
+     Recurrence: monthly
+     Created for: next 12 months
+   - Type: ARIP_QUARTERLY_REPORT
+     Title: \"Quarterly Financial & Compliance Report — SEC\"
+     Recurrence: quarterly
+     Created for: next 4 quarters
+
+5. TESTS
+   - createARIPApplication() creates with correct defaults
+   - Stage can only advance (not skip, not go backwards)
+   - Growth cap breach at exactly 10% triggers restriction log
+   - Growth alert at 8% triggers amber notification
+   - AIP activation creates compliance calendar events
+   - Customer count update recalculates growth correctly
+   - Edge case: baseline = 0 (division by zero guard)
+   - Restriction log entry created on breach
+   - Growth cap = 10% (not configurable — regulatory requirement)
+   - arip_tracker feature gate blocks free/navigator (402)
+═══════════════════════════════════════════════════════
+
+
+──────────────────────────────────────────────────────────
+TASK S5-B2 🤖 CLAUDE CODE — ARIP Tracker UI
+──────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════
+Read PRD v1.1 Section 3.2 US-009 acceptance criteria
+and the complete stage specifications before starting.
+The Stage 3 solicitor warning is NON-DISMISSIBLE.
+Use Sonnet 4.5.
+
+1. ARIP TRACKER PAGE
+   Create: apps/web/src/app/(dashboard)/regulators/arip/page.tsx
+
+2. PAGE HEADER
+   Title: \"ARIP Application Tracker\"
+   Subtitle: \"Track your SEC Nigeria Accelerated Regulatory
+   Incubation Programme application\"
+   Source note (italic): \"Based on ARIP Framework, SEC
+   Nigeria, June 2024\"
+
+   Quick-access contacts card:
+   📧 innovation@sec.gov.ng
+   📧 fintech@sec.gov.ng
+   🕐 Innovation Office: Tue & Thu, 10am–2pm ONLY
+   🔗 SEC ePortal → home.sec.gov.ng
+
+3. DISCLAIMER BANNER (always visible, amber, non-dismissible)
+   \"This information is sourced from the ARIP Framework,
+   SEC Nigeria (June 2024). Klarify provides regulatory
+   information, not legal advice. Verify all requirements
+   with your registered solicitor before submission.\"
+
+4. 5-STAGE PROGRESS STEPPER (horizontal)
+   Stages:
+   1: Initial Assessment
+   2: Eligibility Notification
+   3: Formal Application ← show ⚠️ \"Solicitor Required\" tooltip
+   4: AIP Active
+   5: Transition to Registration
+
+   Active stage: teal filled circle
+   Complete stages: teal with checkmark
+   Incomplete stages: grey outline
+   Stage 3 tooltip on hover: \"Application MUST be filed
+   through a registered solicitor or adviser (Section 16,
+   ARIP Framework). You cannot self-file.\"
+
+5. STAGE DETAIL PANELS (each stage expands when active)
+
+   STAGE 1 — Initial Assessment:
+   Status: not_started | submitted | under_review | complete
+   Instructions text
+   Button: \"Open SEC ePortal →\" (external link, new tab)
+   Note: \"No fee required at this stage\"
+
+   STAGE 2 — Eligibility Notification:
+   Status selector
+   Outcome badges: Eligible (green) | Ineligible (red) |
+                   Deferred (amber)
+   Outcome guidance text for each status
+
+   STAGE 3 — Formal Application:
+   CRITICAL BLOCKER BANNER (red, NON-DISMISSIBLE):
+   \"⚠️ SOLICITOR REQUIRED — Under Section 16 of the
+   ARIP Framework, your application MUST be filed through
+   a registered solicitor or adviser. You cannot self-file.
+   Complete the solicitor fields below before proceeding.\"
+
+   Solicitor fields (required):
+   - Solicitor/Adviser Name
+   - Law Firm / Advisory Firm
+   - Email Address
+   - \"Solicitor engaged\" checkbox
+   
+   Stage 3 cannot be marked started until
+   solicitor fields are filled.
+
+   Processing fee tracker:
+   - \"₦2,000,000 — Non-Refundable\"
+   - Fee paid checkbox + payment date + REVOP reference
+   - \"Pay via REVOP →\" (opens revop.gov.ng in new tab)
+   - Note: \"Only pay after receiving Stage 2 eligibility\"
+
+   Document checklist: all 15 items from PRD US-009
+   (each checkbox individually saveable)
+
+   Fidelity bond tracker:
+   - Coverage % input (must be ≥ 25%)
+   - Insurer name
+   - Expiry date
+   - \"Bond in place\" checkbox
+
+   STAGE 4 — AIP Active:
+   AIP details: issued date, expiry date fields
+
+   Customer baseline CRITICAL capture:
+   Amber banner: \"You MUST record your exact customer count
+   on the day you receive AIP. This is your baseline for
+   the 10% growth cap. It cannot be reconstructed later.\"
+   Number input: \"Customers on AIP receipt date\"
+   \"Lock Baseline\" button (disables further editing)
+   Note after locking: \"Baseline: [N] customers on [date].
+   Your 10% cap = [N×0.1] additional customers allowed.\"
+
+   Customer growth tracker:
+   - \"Current customer count\" number input + \"Update\" button
+   - Progress bar (green 0-7%, amber 8-9%, red 10%+)
+   - \"[current] customers ([growth]% of 10% limit used)\"
+   - Breach alert if > 10%: red critical banner
+
+   AIP restrictions checklist (Section 29):
+   □ No promotional activities (Section 29b)
+   □ No business outside operational plan (Section 29a)
+   □ No misleading communications (Section 29c)
+   □ Customer growth within 10% cap (Section 29d)
+   Each has: Status toggle (Compliant | Breached) + notes
+
+   AIP compliance calendar summary:
+   Shows next 3 upcoming SEC filing events
+   \"View compliance calendar →\" link
+
+   STAGE 5 — Transition:
+   Three outcome options (radio):
+   ○ Full registration granted → green celebration state
+   ○ New regulations adopted for our model → teal info state
+   ○ Registration denied → red state with RI fallback info
+
+6. EMPTY STATE (no ARIP application yet):
+   \"Start your ARIP journey\"
+   \"Begin Initial Assessment →\" button
+   Creates new application on click
+
+7. AUTO-SAVE
+   Every field change auto-saves with 500ms debounce.
+   \"Saved\" toast after each save.
+
+8. GATE: Compass+ only
+   Free/Navigator users see:
+   UpgradePrompt component with \"Available on Compass plan\"
+
+9. TESTS
+   - Empty state renders \"Begin Initial Assessment\"
+   - Stage stepper shows correct active stage
+   - Stage 3 solicitor blocker visible and non-dismissible
+   - Solicitor fields required before S3 can start
+   - Baseline lock button disables input after click
+   - Growth bar green at 5%, amber at 8%, red at 10%
+   - Stage 5 shows 3 outcome options
+   - REVOP link opens in new tab
+   - Free plan user sees UpgradePrompt (not tracker)
+   - Auto-save fires on field blur
+═══════════════════════════════════════════════════════
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SPRINT 5 — PHASE C: REGULATOR CRM (US-010)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+──────────────────────────────────────────────────────────
+TASK S5-C1 🤖 CLAUDE CODE — Regulator CRM Backend + UI
+──────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════
+Read CLAUDE.md Section 13 (NIGERIAN_REGULATORS seed data
+— the full updated version with ARIP contacts).
+Read PRD v1.1 Section 3.2 US-010 acceptance criteria.
+Use Sonnet 4.5.
+
+Build the Regulator Engagement CRM.
+
+1. DATABASE SEED
+   Ensure all 7 Nigerian regulators from CLAUDE.md
+   Section 13 are seeded into a regulators master table
+   on every fresh deployment. The SEC_NIGERIA entry must
+   include the full arip_contacts and arip_fees objects.
+
+2. API ENDPOINTS
+   Create: apps/api/src/routes/regulators/index.ts
+
+   GET /api/regulators
+   Returns the master list of 7 pre-loaded regulators
+   with their mandate, contacts, and ARIP details
+
+   GET /api/regulators/:code
+   Returns full regulator profile for e.g. 'SEC_NIGERIA'
+
+   POST /api/regulators/interactions
+   Creates a new interaction log entry
+   Body: { regulator_code, interaction_type, subject,
+           outcome, follow_up_required, follow_up_date,
+           occurred_at }
+   Types: call | email | meeting | submission | letter
+
+   GET /api/regulators/interactions
+   Returns all interactions for org, sorted by occurred_at DESC
+
+   Both interaction endpoints: requireFeature('regulator_crm')
+   (Compass+ only)
+
+3. REGULATOR HUB PAGE
+   Create: apps/web/src/app/(dashboard)/regulators/page.tsx
+
+   LAYOUT:
+   - ARIP Programme card (prominent, at top — existing UI)
+   - \"Primary Digital Asset Regulators\" section header
+   - Regulator cards grid (2 columns desktop, 1 mobile)
+
+   REGULATOR CARD COMPONENT:
+   Create: packages/ui/src/components/RegulatorProfile.tsx
+
+   Card shows:
+   - Regulator emoji icon + code + full name
+   - Mandate description
+   - Jurisdiction tags (pill badges)
+   - Website link
+   - Email + phone
+   - \"Log interaction\" button (Compass+ only)
+   - \"View interactions\" count badge
+
+4. INTERACTION LOG MODAL
+   Opens on \"Log interaction\" click.
+   Fields:
+   - Interaction type (radio: call, email, meeting,
+     submission, letter)
+   - Subject (text)
+   - Outcome (textarea)
+   - Follow-up required? (checkbox)
+   - Follow-up date (date, only if follow-up checked)
+   - Date of interaction (date, default: today)
+   - \"Save interaction\" button
+
+5. INTERACTION HISTORY
+   Accessible from each regulator card.
+   Shows list of all logged interactions:
+   - Date | Type badge | Subject | Outcome | Follow-up date
+   - Filter by type
+   - \"Regulatory Engagement Summary\" export button
+     (CSV download of all interactions)
+     Compass+ only.
+
+6. FOLLOW-UP ALERTS
+   When follow_up_date is within 7 days and
+   is_complete = false:
+   - Show in dashboard \"Outstanding action items\"
+   - Trigger email reminder (via Resend)
+
+7. TESTS
+   - All 7 regulators appear on hub page
+   - SEC_NIGERIA shows ARIP contacts correctly
+   - Log interaction creates DB record
+   - Interaction appears in history list
+   - Follow-up date shows in dashboard action items
+   - Free/Navigator user sees UpgradePrompt for
+     \"Log interaction\" button
+   - Interactions scoped to org (RLS)
+   - CSV export contains all interaction fields
+═══════════════════════════════════════════════════════
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SPRINT 5 — PHASE D: EMAIL NOTIFICATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+──────────────────────────────────────────────────────────
+TASK S5-D1 🖐  MANUAL — Set Up Resend Account
+──────────────────────────────────────────────────────────
+
+Before S5-D2, complete Resend setup:
+
+1. Go to: https://resend.com
+2. Sign up with your email
+3. Add domain: klarify.africa
+4. Follow DNS verification steps (add TXT + MX records)
+   in your domain DNS settings
+5. Create API key: name it \"klarify-notifications\"
+6. Add to .env.local:
+   RESEND_API_KEY=re_...
+   EMAIL_FROM=noreply@klarify.africa
+   EMAIL_FROM_NAME=Klarify Africa
+
+7. Send a test email via Resend dashboard to confirm
+   domain is verified before running S5-D2
+
+
+──────────────────────────────────────────────────────────
+TASK S5-D2 🤖 CLAUDE CODE — Email Notification System
+──────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════
+Read PRD v1.1 Section 5.4 (notification & alert system).
+Use Sonnet 4.5.
+
+Build the email notification system using Resend.
+
+1. EMAIL SERVICE
+   Create: apps/api/src/services/emailService.ts
+
+   Using Resend SDK: pnpm add resend
+
+   sendEmail(to, subject, htmlBody):
+   - Wraps Resend API
+   - Always uses EMAIL_FROM from env
+   - Logs send success/failure to console
+   - Never throws — catch and log errors silently
+     (email failure should not break the main flow)
+
+   Template functions (each returns { subject, html }):
+
+   buildDeadlineAlertEmail(event, daysRemaining):
+   - Subject: \"[N] days: [event title] — Klarify\"
+   - Body: deadline details, CTA → /compliance/calendar
+
+   buildDocumentAnalysisEmail(analysis, urgency):
+   - CRITICAL/HIGH: subject \"⛔ Action Required — [summary]\"
+   - MEDIUM/LOW: subject \"Document Analysis Ready\"
+   - Body: urgency badge, 3-bullet summary, deadline,
+     CTA → /analyse/[documentId]
+
+   buildWeeklyDigestEmail(orgId):
+   - Subject: \"Your weekly compliance digest — Klarify\"
+   - Body: score, tasks due this week, upcoming deadlines
+   - Only send if user has activity this week
+
+   buildARIPGrowthAlertEmail(orgId, growthPct):
+   - Subject: \"⚠️ ARIP growth cap alert — [growthPct]% used\"
+   - Body: current vs baseline, cap warning, CTA → /arip
+
+   buildBillingEmail(type, orgId):
+   - Types: 'payment_success', 'payment_failed',
+     'subscription_cancelled', 'plan_upgraded'
+
+2. NOTIFICATION TRIGGERS
+   Wire emails into existing services:
+
+   In documentAnalysis.ts (Sprint 3):
+   After analysis complete:
+   - If CRITICAL or HIGH: send immediately
+   - If MEDIUM or LOW: queue for next hourly batch
+
+   In aripTracker.ts (S5-B1):
+   After updateCustomerCount():
+   - If growth_pct >= 8%: send buildARIPGrowthAlertEmail
+
+   In billing webhooks (S5-A2):
+   After invoice.payment_failed: send payment failed email
+   After subscription.activated: send confirmation email
+
+   Create a daily cron job for deadline alerts:
+   Create: apps/api/src/jobs/deadlineAlerts.ts
+   Runs: daily at 8:00am Lagos time (UTC+1)
+   Logic:
+   - Query compliance_events where:
+     due_date IN [today+1, today+7, today+14]
+     AND is_complete = false
+   - For each matching event, send deadline alert email
+     to all org members
+
+3. EMAIL PREFERENCES
+   Add to user_profiles or a new notification_preferences table:
+   - email_deadline_alerts: boolean (default true)
+   - email_weekly_digest: boolean (default true)
+   - email_document_analysis: boolean (default true)
+   - email_arip_alerts: boolean (default true)
+   - email_billing: boolean (always true — cannot opt out)
+
+   Unsubscribe link in every non-billing email:
+   GET /api/notifications/unsubscribe?token=xxx&type=xxx
+
+4. NOTIFICATION PREFERENCES UI
+   Create: apps/web/src/app/(dashboard)/account/
+           notifications/page.tsx
+
+   Simple toggle list for each email type.
+   \"Billing emails cannot be disabled\" note.
+
+5. TESTS
+   - buildDeadlineAlertEmail returns correct subject
+   - CRITICAL analysis triggers email immediately
+   - Payment failed webhook triggers billing email
+   - Unsubscribe token disables correct email type
+   - Cron job finds events due in 7 days
+   - Email send failure does not throw (caught and logged)
+   - Weekly digest not sent if no activity this week
+═══════════════════════════════════════════════════════
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SPRINT 5 — PHASE E: 4 ARIP DOCUMENT TEMPLATES (US-008)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+──────────────────────────────────────────────────────────
+TASK S5-E1 🤖 CLAUDE CODE — 4 ARIP Framework Templates
+──────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════
+Read PRD v1.1 Section 3.2 US-008 — the \"NEW 4 ARIP
+FRAMEWORK TEMPLATES (Sprint 5)\" section for full
+content specifications of each template.
+Use Opus 4 for designing the generation prompts.
+Use Sonnet 4.5 for implementation.
+
+The 4 new templates (Sprint 5 additions):
+  ARIP_OPERATIONAL_PLAN     ARIP Operational Plan
+  ARIP_SWORN_UNDERTAKING    Sworn Undertaking — ARIP
+  SPONSORED_INDIVIDUAL      Sponsored Individual Profile
+  ARIP_ENTITY_RULES         Entity Rules & Governance
+
+1. CREATE PROMPT FILES
+   In packages/ai/prompts/documents/:
+   Create: ARIP_OPERATIONAL_PLAN.ts
+   Create: ARIP_SWORN_UNDERTAKING.ts
+   Create: SPONSORED_INDIVIDUAL.ts
+   Create: ARIP_ENTITY_RULES.ts
+
+   ARIP_OPERATIONAL_PLAN fields:
+   - company_name (prefilled)
+   - product_description (textarea)
+   - technology_stack_description (textarea)
+   - target_customer_profile (textarea)
+   - existing_customers (prefilled from org)
+   - key_risks (multi-select: AML, fraud, cyber, market,
+     operational, legal, reputational)
+   - risk_mitigations (textarea per selected risk)
+   - insurance_cover_details (textarea)
+   - investor_protection_measures (textarea)
+   - data_protection_measures (textarea)
+   - customer_communication_strategy (textarea)
+   - customer_risk_disclosure_plan (textarea)
+   - exit_plan (textarea — mandatory, must describe how
+     customer obligations fulfilled if reg not achieved)
+   Regulatory basis: Sections 15b + 36, ARIP Framework
+
+   ARIP_SWORN_UNDERTAKING fields:
+   - company_name (prefilled)
+   - director_names (dynamic list, min 1)
+   - ceo_name (prefilled from org)
+   - compliance_officer_name (prefilled)
+   - other_key_officers (dynamic list)
+   - declaration_date (date, default today)
+   Note: Document must cover all 6 sub-clauses of
+   Section 15a including all 8 fitness criteria from
+   Section 15a(v)(a-h) for each named person.
+   Regulatory basis: Section 15a, ARIP Framework
+
+   SPONSORED_INDIVIDUAL fields:
+   (Generates one profile sheet per individual)
+   - full_name
+   - role (Managing Director | Compliance Officer |
+     Director | Controller | Other)
+   - nin (NIN number)
+   - bvn (BVN number)
+   - responsibilities (textarea)
+   - experience_and_track_record (textarea)
+   - criminal_convictions_declaration (boolean — No)
+   - sanctions_declaration (boolean — No)
+   - professional_conduct_declaration (boolean — No)
+   Note: Minimum 4 individuals required. The form
+   allows adding multiple profiles (dynamic list).
+   Regulatory basis: Section 18i, ARIP Framework
+
+   ARIP_ENTITY_RULES fields:
+   - company_name (prefilled)
+   - platform_description (textarea)
+   - user_types (select: retail investors, institutional,
+     both)
+   - suspension_criteria (textarea)
+   - expulsion_criteria (textarea)
+   - appeals_process_description (textarea)
+   Note: Must cover all 8 mandatory provisions from
+   Section 15c(i-viii) of ARIP Framework.
+   Regulatory basis: Section 15c, ARIP Framework
+
+2. ADD TO DOCUMENT LIBRARY UI
+   Update: apps/web/src/app/(dashboard)/compliance/
+           documents/page.tsx
+
+   Add new \"ARIP Framework\" category tab to sidebar.
+   Show 4 new template cards under this category.
+   Note on each: \"Sprint 5 — ARIP Application\"
+   Delivery note under template name: \"(ARIP Framework,
+   SEC Nigeria, June 2024)\"
+
+3. SPONSORED INDIVIDUAL — DYNAMIC LIST FORM
+   The Sponsored Individual template requires a special
+   form where user can add multiple individuals:
+   - \"Add another individual\" button (up to 10)
+   - Each individual gets a full form section
+   - Progress indicator: \"3 of minimum 4 individuals added\"
+   - Warning if fewer than 4 added on submission attempt
+
+4. TESTS
+   - ARIP_OPERATIONAL_PLAN includes exit_plan section
+   - ARIP_SWORN_UNDERTAKING covers all 6 Section 15a clauses
+   - SPONSORED_INDIVIDUAL form accepts minimum 4 individuals
+   - SPONSORED_INDIVIDUAL warning if fewer than 4 added
+   - ARIP_ENTITY_RULES covers all 8 Section 15c provisions
+   - All 4 templates appear in \"ARIP Framework\" category
+   - All 4 templates available to Compass+ (not Navigator)
+   - Each generated doc shows regulatory basis in footer
+   - Exit plan field cannot be left blank in Operational Plan
+═══════════════════════════════════════════════════════
+
+
+──────────────────────────────────────────────────────────
+TASK S5-E2 🔍 VERIFY — Sprint 5 Complete Checkpoint
+──────────────────────────────────────────────────────────
+
+Run full Sprint 5 verification before closing sprint:
+
+BILLING:
+□ Flutterwave subscription flow works end-to-end
+□ Stripe subscription flow works end-to-end
+□ Plan upgrades work and take effect immediately
+□ Cancel sets status = 'cancelled' (not deleted)
+□ Free plan user limited to 10 AI queries/month
+□ Navigator plan limited to 3 document templates
+□ Compass plan unlocks ARIP tracker and CRM
+□ Webhook signature validation rejects invalid payloads
+□ Annual plan price shows 20% discount correctly
+
+ARIP TRACKER:
+□ 5 stages render (not 7 — old model must not appear)
+□ Stage 3 solicitor banner non-dismissible
+□ Solicitor fields required before Stage 3 starts
+□ Baseline lock button disables input after click
+□ Customer growth calculation correct at boundary (10%)
+□ Growth breach logged to arip_restrictions_log
+□ AIP activation creates compliance calendar events
+□ Growth bar: green <8%, amber 8-9%, red ≥10%
+□ Stage 5 shows 3 outcome options
+□ Compass+ gate works (free/navigator see upgrade prompt)
+
+REGULATOR CRM:
+□ All 7 regulators appear pre-loaded
+□ SEC_NIGERIA shows ARIP Innovation Office contacts
+□ Log interaction creates record scoped to org
+□ Follow-up date appears in dashboard action items
+□ Compass+ gate on \"Log interaction\"
+
+EMAIL NOTIFICATIONS:
+□ CRITICAL document analysis triggers email immediately
+□ Deadline alert sent for events due in 7 days
+□ ARIP growth cap email sent at 8% threshold
+□ Payment failed email triggers on webhook event
+□ Unsubscribe link works for each email type
+□ Billing emails cannot be unsubscribed
+
+ARIP TEMPLATES:
+□ All 4 templates accessible in \"ARIP Framework\" category
+□ Operational Plan includes mandatory exit_plan field
+□ Sworn Undertaking covers all 6 Section 15a sub-clauses
+□ Sponsored Individual warns if fewer than 4 added
+□ Entity Rules covers all 8 Section 15c provisions
+□ All 4 templates blocked for Navigator plan (UpgradePrompt shown)
+
+SECURITY:
+□ All billing webhooks verify signature
+□ Feature gates reject free/navigator correctly
+□ Subscription records scoped to org (RLS)
+□ ARIP data not accessible across orgs (RLS)
+
+TESTS:
+□ pnpm test — all passing
+□ pnpm tsc --noEmit — zero TypeScript errors
+□ pnpm lint — zero lint errors
+
+SPRINT 5 MILESTONE: \"Billing + Notifications Live\" ✅
+
+─────────────────────────────────────────────────────
+After Sprint 5 closes:
+  - Update CLAUDE.md Section 17 to Beta sprint
+  - Begin 20-user closed beta with book readers
+    and BNUG community members
+  - Beta feedback informs Sprint 6 (Scenario Simulator,
+    Jurisdiction Expansion, Human Escalation)
+─────────────────────────────────────────────────────
+
+
+╔═══════════════════════════════════════════════════════════╗
+║  SPRINT 4 & 5 — EXTERNAL SERVICES SUMMARY               ║
+║  (Everything requiring accounts or credentials)          ║
+╚═══════════════════════════════════════════════════════════╝
+
+Service              Purpose               Setup In
+─────────────────────────────────────────────────────────────
+Flutterwave          Nigerian payments      S5-A1
+Stripe               International          S5-A1
+Resend               Email notifications    S5-D1
+
+All other infrastructure (PostgreSQL, Redis, AWS S3,
+Anthropic API, Voyage AI) was set up in Sprints 0-3.
+No new infrastructure accounts needed beyond the 3 above.
+
+─────────────────────────────────────────────────────────────
+Klarify — Sprint 4 & 5 Task Breakdown v1.0
+Source: Klarify_PRD_v1.1 + CLAUDE.md (May 2026)
+Prepared by: Chimezie Chuta | Blockspace Technologies
+─────────────────────────────────────────────────────────────
+"
+}

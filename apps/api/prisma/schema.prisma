@@ -39,7 +39,7 @@ model User {
   plan      String   @default("free")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
-  ownedOrgs              Organisation[]            @relation("OrgOwner")
+  ownedOrgs              Organisation[]          @relation("OrgOwner")
   memberships            OrgMember[]
   profile                UserProfile?
   conversations          Conversation[]
@@ -92,17 +92,17 @@ model OrgMember {
 }
 
 model UserProfile {
-  userId                  String    @id @map("user_id") @db.Uuid
-  productTypes            String[]  @default([]) @map("product_types")
-  targetMarkets           String[]  @default([]) @map("target_markets")
-  stage                   String?
-  teamSize                Int?      @map("team_size")
-  hasComplianceOfficer    Boolean   @default(false) @map("has_compliance_officer")
-  existingInfrastructure  String[]  @default([]) @map("existing_infrastructure")
+  userId                 String    @id @map("user_id") @db.Uuid
+  productTypes           String[]  @default([]) @map("product_types")
+  targetMarkets          String[]  @default([]) @map("target_markets")
+  stage                  String?
+  teamSize               Int?      @map("team_size")
+  hasComplianceOfficer   Boolean   @default(false) @map("has_compliance_officer")
+  existingInfrastructure String[]  @default([]) @map("existing_infrastructure")
   // Sprint 2 (007 migration) — null until first POST /api/ai/classify.
   // Used by the dashboard nudge banner for "Pre-Launch Founder" persona.
-  lastClassifiedAt        DateTime? @map("last_classified_at") @db.Timestamptz()
-  updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  lastClassifiedAt       DateTime? @map("last_classified_at") @db.Timestamptz()
+  updatedAt              DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -113,19 +113,19 @@ model UserProfile {
 // Compliance
 // =============================================================================
 model ReadinessScore {
-  id                       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orgId                    String   @map("org_id") @db.Uuid
-  totalScore               Int      @map("total_score")
-  corporateStructure       Int      @map("corporate_structure")
-  capitalLicensing         Int      @map("capital_licensing")
-  kycInfrastructure        Int      @map("kyc_infrastructure")
-  amlCftProgramme          Int      @map("aml_cft_programme")
-  transactionMonitoring    Int      @map("transaction_monitoring")
-  regulatoryReporting      Int      @map("regulatory_reporting")
-  regulatoryRelationships  Int      @map("regulatory_relationships")
-  productClassification    Int      @map("product_classification")
-  calculatedAt             DateTime @default(now()) @map("calculated_at") @db.Timestamptz()
-  snapshot                 Json     @default("{}")
+  id                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId                   String   @map("org_id") @db.Uuid
+  totalScore              Int      @map("total_score")
+  corporateStructure      Int      @map("corporate_structure")
+  capitalLicensing        Int      @map("capital_licensing")
+  kycInfrastructure       Int      @map("kyc_infrastructure")
+  amlCftProgramme         Int      @map("aml_cft_programme")
+  transactionMonitoring   Int      @map("transaction_monitoring")
+  regulatoryReporting     Int      @map("regulatory_reporting")
+  regulatoryRelationships Int      @map("regulatory_relationships")
+  productClassification   Int      @map("product_classification")
+  calculatedAt            DateTime @default(now()) @map("calculated_at") @db.Timestamptz()
+  snapshot                Json     @default("{}")
 
   org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
@@ -146,32 +146,65 @@ model RoadmapTask {
   templateId      String?   @map("template_id")
   indicatorKey    String?   @map("indicator_key")
   isLocked        Boolean   @default(false) @map("is_locked")
+  isBlocker       Boolean   @default(false) @map("is_blocker")
+  isCustom        Boolean   @default(false) @map("is_custom")
+  notes           String?
+  templateRefId   String?   @map("template_ref_id")
   completedAt     DateTime? @map("completed_at") @db.Timestamptz()
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz()
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  org   Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  owner User?        @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+  org      Organisation         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  owner    User?                @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+  template RoadmapTaskTemplate? @relation(fields: [templateRefId], references: [id], onDelete: SetNull)
 
   @@index([orgId, phase])
   @@index([ownerUserId])
+  @@index([templateRefId])
   @@map("roadmap_tasks")
+}
+
+// Sprint 4 (009 migration). Master library of all seed roadmap tasks.
+// World-readable for any authenticated user; writes go through the seed
+// script (service-role connection bypasses RLS).
+model RoadmapTaskTemplate {
+  id                 String   @id
+  phase              Int
+  title              String
+  description        String
+  regulatoryBasis    String?  @map("regulatory_basis")
+  effortDaysMin      Int?     @map("effort_days_min")
+  effortDaysMax      Int?     @map("effort_days_max")
+  templateId         String?  @map("template_id")
+  isBlocker          Boolean  @default(false) @map("is_blocker")
+  dependsOn          String[] @default([]) @map("depends_on")
+  productTypes       String[] @default([]) @map("product_types")
+  linkedIndicatorKey String?  @map("linked_indicator_key")
+  linkedDimension    String?  @map("linked_dimension")
+  displayOrder       Int      @default(0) @map("display_order")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  generatedTasks RoadmapTask[]
+
+  @@index([phase, displayOrder])
+  @@map("roadmap_task_templates")
 }
 
 // =============================================================================
 // Documents
 // =============================================================================
 model GeneratedDocument {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orgId         String   @map("org_id") @db.Uuid
-  userId        String   @map("user_id") @db.Uuid
-  templateType  String   @map("template_type")
-  title         String
-  content       Json     @default("{}")
-  version       Int      @default(1)
-  s3Key         String?  @map("s3_key")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId        String   @map("org_id") @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  templateType String   @map("template_type")
+  title        String
+  content      Json     @default("{}")
+  version      Int      @default(1)
+  s3Key        String?  @map("s3_key")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   user User         @relation(fields: [userId], references: [id])
@@ -233,14 +266,14 @@ model Conversation {
 }
 
 model Message {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  conversationId  String   @map("conversation_id") @db.Uuid
-  role            String
-  content         String
-  citations       Json     @default("[]")
-  modelUsed       String?  @map("model_used")
-  tokensUsed      Int?     @map("tokens_used")
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  role           String
+  content        String
+  citations      Json     @default("[]")
+  modelUsed      String?  @map("model_used")
+  tokensUsed     Int?     @map("tokens_used")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
@@ -252,15 +285,15 @@ model Message {
 // Regulators
 // =============================================================================
 model Regulator {
-  code              String   @id
-  name              String
-  mandate           String
-  website           String?
-  portal            String?
-  email             String?
-  phone             String?
-  address           String?
-  jurisdictionTags  String[] @default([]) @map("jurisdiction_tags")
+  code             String   @id
+  name             String
+  mandate          String
+  website          String?
+  portal           String?
+  email            String?
+  phone            String?
+  address          String?
+  jurisdictionTags String[] @default([]) @map("jurisdiction_tags")
 
   contacts     RegulatorContact[]
   interactions RegulatorInteraction[]
@@ -269,15 +302,15 @@ model Regulator {
 }
 
 model RegulatorContact {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orgId           String   @map("org_id") @db.Uuid
-  regulatorCode   String   @map("regulator_code")
-  contactName     String?  @map("contact_name")
-  contactEmail    String?  @map("contact_email")
-  contactPhone    String?  @map("contact_phone")
-  notes           String?
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId         String   @map("org_id") @db.Uuid
+  regulatorCode String   @map("regulator_code")
+  contactName   String?  @map("contact_name")
+  contactEmail  String?  @map("contact_email")
+  contactPhone  String?  @map("contact_phone")
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   regulator Regulator    @relation(fields: [regulatorCode], references: [code])
@@ -287,16 +320,16 @@ model RegulatorContact {
 }
 
 model RegulatorInteraction {
-  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orgId               String    @map("org_id") @db.Uuid
-  regulatorCode       String    @map("regulator_code")
-  interactionType     String    @map("interaction_type")
-  subject             String
-  outcome             String?
-  followUpRequired    Boolean   @default(false) @map("follow_up_required")
-  followUpDate        DateTime? @map("follow_up_date") @db.Date
-  occurredAt          DateTime  @default(now()) @map("occurred_at") @db.Timestamptz()
-  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId            String    @map("org_id") @db.Uuid
+  regulatorCode    String    @map("regulator_code")
+  interactionType  String    @map("interaction_type")
+  subject          String
+  outcome          String?
+  followUpRequired Boolean   @default(false) @map("follow_up_required")
+  followUpDate     DateTime? @map("follow_up_date") @db.Date
+  occurredAt       DateTime  @default(now()) @map("occurred_at") @db.Timestamptz()
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
   org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   regulator Regulator    @relation(fields: [regulatorCode], references: [code])
@@ -309,15 +342,15 @@ model RegulatorInteraction {
 // ARIP
 // =============================================================================
 model AripApplication {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orgId           String    @unique @map("org_id") @db.Uuid
-  licenceType     String    @map("licence_type")
-  currentStage    String    @default("pre_screening") @map("current_stage")
-  aipIssuedDate   DateTime? @map("aip_issued_date") @db.Date
-  aipExpiryDate   DateTime? @map("aip_expiry_date") @db.Date
-  notes           Json      @default("{}")
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId         String    @unique @map("org_id") @db.Uuid
+  licenceType   String    @map("licence_type")
+  currentStage  String    @default("pre_screening") @map("current_stage")
+  aipIssuedDate DateTime? @map("aip_issued_date") @db.Date
+  aipExpiryDate DateTime? @map("aip_expiry_date") @db.Date
+  notes         Json      @default("{}")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
@@ -328,16 +361,16 @@ model AripApplication {
 // Calendar & Subscriptions
 // =============================================================================
 model ComplianceEvent {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orgId        String    @map("org_id") @db.Uuid
-  eventType    String    @map("event_type")
-  title        String
-  description  String?
-  dueDate      DateTime  @map("due_date") @db.Timestamptz()
-  recurrence   String?
-  isComplete   Boolean   @default(false) @map("is_complete")
-  completedAt  DateTime? @map("completed_at") @db.Timestamptz()
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId       String    @map("org_id") @db.Uuid
+  eventType   String    @map("event_type")
+  title       String
+  description String?
+  dueDate     DateTime  @map("due_date") @db.Timestamptz()
+  recurrence  String?
+  isComplete  Boolean   @default(false) @map("is_complete")
+  completedAt DateTime? @map("completed_at") @db.Timestamptz()
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
   org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
@@ -346,16 +379,16 @@ model ComplianceEvent {
 }
 
 model Subscription {
-  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orgId              String    @map("org_id") @db.Uuid
-  plan               String
-  billingCycle       String    @map("billing_cycle")
-  flutterwaveSubId   String?   @map("flutterwave_sub_id")
-  stripeSubId        String?   @map("stripe_sub_id")
-  status             String    @default("active")
-  currentPeriodEnd   DateTime? @map("current_period_end") @db.Timestamptz()
-  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId            String    @map("org_id") @db.Uuid
+  plan             String
+  billingCycle     String    @map("billing_cycle")
+  flutterwaveSubId String?   @map("flutterwave_sub_id")
+  stripeSubId      String?   @map("stripe_sub_id")
+  status           String    @default("active")
+  currentPeriodEnd DateTime? @map("current_period_end") @db.Timestamptz()
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
@@ -366,15 +399,15 @@ model Subscription {
 // Regulatory corpus (pgvector — Section 11)
 // =============================================================================
 model RegulatoryCorpus {
-  id                String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sourceDocument    String                       @map("source_document")
-  jurisdiction      String
-  sectionReference  String?                      @map("section_reference")
-  content           String
+  id               String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceDocument   String                       @map("source_document")
+  jurisdiction     String
+  sectionReference String?                      @map("section_reference")
+  content          String
   // Prisma 5+ supports the Unsupported type for vector columns.
-  embedding         Unsupported("vector(1024)")?
-  metadata          Json                         @default("{}")
-  createdAt         DateTime                     @default(now()) @map("created_at") @db.Timestamptz()
+  embedding        Unsupported("vector(1024)")?
+  metadata         Json                         @default("{}")
+  createdAt        DateTime                     @default(now()) @map("created_at") @db.Timestamptz()
 
   @@index([jurisdiction])
   @@index([sourceDocument])
@@ -388,14 +421,14 @@ model RegulatoryCorpus {
 // One row per corpus ingestion run. Lets the CLI in
 // packages/ai/scripts/ingest.ts resume cleanly and surface per-file failures.
 model IngestionLog {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  filename        String
-  chunkCount      Int       @default(0) @map("chunk_count")
-  embeddingModel  String    @map("embedding_model")
-  status          String    @default("pending")
-  errorMsg        String?   @map("error_msg")
-  startedAt       DateTime  @default(now()) @map("started_at") @db.Timestamptz()
-  completedAt     DateTime? @map("completed_at") @db.Timestamptz()
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  filename       String
+  chunkCount     Int       @default(0) @map("chunk_count")
+  embeddingModel String    @map("embedding_model")
+  status         String    @default("pending")
+  errorMsg       String?   @map("error_msg")
+  startedAt      DateTime  @default(now()) @map("started_at") @db.Timestamptz()
+  completedAt    DateTime? @map("completed_at") @db.Timestamptz()
 
   @@index([filename])
   @@index([startedAt(sort: Desc)])

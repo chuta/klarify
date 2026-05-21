@@ -8,6 +8,7 @@ import {
   calculateReadinessScore,
   PHASE_1_TEMPLATES,
 } from '@klarify/core';
+import { materialiseRoadmapIfEmpty } from '@/lib/roadmapService';
 import { sendOnboardingCompleteEmail } from '@klarify/email';
 import { prisma, withRls } from '@/lib/db';
 import { authenticateRouteHandler, unauthenticated } from '@/lib/route-auth';
@@ -99,22 +100,13 @@ export async function POST(request: Request): Promise<NextResponse> {
         },
       });
 
-      const existingTaskCount = await tx.roadmapTask.count({ where: { orgId } });
-      if (existingTaskCount === 0) {
-        await tx.roadmapTask.createMany({
-          data: PHASE_1_TEMPLATES.map((tpl) => ({
-            orgId,
-            phase: tpl.phase,
-            title: tpl.title,
-            description: tpl.description,
-            regulatoryBasis: tpl.regulatory_basis,
-            templateId: tpl.template_id ?? null,
-            indicatorKey: tpl.indicator_key ?? null,
-            status: 'not_started',
-            isLocked: false,
-          })),
-        });
-      }
+      // Sprint 4 — generate the full 4-phase roadmap from the master
+      // template library (roadmap_task_templates). Phase 1 unlocked,
+      // Phase 2-4 locked until prerequisites are met.
+      await materialiseRoadmapIfEmpty(tx, {
+        orgId,
+        productTypes: body.product_types,
+      });
 
       return { totalScore, dimensionScores };
     });
