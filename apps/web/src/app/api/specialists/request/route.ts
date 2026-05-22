@@ -84,7 +84,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   try {
     const result = await sendSpecialistRequestEmail({
-      to: COMPANY.supportEmail,
+      to: COMPANY.intakeEmail,
       replyTo: body.email,
       name: body.name,
       email: body.email,

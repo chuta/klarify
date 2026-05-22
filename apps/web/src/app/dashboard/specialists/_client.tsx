@@ -53,7 +53,7 @@ export function SpecialistsClient({
       <div className="mb-6 rounded-xl border border-[#0B6E6E]/30 bg-[#E6F4F4] px-4 py-3 text-sm text-[#0D2B45]">
         <strong>How it works:</strong> Browse vetted practitioners below. Request an introduction. The
         Klarify team matches you and sends a warm intro by email. Direct contact details are not listed;
-        all introductions go through hello@klarify.africa.
+        all requests are routed to our team for personal handling.
       </div>
 
       {!hasAccess ? (

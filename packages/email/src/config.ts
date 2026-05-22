@@ -45,7 +45,13 @@ export const COMPANY = {
   tradeName:  'Klarify Africa',
   tagline:    'Navigate Regulated Markets with Confidence',
   address:    'Lagos, Nigeria',
+  /** Public support inbox (user-facing mailto links). */
   supportEmail: 'hello@klarify.africa',
+  /**
+   * Internal intake for form submissions (specialist requests, etc.).
+   * Must differ from EMAIL_FROM to avoid same-address delivery issues in Resend.
+   */
+  intakeEmail: env('EMAIL_INTAKE_TO', 'hello@blockspace.digital'),
   website:    'https://klarify.africa',
 } as const;
 
