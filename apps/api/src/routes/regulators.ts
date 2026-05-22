@@ -292,12 +292,17 @@ regulatorRoutes.put(
 );
 
 // ============================================================================ //
-// GET /api/regulators — all regulators (no auth needed — public reference data) //
+// GET /api/regulators — all regulators (auth required — RLS reference read)     //
 // ============================================================================ //
-regulatorRoutes.get('/', async (c) => {
+regulatorRoutes.get('/', requireAuth, async (c) => {
+  const userId = c.get('userId');
   try {
-    const regulators = await prisma.regulator.findMany({
-      orderBy: { code: 'asc' },
+    const regulators = await prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(
+        `SELECT set_config('app.current_user_id', $1, true)`,
+        userId,
+      );
+      return tx.regulator.findMany({ orderBy: { code: 'asc' } });
     });
     return c.json({ success: true as const, data: regulators });
   } catch (err) {
@@ -313,11 +318,16 @@ regulatorRoutes.get('/', async (c) => {
 // GET /api/regulators/:code — single regulator profile                          //
 // Must be registered AFTER /interactions/* routes.                              //
 // ============================================================================ //
-regulatorRoutes.get('/:code', async (c) => {
+regulatorRoutes.get('/:code', requireAuth, async (c) => {
+  const userId = c.get('userId');
   const code = c.req.param('code').toUpperCase();
   try {
-    const regulator = await prisma.regulator.findUnique({
-      where: { code },
+    const regulator = await prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(
+        `SELECT set_config('app.current_user_id', $1, true)`,
+        userId,
+      );
+      return tx.regulator.findUnique({ where: { code } });
     });
     if (!regulator) {
       return c.json(

@@ -7,7 +7,13 @@ export async function GET(request: Request): Promise<NextResponse> {
   if (!auth) return unauthenticated();
 
   try {
-    const regulators = await prisma.regulator.findMany({ orderBy: { code: 'asc' } });
+    const regulators = await prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(
+        `SELECT set_config('app.current_user_id', $1, true)`,
+        auth.userId,
+      );
+      return tx.regulator.findMany({ orderBy: { code: 'asc' } });
+    });
     return NextResponse.json({ success: true, data: regulators });
   } catch (err) {
     console.error('[regulators/get-all] error', err);

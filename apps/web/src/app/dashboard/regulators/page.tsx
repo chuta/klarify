@@ -1,9 +1,8 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { apiFetch } from '@/lib/api';
 import { prisma, resolveOrgId } from '@/lib/db';
-import type { Regulator } from '@klarify/core';
+import { loadRegulatorsForUser } from '@/lib/regulators';
 import { RegulatorHubClient } from './_client';
 import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
@@ -35,16 +34,12 @@ export default async function RegulatorsPage(): Promise<JSX.Element> {
   const user = userRes.data.user;
   if (!session || !user) redirect('/sign-in');
 
-  const accessToken = session.access_token;
-
-  // Parallelise: regulator list, interaction counts, pending follow-ups, plan.
-  const [regulatorsResult, interactionCounts, plan] = await Promise.all([
-    apiFetch<Regulator[]>('/api/regulators', accessToken),
+  // Parallelise: regulator list (RLS-scoped), interaction counts, plan.
+  const [regulators, interactionCounts, plan] = await Promise.all([
+    loadRegulatorsForUser(user.id),
     loadInteractionCounts(user.id),
     resolvePlan(user.id),
   ]);
-
-  const regulators: Regulator[] = regulatorsResult.success ? regulatorsResult.data : [];
 
   // Build count map for quick lookup.
   const countMap: Record<string, number> = {};

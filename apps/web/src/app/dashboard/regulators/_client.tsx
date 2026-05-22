@@ -240,9 +240,9 @@ function RegulatorCard({
       </div>
 
       {/* Jurisdiction tags */}
-      {regulator.jurisdictionTags.length > 0 && (
+      {(regulator.jurisdictionTags?.length ?? 0) > 0 && (
         <div className="flex flex-wrap gap-1 px-4 pb-3">
-          {regulator.jurisdictionTags.slice(0, maxTags).map((tag) => (
+          {(regulator.jurisdictionTags ?? []).slice(0, maxTags).map((tag) => (
             <span
               key={tag}
               className="rounded px-1.5 py-0.5 text-[10px] font-medium"
@@ -251,9 +251,9 @@ function RegulatorCard({
               {tag}
             </span>
           ))}
-          {regulator.jurisdictionTags.length > maxTags && (
+          {(regulator.jurisdictionTags?.length ?? 0) > maxTags && (
             <span className="rounded px-1.5 py-0.5 text-[10px] text-[#CCCCCC]">
-              +{regulator.jurisdictionTags.length - maxTags}
+              +{(regulator.jurisdictionTags?.length ?? 0) - maxTags}
             </span>
           )}
         </div>

@@ -11,7 +11,13 @@ export async function GET(
 
   const code = params.code.toUpperCase();
   try {
-    const regulator = await prisma.regulator.findUnique({ where: { code } });
+    const regulator = await prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(
+        `SELECT set_config('app.current_user_id', $1, true)`,
+        auth.userId,
+      );
+      return tx.regulator.findUnique({ where: { code } });
+    });
     if (!regulator) {
       return NextResponse.json(
         { success: false, error: 'Regulator not found.', code: 'NOT_FOUND' },
