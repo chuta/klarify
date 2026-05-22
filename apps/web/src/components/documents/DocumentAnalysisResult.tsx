@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   parseDraftBody,
   stripMarkdownToPlainText,
@@ -11,6 +12,10 @@ import {
 } from '@klarify/core';
 import { UrgencyBanner } from './UrgencyBanner';
 import { TinyEditor } from './TinyEditor';
+import {
+  SpecialistRequestModal,
+  type SpecialistRequestDefaults,
+} from '@/components/specialists/SpecialistRequestModal';
 
 export type Urgency = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 export type ActionUrgency = 'IMMEDIATE' | 'TODAY' | 'THIS_WEEK';
@@ -54,19 +59,77 @@ export function DocumentAnalysisResult({
   result,
   documentId,
   apiBaseUrl,
+  hasSpecialistAccess = false,
+  currentPlan = 'free',
+  userName = '',
+  userEmail = '',
+  orgName = 'My organisation',
 }: {
   filename: string;
   result: AnalysisResult;
   documentId: string;
   apiBaseUrl: string;
+  hasSpecialistAccess?: boolean;
+  currentPlan?: string;
+  userName?: string;
+  userEmail?: string;
+  orgName?: string;
 }): JSX.Element {
   const baseUrl = apiBaseUrl.replace(/\/$/, '');
+  const [specialistOpen, setSpecialistOpen] = useState(false);
+  const showSpecialistCta =
+    result.urgency_level === 'CRITICAL' || result.urgency_level === 'HIGH';
+
+  const specialistDefaults: SpecialistRequestDefaults = {
+    source: 'document_analyser',
+    topic: 'enforcement_response',
+    urgency: result.urgency_level === 'CRITICAL' ? 'critical' : 'standard',
+    message: `I need specialist review of "${filename}" before responding to the regulator.\n\nSummary: ${result.plain_language_summary.slice(0, 400)}`,
+    context: {
+      documentId,
+      documentFilename: filename,
+      orgName,
+      urgencyLevel: result.urgency_level,
+      regulatorCode: result.issuing_regulator.code ?? undefined,
+    },
+  };
+
   return (
     <div className="space-y-4">
       <UrgencyBanner
         level={result.urgency_level}
         reasoning={result.urgency_reasoning}
       />
+
+      {showSpecialistCta ? (
+        <div className="rounded-xl border border-[#C0392B]/30 bg-[#FDF2F2] px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-4">
+          <div>
+            <p className="text-sm font-semibold text-[#7a1f15]">
+              Need a specialist before you respond?
+            </p>
+            <p className="mt-0.5 text-xs text-[#555555]">
+              Request a warm introduction to a vetted Nigerian digital asset regulatory lawyer or
+              compliance adviser.
+            </p>
+          </div>
+          {hasSpecialistAccess ? (
+            <button
+              type="button"
+              onClick={() => setSpecialistOpen(true)}
+              className="mt-3 shrink-0 rounded-lg bg-[#0B6E6E] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0A5F5F] sm:mt-0"
+            >
+              Request specialist review →
+            </button>
+          ) : (
+            <Link
+              href="/dashboard/billing?plan=compass"
+              className="mt-3 inline-block shrink-0 rounded-lg border border-[#0B6E6E] px-4 py-2 text-sm font-semibold text-[#0B6E6E] sm:mt-0"
+            >
+              Upgrade to Compass →
+            </Link>
+          )}
+        </div>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* LEFT COLUMN */}
@@ -142,6 +205,17 @@ export function DocumentAnalysisResult({
         documentId={documentId}
         regulator={result.issuing_regulator.name}
         filename={filename}
+      />
+
+      <SpecialistRequestModal
+        open={specialistOpen}
+        onClose={() => setSpecialistOpen(false)}
+        hasAccess={hasSpecialistAccess}
+        currentPlan={currentPlan}
+        defaultName={userName}
+        defaultEmail={userEmail}
+        defaultCompany={orgName}
+        defaults={specialistDefaults}
       />
     </div>
   );

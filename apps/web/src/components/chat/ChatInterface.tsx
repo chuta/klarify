@@ -1,11 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useKlarifyChat } from '@klarify/ai/chat/useKlarifyChat';
+import { messageSuggestsEscalation } from '@klarify/core';
 import { createClient } from '@/lib/supabase/client';
 import { ChatInput } from './ChatInput';
 import { MessageBubble } from './MessageBubble';
 import { ConversationSidebar } from './ConversationSidebar';
+import {
+  SpecialistRequestModal,
+  type SpecialistRequestDefaults,
+} from '@/components/specialists/SpecialistRequestModal';
 
 const STARTER_QUESTIONS: string[] = [
   'What licences does my product need in Nigeria?',
@@ -14,7 +20,21 @@ const STARTER_QUESTIONS: string[] = [
   'What does ISA 2025 mean for my business?',
 ];
 
-export function ChatInterface(): JSX.Element {
+interface ChatInterfaceProps {
+  hasSpecialistAccess: boolean;
+  currentPlan: string;
+  userName: string;
+  userEmail: string;
+  orgName: string;
+}
+
+export function ChatInterface({
+  hasSpecialistAccess,
+  currentPlan,
+  userName,
+  userEmail,
+  orgName,
+}: ChatInterfaceProps): JSX.Element {
   // Memoised auth token getter — the hook calls this on every API call so
   // tokens always come from the live Supabase session, not a stale closure.
   const getAuthToken = useCallback(async (): Promise<string | null> => {
@@ -38,6 +58,30 @@ export function ChatInterface(): JSX.Element {
   } = useKlarifyChat({ getAuthToken });
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [specialistModalOpen, setSpecialistModalOpen] = useState(false);
+  const [specialistDefaults, setSpecialistDefaults] = useState<
+    SpecialistRequestDefaults | undefined
+  >();
+
+  const openSpecialistRequest = useCallback(
+    (defaults?: SpecialistRequestDefaults) => {
+      const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+      setSpecialistDefaults({
+        source: 'chat',
+        topic: defaults?.topic ?? 'general',
+        urgency: defaults?.urgency ?? 'standard',
+        ...defaults,
+        context: {
+          orgName,
+          conversationId: conversationId ?? undefined,
+          lastUserMessage: lastUser?.content.slice(0, 500),
+          ...defaults?.context,
+        },
+      });
+      setSpecialistModalOpen(true);
+    },
+    [conversationId, messages, orgName],
+  );
 
   // Auto-scroll to bottom on new message / token arrival.
   const scrollAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -138,14 +182,41 @@ export function ChatInterface(): JSX.Element {
           ) : (
             <div className="flex w-full flex-col gap-4">
               {messages.map((m) => (
-                <MessageBubble
-                  key={m.id}
-                  role={m.role}
-                  content={m.content}
-                  citations={m.citations}
-                  streaming={m.streaming}
-                  errored={m.errored}
-                />
+                <div key={m.id}>
+                  <MessageBubble
+                    role={m.role}
+                    content={m.content}
+                    citations={m.citations}
+                    streaming={m.streaming}
+                    errored={m.errored}
+                  />
+                  {m.role === 'assistant' &&
+                  !m.streaming &&
+                  messageSuggestsEscalation(m.content) ? (
+                    <div className="mt-2 rounded-xl border border-[#0B6E6E]/40 bg-[#E6F4F4] px-4 py-3">
+                      <p className="text-xs text-[#0D2B45]">
+                        This question may need a qualified practitioner. Request a warm introduction
+                        through Klarify&apos;s vetted network.
+                      </p>
+                      {hasSpecialistAccess ? (
+                        <button
+                          type="button"
+                          onClick={() => openSpecialistRequest()}
+                          className="mt-2 text-xs font-semibold text-[#0B6E6E] underline hover:text-[#0A5F5F]"
+                        >
+                          Talk to a vetted specialist →
+                        </button>
+                      ) : (
+                        <Link
+                          href="/dashboard/billing?plan=compass"
+                          className="mt-2 inline-block text-xs font-semibold text-[#0B6E6E] underline"
+                        >
+                          Available on Compass — upgrade →
+                        </Link>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
               ))}
               <div ref={scrollAnchorRef} />
             </div>
@@ -160,6 +231,19 @@ export function ChatInterface(): JSX.Element {
               Klarify provides regulatory information, not legal advice. Always verify with a
               qualified practitioner.
             </p>
+
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => openSpecialistRequest()}
+                className="text-[11px] font-semibold text-[#0B6E6E] hover:underline"
+              >
+                Talk to a vetted specialist →
+              </button>
+              {!hasSpecialistAccess ? (
+                <span className="text-[10px] text-[#999]">Compass+</span>
+              ) : null}
+            </div>
 
             {error && !quotaBlocked && (
               <div className="rounded-lg border border-[#C0392B]/40 bg-[#FCEAE8] px-3 py-2 text-xs text-[#7a1f15]">
@@ -191,6 +275,17 @@ export function ChatInterface(): JSX.Element {
           </div>
         </div>
       </div>
+
+      <SpecialistRequestModal
+        open={specialistModalOpen}
+        onClose={() => setSpecialistModalOpen(false)}
+        hasAccess={hasSpecialistAccess}
+        currentPlan={currentPlan}
+        defaultName={userName}
+        defaultEmail={userEmail}
+        defaultCompany={orgName}
+        defaults={specialistDefaults}
+      />
     </div>
   );
 }

@@ -42,6 +42,19 @@ export default async function DocumentDetailPage({
 
   if (!doc) notFound();
 
+  const membership = await prisma.orgMember.findFirst({
+    where: { userId: user.id },
+    orderBy: { createdAt: 'asc' },
+    select: { org: { select: { plan: true, name: true } } },
+  });
+  const plan = membership?.org.plan ?? 'free';
+  const hasSpecialistAccess = plan === 'compass' || plan === 'flagship';
+  const orgName = membership?.org.name ?? 'My organisation';
+  const userName =
+    (user.user_metadata?.name as string | undefined) ??
+    user.email?.split('@')[0] ??
+    'User';
+
   return (
     <DashboardPageShell>
       <nav className="mb-4 text-xs text-[#777]">
@@ -80,6 +93,11 @@ export default async function DocumentDetailPage({
           filename: doc.filename,
         }}
         apiBaseUrl={getPublicApiBaseUrl()}
+        hasSpecialistAccess={hasSpecialistAccess}
+        currentPlan={plan}
+        userName={userName}
+        userEmail={user.email ?? ''}
+        orgName={orgName}
       />
     </DashboardPageShell>
   );

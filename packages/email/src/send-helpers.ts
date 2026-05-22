@@ -209,3 +209,17 @@ export async function sendFlagshipEnquiryEmail(
     tag: 'flagship_enquiry',
   });
 }
+
+export async function sendSpecialistRequestEmail(
+  args: BaseSend & T.SpecialistRequestProps,
+): Promise<SendEmailResult> {
+  const { to, replyTo, idempotencyKey, ...props } = args;
+  return sendEmail({
+    to,
+    replyTo: replyTo ?? props.email,
+    idempotencyKey,
+    subject: T.specialistRequestSubject(props),
+    template: createElement(T.SpecialistRequestEmail, props),
+    tag: 'specialist_request',
+  });
+}

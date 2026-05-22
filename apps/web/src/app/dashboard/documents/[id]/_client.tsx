@@ -33,10 +33,20 @@ export function DocumentDetailClient({
   documentId,
   initial,
   apiBaseUrl,
+  hasSpecialistAccess,
+  currentPlan,
+  userName,
+  userEmail,
+  orgName,
 }: {
   documentId: string;
   initial: InitialState;
   apiBaseUrl: string;
+  hasSpecialistAccess: boolean;
+  currentPlan: string;
+  userName: string;
+  userEmail: string;
+  orgName: string;
 }): JSX.Element {
   const router = useRouter();
   const baseUrl = apiBaseUrl.replace(/\/$/, '');
@@ -139,6 +149,11 @@ export function DocumentDetailClient({
         filename={initial.filename}
         result={analysisResult}
         apiBaseUrl={baseUrl}
+        hasSpecialistAccess={hasSpecialistAccess}
+        currentPlan={currentPlan}
+        userName={userName}
+        userEmail={userEmail}
+        orgName={orgName}
       />
     );
   }

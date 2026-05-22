@@ -1,16 +1,10 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { prisma } from '@/lib/db';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 
 /**
  * /dashboard/chat — FounderCounsel AI Advisory
- *
- * Server component gates on auth, then hands off to the client-side
- * ChatInterface which owns the SSE stream + sidebar state.
- *
- * The page itself is full-bleed (no max-w wrapper) so the chat column
- * can fill the available height; the dashboard layout's padding is
- * neutralised by overriding the inner ChatInterface min-height.
  */
 export default async function ChatPage(): Promise<JSX.Element> {
   const supabase = createClient();
@@ -20,9 +14,29 @@ export default async function ChatPage(): Promise<JSX.Element> {
   } = await supabase.auth.getUser();
   if (error || !user) redirect('/sign-in');
 
+  const membership = await prisma.orgMember.findFirst({
+    where: { userId: user.id },
+    orderBy: { createdAt: 'asc' },
+    select: { org: { select: { plan: true, name: true } } },
+  });
+
+  const plan = membership?.org.plan ?? 'free';
+  const hasSpecialistAccess = plan === 'compass' || plan === 'flagship';
+  const orgName = membership?.org.name ?? 'My organisation';
+  const userName =
+    (user.user_metadata?.name as string | undefined) ??
+    user.email?.split('@')[0] ??
+    'User';
+
   return (
     <div className="-mx-6 -my-6 md:-mx-8 md:-my-8 lg:-mx-10 xl:-mx-12">
-      <ChatInterface />
+      <ChatInterface
+        hasSpecialistAccess={hasSpecialistAccess}
+        currentPlan={plan}
+        userName={userName}
+        userEmail={user.email ?? ''}
+        orgName={orgName}
+      />
     </div>
   );
 }

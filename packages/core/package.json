@@ -12,6 +12,7 @@
     "./compliance": "./src/compliance/index.ts",
     "./roadmap": "./src/roadmap/index.ts",
     "./regulators": "./src/regulators/index.ts",
+    "./specialists": "./src/specialists/index.ts",
     "./types": "./src/types/index.ts",
     "./validation": "./src/validation/index.ts",
     "./utils": "./src/utils/index.ts"

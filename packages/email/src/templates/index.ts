@@ -93,3 +93,9 @@ export {
   flagshipEnquirySubject,
   type FlagshipEnquiryProps,
 } from './FlagshipEnquiry.js';
+
+export {
+  SpecialistRequestEmail,
+  specialistRequestSubject,
+  type SpecialistRequestProps,
+} from './SpecialistRequest.js';
