@@ -2,13 +2,13 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
-import { updateProfile } from './actions';
+import { updateProfile, updateOrgName } from './actions';
 import type { UserMeResponse } from '@klarify/core';
 
 export default async function ProfilePage({
   searchParams,
 }: {
-  searchParams: { success?: string; error?: string };
+  searchParams: { success?: string; error?: string; orgSuccess?: string; orgError?: string };
 }): Promise<JSX.Element> {
   const supabase = createClient();
   // Parallelise the two auth reads — getUser is the slow one (network);
@@ -129,6 +129,46 @@ export default async function ProfilePage({
               </button>
             </form>
           </section>
+
+          {/* Edit organisation name — only shown to owners */}
+          {membership?.role === 'owner' && (
+            <section className="rounded-2xl border border-[#CCCCCC] bg-white p-6 shadow-sm">
+              <h2 className="mb-1 text-base font-semibold text-[#1A1A1A]">Organisation name</h2>
+              <p className="mb-4 text-sm text-[#555555]">
+                This name appears on all generated documents and compliance exports.
+              </p>
+
+              {searchParams.orgSuccess && (
+                <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                  Organisation name updated successfully.
+                </div>
+              )}
+              {searchParams.orgError && (
+                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {decodeURIComponent(searchParams.orgError)}
+                </div>
+              )}
+
+              <form action={updateOrgName} className="flex flex-col gap-3 sm:flex-row">
+                <input type="hidden" name="orgId" value={membership.orgId} />
+                <input
+                  name="orgName"
+                  type="text"
+                  defaultValue={membership.orgName}
+                  placeholder="e.g. BlockEX Technologies Ltd"
+                  maxLength={200}
+                  required
+                  className="flex-1 rounded-lg border border-[#CCCCCC] px-4 py-2.5 text-sm text-[#1A1A1A] focus:border-[#0B6E6E] focus:outline-none focus:ring-2 focus:ring-[#0B6E6E]/20"
+                />
+                <button
+                  type="submit"
+                  className="rounded-lg bg-[#0B6E6E] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0D2B45]"
+                >
+                  Save
+                </button>
+              </form>
+            </section>
+          )}
 
           {/* Subscription */}
           <section className="rounded-2xl border border-[#CCCCCC] bg-white p-6 shadow-sm">
