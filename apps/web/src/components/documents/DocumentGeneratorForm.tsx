@@ -16,7 +16,7 @@
  * The disclaimer banner is non-dismissible and always present in the
  * preview pane (CLAUDE.md §16 Rule 1).
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { htmlToMarkdown, markdownToHtml } from '@klarify/core';
@@ -359,13 +359,37 @@ export function DocumentGeneratorForm({
             <button
               type="submit"
               disabled={!allRequiredFilled || submitting}
-              className="inline-flex w-full items-center justify-center rounded-md bg-[#0B6E6E] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#085656] disabled:cursor-not-allowed disabled:bg-[#CCCCCC]"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#0B6E6E] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#085656] disabled:cursor-not-allowed disabled:bg-[#CCCCCC]"
             >
-              {submitting
-                ? `Generating your ${template.documentName}… 10–20 seconds`
-                : result
-                  ? `Regenerate (will create v${result.version + 1})`
-                  : `Generate ${template.documentName}`}
+              {submitting ? (
+                <>
+                  <svg
+                    className="h-4 w-4 animate-spin"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  <span>Generating… 10–20 seconds</span>
+                </>
+              ) : result ? (
+                `Regenerate (will create v${result.version + 1})`
+              ) : (
+                `Generate ${template.documentName}`
+              )}
             </button>
           </form>
         </section>
@@ -373,18 +397,23 @@ export function DocumentGeneratorForm({
         {/* ---------- RIGHT: PREVIEW ---------- */}
         <section className="rounded-xl border border-[#E5E5E5] bg-white">
           {result === null ? (
-            <div className="flex h-full min-h-[420px] flex-col items-center justify-center px-6 py-12 text-center">
-              <div className="mb-3 text-3xl" aria-hidden="true">
-                📄
+            submitting ? (
+              <GeneratingState templateName={template.documentName} />
+            ) : (
+              <div className="flex h-full min-h-[420px] flex-col items-center justify-center px-6 py-12 text-center">
+                <div className="mb-3 text-4xl opacity-40" aria-hidden="true">
+                  📄
+                </div>
+                <h3 className="mb-2 text-base font-medium text-[#0D2B45]">
+                  Your generated document will appear here
+                </h3>
+                <p className="max-w-sm text-sm text-[#777]">
+                  Fill in the form, then click Generate. Klarify will use
+                  Nigerian regulation as context — typically takes 10–20
+                  seconds.
+                </p>
               </div>
-              <h3 className="mb-2 text-base font-medium text-[#0D2B45]">
-                Your generated document will appear here
-              </h3>
-              <p className="max-w-sm text-sm text-[#777]">
-                Fill in the form, then click Generate. Klarify will use Nigerian
-                regulation as context — typically takes 10–20 seconds.
-              </p>
-            </div>
+            )
           ) : (
             <div className="flex flex-col">
               <div className="flex items-center justify-between border-b border-[#F0F0F0] px-5 py-3">
@@ -547,14 +576,18 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
       );
     case 'multiselect':
       return (
-        <div className="mt-1 grid grid-cols-2 gap-1 rounded-md border border-[#D1D5DB] bg-white p-2 sm:grid-cols-3">
+        <div className="mt-1 grid grid-cols-1 gap-x-3 gap-y-0.5 rounded-md border border-[#D1D5DB] bg-white p-2 sm:grid-cols-2">
           {(field.options ?? []).map((opt) => {
             const arr = Array.isArray(value) ? (value as string[]) : [];
             const checked = arr.includes(opt);
+            const displayLabel = opt
+              .replace(/_/g, ' ')
+              .toLowerCase()
+              .replace(/\b\w/g, (c) => c.toUpperCase());
             return (
               <label
                 key={opt}
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 text-[11px] text-[#1A1A1A] hover:bg-[#F5F5F5]"
+                className="flex min-w-0 cursor-pointer items-start gap-2 rounded px-1.5 py-1 text-xs text-[#1A1A1A] hover:bg-[#F5F5F5]"
               >
                 <input
                   type="checkbox"
@@ -565,9 +598,9 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
                       : [...arr, opt];
                     onChange(next);
                   }}
-                  className="h-3.5 w-3.5"
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-[#0B6E6E]"
                 />
-                <span>{opt}</span>
+                <span className="min-w-0 leading-snug">{displayLabel}</span>
               </label>
             );
           })}
@@ -588,4 +621,77 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
     default:
       return <input type="text" className={className} />;
   }
+}
+
+// =============================================================================
+// Generating state — animated panel shown while the API call is in-flight
+// =============================================================================
+
+const GENERATING_STEPS = [
+  'Searching Nigerian regulatory corpus…',
+  'Applying NFIU AML/CFT compliance framework…',
+  'Cross-referencing SEC Digital Asset Rules…',
+  'Structuring document sections…',
+  'Formatting for regulatory submission…',
+  'Finalising your document…',
+] as const;
+
+function GeneratingState({ templateName }: { templateName: string }): JSX.Element {
+  const [stepIdx, setStepIdx] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const stepTimer = setInterval(() => {
+      setStepIdx((i) => (i + 1) % GENERATING_STEPS.length);
+    }, 3000);
+    const elapsedTimer = setInterval(() => {
+      setElapsed((s) => s + 1);
+    }, 1000);
+    return (): void => {
+      clearInterval(stepTimer);
+      clearInterval(elapsedTimer);
+    };
+  }, []);
+
+  return (
+    <div className="flex h-full min-h-[420px] flex-col items-center justify-center px-6 py-12 text-center">
+      {/* Dual-ring spinner */}
+      <div className="relative mb-6 h-16 w-16" aria-hidden="true">
+        <div className="absolute inset-0 rounded-full border-4 border-[#E6F4F4]" />
+        <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-[#0B6E6E]" />
+        <div
+          className="absolute inset-[6px] animate-spin rounded-full border-2 border-transparent border-t-[#D4A843]"
+          style={{ animationDuration: '1.4s', animationDirection: 'reverse' }}
+        />
+      </div>
+
+      <h3 className="mb-1 text-base font-semibold text-[#0D2B45]">
+        Generating your {templateName}…
+      </h3>
+
+      {/* Rotating step message */}
+      <p
+        key={stepIdx}
+        className="mb-5 text-sm text-[#0B6E6E] transition-opacity duration-500"
+      >
+        {GENERATING_STEPS[stepIdx]}
+      </p>
+
+      {/* Indeterminate progress bar */}
+      <div className="w-full max-w-xs">
+        <div className="h-1.5 overflow-hidden rounded-full bg-[#E6F4F4]">
+          <div className="klarify-indeterminate-bar h-full rounded-full bg-[#0B6E6E]" />
+        </div>
+      </div>
+
+      {/* Elapsed / estimated time */}
+      <p className="mt-4 text-xs text-[#999]">
+        {elapsed < 6
+          ? 'Typically takes 10–20 seconds'
+          : elapsed < 25
+            ? `${elapsed}s — almost there…`
+            : `${elapsed}s — larger documents take a moment, hang tight`}
+      </p>
+    </div>
+  );
 }
