@@ -167,12 +167,16 @@ export function ChatInterface(): JSX.Element {
               </div>
             )}
 
-            <ChatInput
-              onSend={(text) => void sendMessage(text)}
-              onStop={stopStreaming}
-              isStreaming={isStreaming}
-              blockedMessage={quotaBlockedMessage}
-            />
+            {quotaBlocked ? (
+              <QueryLimitUpgradePrompt plan={quota?.plan ?? 'free'} limit={quota?.limit ?? 0} />
+            ) : (
+              <ChatInput
+                onSend={(text) => void sendMessage(text)}
+                onStop={stopStreaming}
+                isStreaming={isStreaming}
+                blockedMessage={null}
+              />
+            )}
 
             {quota && quota.limit !== null && !quotaBlocked && (
               <p
@@ -186,6 +190,70 @@ export function ChatInterface(): JSX.Element {
             )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function QueryLimitUpgradePrompt({
+  plan,
+  limit,
+}: {
+  plan: string;
+  limit: number;
+}): JSX.Element {
+  const requiredPlan = plan === 'free' ? 'navigator' : 'compass';
+  const planLabel = requiredPlan === 'navigator' ? 'Navigator' : 'Compass';
+
+  return (
+    <div className="rounded-xl border border-[#0B6E6E] bg-[#E6F4F4] p-4">
+      <div className="mb-3 flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0B6E6E] text-white">
+          🔒
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-[#0D2B45]">
+            Monthly query limit reached
+          </p>
+          <p className="text-xs text-[#555]">
+            You have used all {limit} AI queries this month on the {plan} plan.
+            Upgrade to keep asking Klarify.
+          </p>
+        </div>
+      </div>
+
+      <div className="mb-3 rounded-lg bg-white p-3">
+        <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#0B6E6E]">
+          {planLabel} includes:
+        </p>
+        {requiredPlan === 'navigator' ? (
+          <ul className="space-y-1 text-xs text-[#555]">
+            <li>✓ 50 AI queries / month</li>
+            <li>✓ 5 document analyses</li>
+            <li>✓ 3 compliance document templates</li>
+          </ul>
+        ) : (
+          <ul className="space-y-1 text-xs text-[#555]">
+            <li>✓ Unlimited AI queries</li>
+            <li>✓ ARIP tracker + Regulator CRM</li>
+            <li>✓ All 13 document templates</li>
+          </ul>
+        )}
+      </div>
+
+      <div className="flex items-center gap-3">
+        <a
+          href={`/dashboard/billing?plan=${requiredPlan}`}
+          className="rounded-lg bg-[#0B6E6E] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0A5F5F]"
+        >
+          Upgrade to {planLabel} →
+        </a>
+        <a
+          href="/pricing"
+          className="text-xs text-[#0B6E6E] underline hover:text-[#0A5F5F]"
+        >
+          See all plans
+        </a>
       </div>
     </div>
   );

@@ -353,22 +353,85 @@ model RegulatorInteraction {
 }
 
 // =============================================================================
-// ARIP
+// ARIP — Sprint 5-B1 (012_arip_tracker migration)
 // =============================================================================
 model AripApplication {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orgId         String    @unique @map("org_id") @db.Uuid
-  licenceType   String    @map("licence_type")
-  currentStage  String    @default("pre_screening") @map("current_stage")
-  aipIssuedDate DateTime? @map("aip_issued_date") @db.Date
-  aipExpiryDate DateTime? @map("aip_expiry_date") @db.Date
-  notes         Json      @default("{}")
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId                  String    @unique @map("org_id") @db.Uuid
+  licenceType            String    @map("licence_type")
+  currentStage           String    @default("pre_screening") @map("current_stage")
+  stageEnteredAt         DateTime  @default(now()) @map("stage_entered_at") @db.Timestamptz()
+  aipIssuedDate          DateTime? @map("aip_issued_date") @db.Date
+  aipExpiryDate          DateTime? @map("aip_expiry_date") @db.Date
+  aipExtensionCount      Int       @default(0) @map("aip_extension_count")
 
-  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  // AIP operational limits — Section 29, ARIP Framework (June 2024)
+  // Amounts in kobo (NGN × 100) to avoid floating-point issues.
+  aipTotalCustomers      Int    @default(0) @map("aip_total_customers")
+  aipTotalAumNgn         BigInt @default(0) @map("aip_total_aum_ngn")
+  aipMaxCustomers        Int    @default(50) @map("aip_max_customers")
+  aipMaxSingleTxnNgn     BigInt @default(200000000) @map("aip_max_single_txn_ngn")
+  aipMaxCustomerAumNgn   BigInt @default(500000000) @map("aip_max_customer_aum_ngn")
+
+  // Compliance blockers
+  solicitorEngaged       Boolean   @default(false) @map("solicitor_engaged")
+  solicitorName          String?   @map("solicitor_name")
+  solicitorFirm          String?   @map("solicitor_firm")
+  solicitorEngagedDate   DateTime? @map("solicitor_engaged_date") @db.Date
+
+  fidelityBondInPlace    Boolean   @default(false) @map("fidelity_bond_in_place")
+  fidelityBondAmountNgn  BigInt?   @map("fidelity_bond_amount_ngn")
+  fidelityBondExpiry     DateTime? @map("fidelity_bond_expiry") @db.Date
+
+  // Application fee tracking
+  applicationFeePaid       Boolean   @default(false) @map("application_fee_paid")
+  applicationFeeAmountNgn  Int?      @map("application_fee_amount_ngn")
+  applicationFeePaidDate   DateTime? @map("application_fee_paid_date") @db.Date
+
+  secReferenceNumber     String?   @map("sec_reference_number")
+  // Legacy extra-state JSON column — kept for backward compat with existing UI.
+  notes                  Json      @default("{}")
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt              DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  org          Organisation       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  growthLog    AripGrowthLog[]
+  stageHistory AripStageHistory[]
 
   @@map("arip_applications")
+}
+
+// Append-only per-event ledger for customer and AUM changes during AIP period.
+model AripGrowthLog {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  aripId         String   @map("arip_id") @db.Uuid
+  orgId          String   @map("org_id") @db.Uuid
+  eventType      String   @map("event_type")
+  deltaCustomers Int      @default(0) @map("delta_customers")
+  deltaAumNgn    BigInt   @default(0) @map("delta_aum_ngn")
+  description    String?
+  recordedAt     DateTime @default(now()) @map("recorded_at") @db.Timestamptz()
+
+  arip AripApplication @relation(fields: [aripId], references: [id], onDelete: Cascade)
+
+  @@index([aripId])
+  @@index([orgId])
+  @@map("arip_growth_log")
+}
+
+// Immutable audit trail of every stage transition.
+model AripStageHistory {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  aripId         String   @map("arip_id") @db.Uuid
+  fromStage      String?  @map("from_stage")
+  toStage        String   @map("to_stage")
+  notes          String?
+  transitionedAt DateTime @default(now()) @map("transitioned_at") @db.Timestamptz()
+
+  arip AripApplication @relation(fields: [aripId], references: [id], onDelete: Cascade)
+
+  @@index([aripId])
+  @@map("arip_stage_history")
 }
 
 // =============================================================================
@@ -393,19 +456,23 @@ model ComplianceEvent {
 }
 
 model Subscription {
-  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orgId            String    @map("org_id") @db.Uuid
-  plan             String
-  billingCycle     String    @map("billing_cycle")
-  flutterwaveSubId String?   @map("flutterwave_sub_id")
-  stripeSubId      String?   @map("stripe_sub_id")
-  status           String    @default("active")
-  currentPeriodEnd DateTime? @map("current_period_end") @db.Timestamptz()
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId                   String    @map("org_id") @db.Uuid
+  plan                    String    @default("free")
+  billingCycle            String?   @map("billing_cycle")
+  /// Korapay charge reference (KLR-{shortOrgId}-{nanoid}) created at checkout init.
+  korapayTransactionRef   String?   @map("korapay_transaction_ref")
+  /// Korapay subscription code if provided in the charge.success webhook.
+  korapaySubscriptionCode String?   @map("korapay_subscription_code")
+  status                  String    @default("active")
+  currentPeriodEnd        DateTime? @map("current_period_end") @db.Timestamptz()
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
+  @@index([orgId])
+  @@index([korapayTransactionRef])
   @@map("subscriptions")
 }
 

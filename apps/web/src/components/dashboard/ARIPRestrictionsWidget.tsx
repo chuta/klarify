@@ -233,7 +233,7 @@ export function ARIPRestrictionsWidget({
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
               <p className="text-xs font-semibold text-amber-700">
                 ⚠️ Customer baseline not recorded. Go to the{' '}
-                <Link href="/dashboard/regulators/arip" className="underline">
+                <Link href="/dashboard/arip" className="underline">
                   ARIP Tracker
                 </Link>{' '}
                 to lock your baseline immediately.

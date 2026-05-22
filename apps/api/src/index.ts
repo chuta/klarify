@@ -47,6 +47,8 @@ import { documentGeneratorRoutes } from './routes/documents/generate.js';
 import { chatRoutes } from './routes/ai/chat.js';
 import { conversationRoutes } from './routes/ai/conversations.js';
 import { classifyRoutes } from './routes/ai/classify.js';
+import { billingRoutes } from './routes/billing/index.js';
+import { billingWebhookRoutes } from './routes/billing/webhooks.js';
 
 const app = new Hono();
 
@@ -109,6 +111,11 @@ app.route('/api/auth', authRoutes);
 // prefixes like /api/documents/generated.
 app.route('/api/documents', documentGeneratorRoutes);
 app.route('/api/documents', documentRoutes);
+
+// Billing — Sprint 5: Korapay subscriptions.
+// Webhook route is intentionally mounted WITHOUT auth middleware (public endpoint).
+app.route('/api/billing/webhook', billingWebhookRoutes);
+app.route('/api/billing', billingRoutes);
 
 // FounderCounsel — Sprint 2 streaming AI chat (RAG + Claude SSE).
 app.route('/api/ai', chatRoutes);

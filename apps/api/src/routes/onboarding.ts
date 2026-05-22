@@ -14,6 +14,7 @@ import {
 import { sendOnboardingCompleteEmail } from '@klarify/email';
 import { prisma, withRls } from '../db.js';
 import { requireAuth, type AuthVars } from '../middleware/auth.js';
+import { ensureFreeTier } from '../services/billing.js';
 
 /**
  * Map a product-type code (e.g. "DAX") onto its primary Nigerian regulator
@@ -89,6 +90,12 @@ onboardingRoutes.post(
           },
         });
         orgId = newOrg.id;
+
+        // Create free-tier subscription row for the new org.
+        // Fire-and-forget — onboarding succeeds even if this fails.
+        void ensureFreeTier(orgId).catch((err) => {
+          console.error('[onboarding] ensureFreeTier failed', err);
+        });
       }
 
       // ------------------------------------------------------------------ //

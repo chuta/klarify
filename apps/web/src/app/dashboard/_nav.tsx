@@ -33,6 +33,7 @@ export const DASHBOARD_NAV: NavSection[] = [
       { href: '/dashboard/documents', label: 'Letter Analyser', icon: <DocIcon /> },
       { href: '/dashboard/compliance/documents', label: 'Document Generator', icon: <GenIcon /> },
       { href: '/dashboard/regulators', label: 'Regulators', icon: <BuildingIcon /> },
+      { href: '/dashboard/arip', label: 'ARIP Tracker', icon: <ARIPIcon /> },
       { href: '/dashboard/calendar', label: 'Calendar', icon: <CalIcon /> },
     ],
   },
@@ -40,6 +41,12 @@ export const DASHBOARD_NAV: NavSection[] = [
     title: 'FounderCounsel',
     items: [
       { href: '/dashboard/chat', label: 'AI Advisory', icon: <ChatIcon /> },
+    ],
+  },
+  {
+    title: 'Account',
+    items: [
+      { href: '/dashboard/billing', label: 'Billing', icon: <BillingIcon /> },
     ],
   },
 ];
@@ -106,6 +113,22 @@ function GenIcon(): JSX.Element {
   return (
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+    </svg>
+  );
+}
+
+function ARIPIcon(): JSX.Element {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+    </svg>
+  );
+}
+
+function BillingIcon(): JSX.Element {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
     </svg>
   );
 }

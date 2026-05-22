@@ -106,9 +106,11 @@ klarify/
 - **Biometrics (mobile):** Expo LocalAuthentication (V2)
 
 ### Payments
-- **Africa-first:** Flutterwave
-- **International:** Stripe
+- **Provider:** Korapay (existing Blockspace Technologies Limited account — Nigerian cards, bank transfer, USSD, mobile money + international cards via Korapay's multi-currency support)
+- **Docs:** https://developers.korapay.com/docs/checkout-standard
 - **Billing:** Subscription (monthly/annual) + one-time purchases
+- **Webhook event:** `charge.success` (POST to `/api/billing/webhook/korapay`)
+- **Signature verification:** HMAC-SHA256 using `KORAPAY_ENCRYPTION_KEY`
 
 ### Email
 - **Provider:** Resend (preferred) or SendGrid
@@ -314,8 +316,8 @@ subscriptions (
   id, org_id,
   plan,                    -- free, navigator, compass, flagship
   billing_cycle,           -- monthly, annual
-  flutterwave_sub_id,
-  stripe_sub_id,
+  korapay_transaction_ref, -- Korapay charge reference
+  korapay_subscription_code,
   status,                  -- active, cancelled, past_due
   current_period_end,
   created_at
@@ -714,8 +716,7 @@ GET  /api/calendar/upcoming         ← next 30 days
 POST /api/billing/subscribe
 POST /api/billing/cancel
 GET  /api/billing/status
-POST /api/billing/webhook/flutterwave
-POST /api/billing/webhook/stripe
+POST /api/billing/webhook/korapay
 ```
 
 ---
@@ -1086,11 +1087,11 @@ AWS_SECRET_ACCESS_KEY=
 AWS_S3_BUCKET=
 AWS_REGION=
 
-# Payments
-FLUTTERWAVE_SECRET_KEY=
-FLUTTERWAVE_PUBLIC_KEY=
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
+# Payments (Korapay — existing Blockspace Technologies Limited account)
+KORAPAY_PUBLIC_KEY=pk_live_...
+KORAPAY_SECRET_KEY=sk_live_...
+KORAPAY_ENCRYPTION_KEY=        # Used for webhook HMAC-SHA256 signature verification
+NEXT_PUBLIC_KORAPAY_PUBLIC_KEY=pk_live_...
 
 # Email
 RESEND_API_KEY=
@@ -1179,9 +1180,9 @@ These rules are non-negotiable. Violating them creates liability for the product
 **Sprint 5 deliverables (in flight):**
 
 Phase A — Billing & Subscriptions:
-- S5-A1 🖐 MANUAL: Set up Flutterwave + Stripe accounts, obtain API keys, create subscription plans/price IDs
-- S5-A2: Billing service (createSubscription, cancelSubscription, upgradeSubscription), webhook handlers (Flutterwave + Stripe), feature gate middleware (`requireFeature()`), free tier enforcement
-- S5-A3: Pricing page (public, 3-column, monthly/annual toggle), /billing subscription management page, UpgradePrompt component
+- S5-A1 ✅ DONE: Korapay account active (Blockspace Technologies Ltd); keys added to .env; Resend domain verified and working
+- S5-A2: Billing service (Korapay Checkout initialisation, charge.success webhook with HMAC-SHA256 verification, cancelSubscription, upgradeSubscription), feature gate middleware (`requireFeature()`), free tier enforcement
+- S5-A3: Pricing page (public, 3-column, monthly/annual toggle), /billing subscription management page (Korapay Checkout), UpgradePrompt component
 
 Phase B — ARIP Tracker (US-009):
 - S5-B1: ARIP service + DB migration (5-stage model, growth cap tracking, restrictions log), API endpoints (GET/PUT /api/arip, POST /api/arip/incident), AIP calendar automation
@@ -1191,7 +1192,7 @@ Phase C — Regulator CRM (US-010):
 - S5-C1: Regulator hub page + interaction log backend + CSV export, follow-up alerts in dashboard, Compass+ gate
 
 Phase D — Email Notifications:
-- S5-D1 🖐 MANUAL: Set up Resend domain (klarify.africa), verify DNS, add API key to env
+- S5-D1 ✅ DONE: Resend domain (klarify.africa) verified and working; RESEND_API_KEY active
 - S5-D2: emailService.ts (deadline alerts, ARIP growth alerts, billing emails, weekly digest), daily cron for deadline alerts, notification preferences UI + unsubscribe tokens
 
 Phase E — 4 ARIP Document Templates (US-008 Sprint 5 additions):
@@ -3072,7 +3073,7 @@ starting Sprint 5 tasks.
 ║  SPRINT 5 — WEEKS 11–12                                   ║
 ║  GOAL: BILLING + NOTIFICATIONS LIVE                       ║
 ║                                                           ║
-║  Delivers: Subscription billing (Flutterwave + Stripe),   ║
+║  Delivers: Subscription billing (Korapay),                ║
 ║            Feature tier-gating, ARIP tracker (US-009),   ║
 ║            Regulator CRM (US-010),                        ║
 ║            Email notifications,                           ║
@@ -3086,56 +3087,32 @@ SPRINT 5 — PHASE A: SUBSCRIPTION BILLING
 
 
 ──────────────────────────────────────────────────────────
-TASK S5-A1 🖐  MANUAL — Set Up Payment Provider Accounts
+TASK S5-A1 ✅ DONE — Payment & Email Providers Active
 ──────────────────────────────────────────────────────────
 
-Complete before S5-A2. Both are required.
+Both providers are live and verified. No manual setup needed.
 
-1. FLUTTERWAVE (Africa-first — primary for Nigerian users)
-   - Sign up at: https://dashboard.flutterwave.com
-   - Complete business verification (Blockspace Technologies)
-   - Enable: Subscriptions, Card payments, Bank transfers,
-     USSD, Mobile money
-   - Get API keys from Dashboard → Settings → API Keys:
-     FLUTTERWAVE_PUBLIC_KEY=FLWPUBK_TEST-...
-     FLUTTERWAVE_SECRET_KEY=FLWSECK_TEST-...
-     FLUTTERWAVE_ENCRYPTION_KEY=...
-   - Set webhook URL to:
-     https://api.klarify.africa/api/billing/webhook/flutterwave
-   - Add all keys to .env.local
+1. KORAPAY ✅ — existing Blockspace Technologies Ltd account
+   Account: ID KPY36411 (Live Mode active — see screenshot)
+   Public Key: pk_live_jF7p... (in Korapay dashboard)
+   Secret Key: sk_live_qxBd... (in Korapay dashboard)
+   Encryption Key: ZLTeX883aCmF... (in Korapay dashboard)
+   Docs: https://developers.korapay.com/docs/checkout-standard
 
-2. STRIPE (international users — outside Africa)
-   - Sign up at: https://dashboard.stripe.com
-   - Enable: Subscriptions, Cards, international payments
-   - Get API keys from Developers → API Keys:
-     STRIPE_PUBLIC_KEY=pk_test_...
-     STRIPE_SECRET_KEY=sk_test_...
-     STRIPE_WEBHOOK_SECRET=whsec_...
-   - Create products and prices in Stripe dashboard:
-     Navigator: $29/month recurring + $278/year recurring
-     Compass: $99/month recurring + $950/year recurring
-     Flagship: $299/month recurring + $2870/year recurring
-     ARIP Package: $499 one-time
-   - Note all Price IDs (price_xxx) — needed in code
-   - Set webhook URL to:
-     https://api.klarify.africa/api/billing/webhook/stripe
-   - Add all keys and price IDs to .env.local
+   ACTION REQUIRED — add to .env.local and Fly secrets:
+     KORAPAY_PUBLIC_KEY=pk_live_...
+     KORAPAY_SECRET_KEY=sk_live_...
+     KORAPAY_ENCRYPTION_KEY=ZLTeX883aCmF...
+     NEXT_PUBLIC_KORAPAY_PUBLIC_KEY=pk_live_...
 
-3. ENVIRONMENT VARIABLES TO ADD:
-   FLUTTERWAVE_PUBLIC_KEY=
-   FLUTTERWAVE_SECRET_KEY=
-   FLUTTERWAVE_ENCRYPTION_KEY=
-   STRIPE_PUBLIC_KEY=
-   STRIPE_SECRET_KEY=
-   STRIPE_WEBHOOK_SECRET=
-   # Stripe Price IDs
-   STRIPE_PRICE_NAVIGATOR_MONTHLY=
-   STRIPE_PRICE_NAVIGATOR_ANNUAL=
-   STRIPE_PRICE_COMPASS_MONTHLY=
-   STRIPE_PRICE_COMPASS_ANNUAL=
-   STRIPE_PRICE_FLAGSHIP_MONTHLY=
-   STRIPE_PRICE_FLAGSHIP_ANNUAL=
-   STRIPE_PRICE_ARIP_PACKAGE=
+   Set webhook URL in Korapay dashboard to:
+     https://api.klarify.africa/api/billing/webhook/korapay
+   Event to enable: charge.success
+
+2. RESEND ✅ — domain verified and working
+   Domain: klarify.africa (DNS verified)
+   FROM address: noreply@klarify.africa
+   RESEND_API_KEY: already in .env.local + Fly secrets
 
 
 ──────────────────────────────────────────────────────────
@@ -3149,60 +3126,81 @@ Use Sonnet 4.5 for this implementation.
 Do NOT hardcode prices — read from PLAN_PRICING in
 packages/core/src/types/subscription.ts.
 
+PAYMENT GATEWAY: Korapay (existing Blockspace account)
+Docs: https://developers.korapay.com/docs/checkout-standard
+Korapay uses a client-side JS modal (Korapay.initialize)
+for checkout. The backend creates a reference, the front
+end opens the modal; on success the webhook fires.
+
 1. BILLING SERVICE
    Create: apps/api/src/services/billing.ts
 
-   createSubscription(orgId, plan, billingCycle, provider):
-   - provider: 'flutterwave' (NG users) or 'stripe' (others)
-   - For Flutterwave: use Flutterwave Subscriptions API
-   - For Stripe: use Stripe Subscriptions API with Price ID
-   - On success: save to subscriptions table
-   - Return: { subscriptionId, paymentUrl }
+   createCheckoutRef(orgId, plan, billingCycle):
+   - Generate a unique reference: `KLR-{orgId}-{uuid}`
+   - Calculate amount from PLAN_PRICING[plan][billingCycle]
+     in NGN (multiply USD price by ~1600 NGN/USD rate, or
+     accept NGN prices directly — store in core config)
+   - Save pending subscription record:
+     { org_id, plan, billing_cycle, korapay_transaction_ref,
+       status: 'pending', created_at }
+   - Return: { reference, amount, currency: 'NGN' }
+   (Front end calls Korapay.initialize with this reference)
+
+   activateSubscription(korapayRef):
+   - Called by webhook handler on charge.success
+   - Find subscription by korapay_transaction_ref
+   - Set status = 'active'
+   - Calculate current_period_end (30 days or 365 days)
+   - Update org plan in organisations table
+   - Trigger feature-gate cache refresh
 
    cancelSubscription(orgId):
-   - Cancel with respective provider
    - Update subscriptions.status = 'cancelled'
    - Access continues until current_period_end
+   (Korapay does not have recurring billing API — renewals
+    are handled by sending reminder emails and re-initialising
+    a new checkout. See NOTE below.)
 
    getSubscriptionStatus(orgId):
    - Returns: { plan, status, current_period_end, seats_used }
 
-   upgradeSubscription(orgId, newPlan):
-   - Prorate billing with respective provider
-   - Update subscriptions table immediately (not at renewal)
-   - Trigger feature-gate refresh
+   NOTE ON RECURRING BILLING:
+   Korapay Checkout Standard is a one-time charge gateway.
+   For subscription renewals, Klarify will:
+   a. 7 days before period_end: email user with renewal link
+   b. On period_end: downgrade to free plan automatically
+   c. User clicks renewal link → new Korapay checkout
+   d. On charge.success webhook → reactivate subscription
+   This is the simplest model for V1. Upgrade to Korapay
+   recurring API or a subscription management layer in V2.
 
-2. WEBHOOK HANDLERS
+2. WEBHOOK HANDLER
    Create: apps/api/src/routes/billing/webhooks.ts
 
-   POST /api/billing/webhook/flutterwave
-   Events to handle:
-   - subscription.create → update subscriptions table
-   - subscription.activated → set status 'active'
-   - subscription.cancelled → set status 'cancelled'
-   - charge.completed → log payment success
-   - charge.failed → set status 'past_due', send email
+   POST /api/billing/webhook/korapay
+   Event to handle: charge.success
 
-   POST /api/billing/webhook/stripe
-   Events to handle:
-   - customer.subscription.created → update table
-   - customer.subscription.updated → sync plan changes
-   - customer.subscription.deleted → set cancelled
-   - invoice.paid → set active, update period end
-   - invoice.payment_failed → set past_due, send email
-   - checkout.session.completed → activate ARIP package
+   WEBHOOK SECURITY (CRITICAL):
+   Verify HMAC-SHA256 signature:
+   - Korapay sends hash in request header: `x-korapay-signature`
+   - Compute: HMAC-SHA256(requestBody, KORAPAY_ENCRYPTION_KEY)
+   - Compare with timing-safe equality
+   - Reject with 401 if mismatch
 
-   WEBHOOK SECURITY:
-   - Flutterwave: verify webhook hash
-   - Stripe: verify stripe-signature header using
-     STRIPE_WEBHOOK_SECRET
+   On charge.success:
+   - Parse: { reference, amount, status, payment_reference }
+   - Call activateSubscription(payment_reference)
+   - Return 200 immediately (idempotent — safe to call twice)
+
+   On any other event: return 200 (ignore gracefully)
 
 3. BILLING API ROUTES
    Create: apps/api/src/routes/billing/index.ts
 
    POST /api/billing/subscribe
-   Body: { plan, billingCycle, provider }
-   Returns: { paymentUrl } — redirect user here to pay
+   Body: { plan, billingCycle }
+   Returns: { reference, amount, currency }
+   (Front end passes this to Korapay.initialize)
 
    POST /api/billing/cancel
    Cancels current subscription (access until period end)
@@ -3212,7 +3210,9 @@ packages/core/src/types/subscription.ts.
 
    POST /api/billing/upgrade
    Body: { newPlan }
-   Upgrades immediately with proration
+   Creates new checkout ref for the upgraded plan
+   Returns: { reference, amount, currency }
+   (Front end opens new Korapay modal for difference)
 
 4. FEATURE GATE MIDDLEWARE
    Create: apps/api/src/middleware/featureGate.ts
@@ -3244,16 +3244,16 @@ packages/core/src/types/subscription.ts.
    No credit card required for free tier.
 
 6. TESTS
-   - createSubscription() creates record in DB
-   - Stripe webhook updates plan on invoice.paid
-   - Flutterwave webhook updates plan on charge.completed
+   - createCheckoutRef() creates pending record in DB
+   - Webhook activates subscription on charge.success
+   - Webhook rejects invalid HMAC signature with 401
+   - Duplicate webhook calls are idempotent (no double-activate)
    - featureGate blocks scenario simulator for free plan
    - featureGate allows scenario simulator for compass plan
    - Cancel sets status='cancelled' not deleted
    - Free tier user gets 402 on AI query #11
-   - Webhook signature verification rejects invalid payloads
 
-   Install: pnpm add stripe @flutterwave-node-v3/node
+   Install: pnpm add crypto (built-in Node — no extra install)
 ═══════════════════════════════════════════════════════
 
 
@@ -3304,11 +3304,21 @@ Build the billing and upgrade UI.
       - \"Switch to annual\" button for monthly subscribers
         (shows savings calculation)
 
-   c. PAYMENT PROVIDER SELECTOR
-      - \"Pay with Flutterwave (Nigerian cards, bank transfer,
-         USSD)\" — default for NG users
-      - \"Pay with Stripe (international cards)\"
-      - Selection stored in localStorage
+   c. CHECKOUT VIA KORAPAY
+      Korapay Checkout Standard (JS modal — client-side):
+      - Load script on demand (dynamic import):
+        korablobstorage.blob.core.windows.net/modal-bucket/
+        korapay-collections.min.js
+      - On \"Subscribe\" click: POST /api/billing/subscribe
+        → receive { reference, amount, currency }
+      - Call window.Korapay.initialize({ key: NEXT_PUBLIC_
+        KORAPAY_PUBLIC_KEY, reference, amount, currency: 'NGN',
+        customer: { name, email }, onSuccess, onFailed,
+        onClose, channels: ['bank_transfer','card'],
+        merchant_bears_cost: true })
+      - onSuccess: show \"Activating your plan...\" spinner,
+        poll GET /api/billing/status every 2s until plan changes
+      - onFailed: show error toast, allow retry
 
    d. ARIP APPLICATION PACKAGE
       - Separate purchase card: \"$499 one-time\"
@@ -3330,8 +3340,10 @@ Build the billing and upgrade UI.
 4. TESTS
    - Pricing table renders all 3 plans with correct prices
    - Annual toggle shows discounted prices
-   - Flutterwave payment flow redirects to payment URL
-   - Stripe payment flow redirects to Stripe checkout
+   - Subscribe button calls POST /api/billing/subscribe
+   - Korapay.initialize called with correct reference + amount
+   - onSuccess triggers polling of /api/billing/status
+   - onFailed shows error toast
    - UpgradePrompt renders with correct plan name
    - Cancel confirmation modal appears before cancelling
    - Current plan highlighted on billing page
@@ -3734,24 +3746,19 @@ SPRINT 5 — PHASE D: EMAIL NOTIFICATIONS
 
 
 ──────────────────────────────────────────────────────────
-TASK S5-D1 🖐  MANUAL — Set Up Resend Account
+TASK S5-D1 ✅  DONE — Resend Account Active
 ──────────────────────────────────────────────────────────
 
-Before S5-D2, complete Resend setup:
+Resend is already set up and verified. No manual action needed.
 
-1. Go to: https://resend.com
-2. Sign up with your email
-3. Add domain: klarify.africa
-4. Follow DNS verification steps (add TXT + MX records)
-   in your domain DNS settings
-5. Create API key: name it \"klarify-notifications\"
-6. Add to .env.local:
-   RESEND_API_KEY=re_...
-   EMAIL_FROM=noreply@klarify.africa
-   EMAIL_FROM_NAME=Klarify Africa
+Status:
+✅ Domain klarify.africa verified in Resend
+✅ DNS records live
+✅ RESEND_API_KEY in .env.local and Fly secrets
+✅ EMAIL_FROM=noreply@klarify.africa confirmed working
+✅ Document analysis emails already in production (Sprint 3)
 
-7. Send a test email via Resend dashboard to confirm
-   domain is verified before running S5-D2
+Proceed directly to S5-D2.
 
 
 ──────────────────────────────────────────────────────────
@@ -3981,8 +3988,9 @@ TASK S5-E2 🔍 VERIFY — Sprint 5 Complete Checkpoint
 Run full Sprint 5 verification before closing sprint:
 
 BILLING:
-□ Flutterwave subscription flow works end-to-end
-□ Stripe subscription flow works end-to-end
+□ Korapay checkout flow works end-to-end (test mode)
+□ Webhook activates plan on charge.success
+□ Webhook signature verification rejects tampered payloads
 □ Plan upgrades work and take effect immediately
 □ Cancel sets status = 'cancelled' (not deleted)
 □ Free plan user limited to 10 AI queries/month
@@ -4056,9 +4064,8 @@ After Sprint 5 closes:
 
 Service              Purpose               Setup In
 ─────────────────────────────────────────────────────────────
-Flutterwave          Nigerian payments      S5-A1
-Stripe               International          S5-A1
-Resend               Email notifications    S5-D1
+Korapay              All payments (NGN)     ✅ DONE (existing account)
+Resend               Email notifications    ✅ DONE (domain verified, Sprint 3)
 
 All other infrastructure (PostgreSQL, Redis, AWS S3,
 Anthropic API, Voyage AI) was set up in Sprints 0-3.

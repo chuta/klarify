@@ -184,10 +184,10 @@ export default async function ProfilePage({
                 </p>
               </div>
               <Link
-                href="/billing"
+                href="/dashboard/billing"
                 className="shrink-0 rounded-lg border border-[#D4A843] px-4 py-2 text-sm font-semibold text-[#D4A843] transition hover:bg-[#FDF6E3]"
               >
-                Upgrade plan
+                Manage plan
               </Link>
             </div>
 
@@ -201,10 +201,10 @@ export default async function ProfilePage({
                   <li>• No document generation</li>
                 </ul>
                 <Link
-                  href="/billing"
+                  href="/dashboard/billing"
                   className="mt-3 block text-xs font-semibold text-[#D4A843] underline underline-offset-2"
                 >
-                  Upgrade to Navigator ($29/mo) for 50 AI queries + 5 document analyses →
+                  Upgrade to Navigator (₦47,000/mo) for 50 AI queries + 5 document analyses →
                 </Link>
               </div>
             )}

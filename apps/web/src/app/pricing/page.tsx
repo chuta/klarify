@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { getOptionalUser } from '@/lib/supabase/server';
 import { Navbar } from '@/components/marketing/Navbar';
 import { Footer } from '@/components/marketing/Footer';
@@ -22,8 +21,8 @@ export const metadata: Metadata = {
  *   5. CTA banner
  */
 export default async function PricingPage(): Promise<JSX.Element> {
-  const user = await getOptionalUser();
-  if (user) redirect('/dashboard');
+  // user is fetched so the Navbar can show the right CTA (sign in vs dashboard).
+  const _user = await getOptionalUser();
 
   return (
     <div className="min-h-screen bg-white">
@@ -102,7 +101,7 @@ function PricingTiers(): JSX.Element {
               <li>✗ Regulator CRM</li>
             </ul>
             <Link
-              href="/sign-up"
+              href="/sign-up?next=/dashboard/billing%3Fplan%3Dnavigator"
               className="block w-full rounded-lg border border-[#0B6E6E] px-4 py-2.5 text-center text-sm font-semibold text-[#0B6E6E] transition hover:bg-[#E6F4F4]"
             >
               Start Navigator
@@ -129,7 +128,7 @@ function PricingTiers(): JSX.Element {
               <li>✓ Human escalation</li>
             </ul>
             <Link
-              href="/sign-up"
+              href="/sign-up?next=/dashboard/billing%3Fplan%3Dcompass"
               className="block w-full rounded-lg bg-[#0B6E6E] px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-[#0A5F5F]"
             >
               Start Compass
@@ -152,10 +151,10 @@ function PricingTiers(): JSX.Element {
               <li>✓ API access</li>
             </ul>
             <Link
-              href="/sign-up"
+              href="mailto:hello@klarify.africa?subject=Flagship%20Plan%20Enquiry"
               className="block w-full rounded-lg border border-[#D4A843] px-4 py-2.5 text-center text-sm font-semibold text-[#D4A843] transition hover:bg-[#D4A843]/10"
             >
-              Start Flagship
+              Contact us
             </Link>
           </div>
         </div>
@@ -223,7 +222,7 @@ function PricingFaq(): JSX.Element {
     },
     {
       q: 'Which payment methods do you accept?',
-      a: 'Naira card payments via Flutterwave. International cards via Stripe. Bank transfer available for annual Flagship plans.',
+      a: 'Naira card payments and bank transfers via Korapay. All major Nigerian bank cards, USSD, and bank transfer are supported. International cards are accepted through Korapay\'s multi-currency support.',
     },
     {
       q: 'Is my data secure?',

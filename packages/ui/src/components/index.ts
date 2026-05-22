@@ -6,3 +6,4 @@ export * from './UrgencyBadge';
 export * from './ProgressBar';
 export * from './RoadmapBoard';
 export * from './RegulatorProfile';
+export * from './UpgradePrompt';

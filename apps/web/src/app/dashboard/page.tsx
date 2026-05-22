@@ -247,7 +247,7 @@ export default async function DashboardPage(): Promise<JSX.Element> {
             <QuickAction
               title="ARIP Tracker"
               description="Track your 5-stage ARIP application, manage AIP conditions, and monitor your compliance calendar."
-              href="/dashboard/regulators/arip"
+              href="/dashboard/arip"
               accent="#0B6E6E"
               aripStageBadge={arip ? (ARIP_STAGE_LABELS[arip.current_stage] ?? null) : null}
             />
