@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
 /**
  * /dashboard/calendar — Compliance Calendar
@@ -32,7 +33,7 @@ export default async function CalendarPage(): Promise<JSX.Element> {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <DashboardPageShell>
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-[#1A1A1A]">Compliance Calendar</h1>
@@ -63,7 +64,7 @@ export default async function CalendarPage(): Promise<JSX.Element> {
       <h2 className="mb-4 text-base font-semibold text-[#1A1A1A]">
         Events that will track automatically
       </h2>
-      <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-8">
         {UPCOMING_EVENTS.map((evt) => (
           <div
             key={evt.type}
@@ -100,6 +101,6 @@ export default async function CalendarPage(): Promise<JSX.Element> {
           with your registered solicitor before the AIP period begins.
         </p>
       </div>
-    </div>
+    </DashboardPageShell>
   );
 }

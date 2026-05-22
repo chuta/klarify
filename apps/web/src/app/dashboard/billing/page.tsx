@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
 import { BillingClient, type SubscriptionStatusData } from './_client';
+import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
 // Billing calls go directly to the Hono API (Fly.io) — they need persistence
 // and aren't short-lived enough for Netlify's serverless timeout.
@@ -57,12 +58,14 @@ export default async function BillingPage({ searchParams }: PageProps): Promise<
     'User';
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#1A1A1A]">Billing & Subscription</h1>
-        <p className="mt-1 text-sm text-[#555]">
-          Manage your plan and payment details. All payments processed via Korapay.
-        </p>
+    <DashboardPageShell>
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1A1A1A]">Billing & Subscription</h1>
+          <p className="mt-1 text-sm text-[#555]">
+            Manage your plan and payment details. All payments processed via Korapay.
+          </p>
+        </div>
       </div>
 
       <BillingClient
@@ -73,6 +76,6 @@ export default async function BillingPage({ searchParams }: PageProps): Promise<
         apiBaseUrl={API_BASE_URL}
         initialPlan={searchParams?.plan ?? null}
       />
-    </div>
+    </DashboardPageShell>
   );
 }

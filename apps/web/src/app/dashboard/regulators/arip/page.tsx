@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
 import { ARIPTrackerClient } from './_client';
+import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
 /**
  * /dashboard/regulators/arip — ARIP Application Tracker (server wrapper).
@@ -52,7 +53,7 @@ export default async function ARIPTrackerPage(): Promise<JSX.Element> {
   const arip: ARIPData | null = aripResult.success ? aripResult.data : null;
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <DashboardPageShell>
       {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-[#1A1A1A]">
@@ -95,6 +96,6 @@ export default async function ARIPTrackerPage(): Promise<JSX.Element> {
       </div>
 
       <ARIPTrackerClient arip={arip} accessToken={session.access_token} />
-    </div>
+    </DashboardPageShell>
   );
 }

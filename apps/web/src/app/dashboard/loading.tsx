@@ -9,7 +9,7 @@
  * /dashboard/regulators/arip, /dashboard/calendar, etc.
  *
  * Design constraints:
- *   - Mirror the dashboard page container (max-w-5xl) so the skeleton
+ *   - Mirror the full-width dashboard page shell so the skeleton
  *     occupies the same footprint as the eventual content.
  *   - Generic enough to look reasonable in front of any dashboard page,
  *     not just the score gauge.
@@ -34,7 +34,7 @@ function ShimmerCard({ className = '' }: { className?: string }): JSX.Element {
 
 export default function DashboardLoading(): JSX.Element {
   return (
-    <div className="max-w-5xl mx-auto" aria-busy="true" aria-live="polite">
+    <div className="w-full min-w-0" aria-busy="true" aria-live="polite">
       <span className="sr-only">Loading dashboard…</span>
 
       {/* ── Welcome header skeleton ─────────────────────────────────── */}
@@ -70,7 +70,7 @@ export default function DashboardLoading(): JSX.Element {
       <ShimmerBar className="mb-4 h-4 w-52" />
 
       {/* ── Grid of secondary cards ─────────────────────────────────── */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-6">
         {Array.from({ length: 8 }).map((_, i) => (
           <ShimmerCard key={i} />
         ))}

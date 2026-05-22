@@ -256,7 +256,7 @@ export function BillingClient({
   const currentPlanRank = PLAN_RANK[status.plan] ?? 0;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="w-full min-w-0 space-y-8">
       {/* Toast */}
       {toast && (
         <div
@@ -403,7 +403,7 @@ export function BillingClient({
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {(['navigator', 'compass', 'flagship'] as const).map((plan) => {
             const pricing = status.pricing[plan];
             const amount = pricing ? pricing[billingCycle] : 0;

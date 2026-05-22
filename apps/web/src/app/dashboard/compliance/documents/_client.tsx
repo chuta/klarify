@@ -108,7 +108,7 @@ export function DocumentLibraryClient({
   };
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="w-full min-w-0">
       <header className="mb-6">
         <h1 className="text-2xl font-semibold text-[#1A1A1A]">
           Compliance Document Generator
@@ -193,7 +193,7 @@ export function DocumentLibraryClient({
 
         {/* Main grid */}
         <section>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {visibleTemplates.map((t) => {
               const existing = generatedByTemplate.get(t.templateId);
               return (

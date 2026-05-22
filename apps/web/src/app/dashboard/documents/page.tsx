@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { DocumentUploader } from '@/components/documents/DocumentUploader';
 import { getPublicApiBaseUrl } from '@/lib/env';
 import { prisma } from '@/lib/db';
+import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
 /**
  * /dashboard/documents — Document Analyser entry (Sprint 3 S3-B2).
@@ -30,7 +31,7 @@ export default async function DocumentsPage(): Promise<JSX.Element> {
   const recent = await loadRecentDocs(user.id);
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <DashboardPageShell>
       <header className="mb-6">
         <h1 className="text-2xl font-semibold text-[#1A1A1A]">
           Regulatory letter analyser
@@ -55,7 +56,7 @@ export default async function DocumentsPage(): Promise<JSX.Element> {
           Review any submission with a qualified practitioner before sending.
         </p>
       </div>
-    </div>
+    </DashboardPageShell>
   );
 }
 

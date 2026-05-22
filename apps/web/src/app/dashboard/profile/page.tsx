@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
 import { updateProfile, updateOrgName } from './actions';
 import type { UserMeResponse } from '@klarify/core';
+import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
 export default async function ProfilePage({
   searchParams,
@@ -43,7 +44,7 @@ export default async function ProfilePage({
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <DashboardPageShell>
       <h1 className="mb-6 text-2xl font-semibold text-[#1A1A1A]">Account &amp; Profile</h1>
 
       <div className="grid gap-6 lg:grid-cols-5">
@@ -211,7 +212,7 @@ export default async function ProfilePage({
           </section>
         </div>
       </div>
-    </div>
+    </DashboardPageShell>
   );
 }
 

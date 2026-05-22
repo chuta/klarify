@@ -361,7 +361,7 @@ export function SponsoredIndividualForm({
     individuals.length >= MIN_INDIVIDUALS ? 'text-[#1A7A4A]' : 'text-[#D4A843]';
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="w-full min-w-0">
       {/* Page header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#0D2B45]">

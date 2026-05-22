@@ -21,7 +21,7 @@ export default async function ChatPage(): Promise<JSX.Element> {
   if (error || !user) redirect('/sign-in');
 
   return (
-    <div className="-mx-4 -my-6 sm:-mx-6 lg:-mx-8">
+    <div className="-mx-6 -my-6 md:-mx-8 md:-my-8 lg:-mx-10 xl:-mx-12">
       <ChatInterface />
     </div>
   );

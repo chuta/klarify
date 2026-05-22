@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api';
 import { prisma, resolveOrgId } from '@/lib/db';
 import type { Regulator } from '@klarify/core';
 import { RegulatorHubClient } from './_client';
+import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
 /**
  * /dashboard/regulators — Regulator Engagement Hub
@@ -54,11 +55,11 @@ export default async function RegulatorsPage(): Promise<JSX.Element> {
   const hasCrm = plan === 'compass' || plan === 'flagship';
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <DashboardPageShell>
       {/* ── Page header ── */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-[#1A1A1A]">Regulator Engagement Hub</h1>
-        <p className="mt-1 text-sm text-[#555555] max-w-2xl">
+        <p className="mt-1 text-sm text-[#555555]">
           Track your relationships with Nigeria&apos;s key digital asset regulators.
           Every interaction documented. Every deadline met.
         </p>
@@ -98,7 +99,7 @@ export default async function RegulatorsPage(): Promise<JSX.Element> {
         hasCrm={hasCrm}
         plan={plan}
       />
-    </div>
+    </DashboardPageShell>
   );
 }
 

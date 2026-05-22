@@ -344,7 +344,7 @@ export function DocumentGeneratorForm({
   };
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="w-full min-w-0">
       <header className="mb-6">
         <Link
           href="/dashboard/compliance/documents"

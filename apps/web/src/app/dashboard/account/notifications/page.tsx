@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { NotificationsClient } from './_client';
+import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
 export const metadata = {
   title: 'Notification Preferences — Klarify',
@@ -8,7 +9,7 @@ export const metadata = {
 
 export default function NotificationsPage(): JSX.Element {
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <DashboardPageShell>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[#1A1A1A] mb-2">
           Notification Preferences
@@ -21,7 +22,7 @@ export default function NotificationsPage(): JSX.Element {
       <Suspense fallback={<NotificationsSkeleton />}>
         <NotificationsClient />
       </Suspense>
-    </div>
+    </DashboardPageShell>
   );
 }
 

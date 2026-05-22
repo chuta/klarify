@@ -230,7 +230,7 @@ export function RoadmapClient({
     : null;
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="w-full min-w-0">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-[#1A1A1A]">Smart Compliance Roadmap</h1>

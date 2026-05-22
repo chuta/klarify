@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/db';
 import { getPublicApiBaseUrl } from '@/lib/env';
 import { DocumentDetailClient } from './_client';
+import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
 /**
  * /dashboard/documents/[id] — Single-document analyser result (Sprint 3 S3-B2).
@@ -42,7 +43,7 @@ export default async function DocumentDetailPage({
   if (!doc) notFound();
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <DashboardPageShell>
       <nav className="mb-4 text-xs text-[#777]">
         <Link href="/dashboard/documents" className="hover:text-[#0B6E6E]">
           ← Back to analyser
@@ -80,6 +81,6 @@ export default async function DocumentDetailPage({
         }}
         apiBaseUrl={getPublicApiBaseUrl()}
       />
-    </div>
+    </DashboardPageShell>
   );
 }

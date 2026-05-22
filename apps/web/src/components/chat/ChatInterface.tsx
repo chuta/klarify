@@ -136,7 +136,7 @@ export function ChatInterface(): JSX.Element {
           {emptyState ? (
             <EmptyState onPick={(q) => void sendMessage(q)} />
           ) : (
-            <div className="mx-auto flex max-w-3xl flex-col gap-4">
+            <div className="flex w-full flex-col gap-4">
               {messages.map((m) => (
                 <MessageBubble
                   key={m.id}
@@ -154,7 +154,7 @@ export function ChatInterface(): JSX.Element {
 
         {/* Persistent disclaimer + input */}
         <div className="border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-3 sm:px-8">
-          <div className="mx-auto max-w-3xl space-y-2">
+          <div className="w-full space-y-2">
             {/* CLAUDE.md §16 Rule 1 — never remove this banner */}
             <p className="text-[11px] text-[#777]">
               Klarify provides regulatory information, not legal advice. Always verify with a
@@ -261,7 +261,7 @@ function QueryLimitUpgradePrompt({
 
 function EmptyState({ onPick }: { onPick: (q: string) => void }): JSX.Element {
   return (
-    <div className="mx-auto flex max-w-2xl flex-col items-center justify-center py-12 text-center">
+    <div className="flex w-full flex-col items-center justify-center py-12 text-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E6F4F4]">
         <svg className="h-7 w-7 text-[#0B6E6E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
           <path

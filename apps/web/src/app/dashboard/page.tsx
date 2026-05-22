@@ -22,6 +22,7 @@ import type { DimensionKey } from '@klarify/core';
 import { DimensionBreakdown } from '@/components/compliance/DimensionBreakdown';
 import { ScoreHistorySection } from './_score-history';
 import { FollowUpAlertsWidget, type FollowUpAlert } from '@/components/dashboard/FollowUpAlertsWidget';
+import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -118,7 +119,7 @@ export default async function DashboardPage(): Promise<JSX.Element> {
   const criticalDoc = await pickCriticalDoc(user.id);
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <DashboardPageShell>
       {/* ── Welcome header ── */}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-[#1A1A1A]">
@@ -231,7 +232,7 @@ export default async function DashboardPage(): Promise<JSX.Element> {
 
           {/* Quick actions */}
           <h2 className="mb-4 text-base font-semibold text-[#1A1A1A]">Quick Actions</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4">
             <QuickAction
               title="Upload a Regulator Letter"
               description="Received something from SEC, CBN, or NFIU? Get a plain-English summary and a 72-hour action plan."
@@ -261,7 +262,7 @@ export default async function DashboardPage(): Promise<JSX.Element> {
           </div>
         </>
       )}
-    </div>
+    </DashboardPageShell>
   );
 }
 

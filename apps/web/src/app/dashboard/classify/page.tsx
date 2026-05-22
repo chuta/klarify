@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { ClassifyForm } from '@/components/classify/ClassifyForm';
+import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
 /**
  * /dashboard/classify — Product Classification (Sprint 2, US-001).
@@ -24,7 +25,7 @@ export default async function ClassifyPage(): Promise<JSX.Element> {
     process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? 'http://localhost:3001';
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <DashboardPageShell>
       <header className="mb-6">
         <h1 className="text-2xl font-semibold text-[#1A1A1A]">Classify Your Product</h1>
         <p className="mt-1 text-sm text-[#555]">
@@ -35,6 +36,6 @@ export default async function ClassifyPage(): Promise<JSX.Element> {
       </header>
 
       <ClassifyForm apiBaseUrl={apiBaseUrl} />
-    </div>
+    </DashboardPageShell>
   );
 }

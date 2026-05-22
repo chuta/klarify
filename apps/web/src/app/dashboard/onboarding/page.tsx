@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { OnboardingWizard } from '@/app/onboarding/_wizard';
+import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
 /**
  * /dashboard/onboarding — 5-step setup wizard rendered inside the dashboard
@@ -14,7 +15,7 @@ import { OnboardingWizard } from '@/app/onboarding/_wizard';
  */
 export default function DashboardOnboardingPage(): JSX.Element {
   return (
-    <div className="max-w-5xl mx-auto">
+    <DashboardPageShell>
       {/* ── Page header ── */}
       <div className="mb-8">
         <div className="mb-1 flex items-center gap-2 text-xs text-[#CCCCCC]">
@@ -67,6 +68,6 @@ export default function DashboardOnboardingPage(): JSX.Element {
 
       {/* ── Wizard ── */}
       <OnboardingWizard />
-    </div>
+    </DashboardPageShell>
   );
 }
