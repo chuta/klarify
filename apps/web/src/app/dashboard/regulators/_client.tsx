@@ -4,9 +4,11 @@
 // Handles interaction modal, history slide-over, and plan gating.
 
 import { useState, useCallback } from 'react';
+import Image from 'next/image';
 import type { Regulator } from '@klarify/core';
 import { InteractionModal } from '@/components/regulators/InteractionModal';
 import { InteractionHistory } from '@/components/regulators/InteractionHistory';
+import { getRegulatorLogoPath } from '@/lib/regulatorLogos';
 
 interface RegulatorHubClientProps {
   regulators: Regulator[];
@@ -197,6 +199,7 @@ function RegulatorCard({
   onViewHistory,
 }: RegulatorCardProps): JSX.Element {
   const accent = REGULATOR_ACCENT[regulator.code] ?? DEFAULT_ACCENT;
+  const logoPath = getRegulatorLogoPath(regulator.code);
   const maxTags = 4;
 
   return (
@@ -210,12 +213,24 @@ function RegulatorCard({
         className="flex items-center gap-3 px-4 py-3"
         style={{ backgroundColor: accent.bg }}
       >
-        {/* Initials avatar */}
-        <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-          style={{ backgroundColor: accent.color }}
-        >
-          {accent.initials}
+        {/* Logo or initials fallback */}
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/60 bg-white p-1 shadow-sm">
+          {logoPath ? (
+            <Image
+              src={logoPath}
+              alt={`${regulator.name} logo`}
+              width={40}
+              height={40}
+              className="h-full w-full object-contain"
+            />
+          ) : (
+            <div
+              className="flex h-full w-full items-center justify-center rounded-md text-[10px] font-bold text-white"
+              style={{ backgroundColor: accent.color }}
+            >
+              {accent.initials}
+            </div>
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs font-semibold" style={{ color: accent.color }}>
