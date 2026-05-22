@@ -14,7 +14,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { getPublicApiBaseUrl } from '@/lib/env';
+import { getPublicApiBaseUrl } from '@/lib/publicEnv';
 import { DocumentTemplateCard } from '@/components/documents/DocumentTemplateCard';
 import {
   CATEGORY_DETAILS,
