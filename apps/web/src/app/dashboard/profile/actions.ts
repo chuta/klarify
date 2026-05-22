@@ -2,9 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { Prisma } from '@prisma/client';
 import { createClient } from '@/lib/supabase/server';
-import { apiFetch } from '@/lib/api';
+import { prisma } from '@/lib/db';
 import { updateProfileSchema, updateOrgSchema } from '@klarify/core';
+import { apiFetch } from '@/lib/api';
 
 export async function updateProfile(formData: FormData): Promise<void> {
   const supabase = createClient();
@@ -45,7 +47,9 @@ export async function updateProfile(formData: FormData): Promise<void> {
 
 export async function updateOrgName(formData: FormData): Promise<void> {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session) redirect('/sign-in');
 
   const raw = { name: formData.get('orgName') ?? undefined };
@@ -60,18 +64,45 @@ export async function updateOrgName(formData: FormData): Promise<void> {
     redirect(`/dashboard/profile?orgError=${encodeURIComponent('Organisation not found.')}`);
   }
 
-  const result = await apiFetch<{ id: string; name: string }>(
-    `/api/user/org/${orgId}`,
-    session.access_token,
-    {
-      method: 'PUT',
-      body: JSON.stringify({ name: parsed.data.name }),
-    },
-  );
+  const userId = session.user.id;
 
-  if (!result.success) {
+  try {
+    const membership = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      await tx.$executeRawUnsafe(
+        `SELECT set_config('app.current_user_id', $1, true)`,
+        userId,
+      );
+      return tx.orgMember.findUnique({
+        where: { orgId_userId: { orgId, userId } },
+        select: { role: true },
+      });
+    });
+
+    if (!membership) {
+      redirect(
+        `/dashboard/profile?orgError=${encodeURIComponent('Organisation not found.')}`,
+      );
+    }
+    if (membership.role !== 'owner') {
+      redirect(
+        `/dashboard/profile?orgError=${encodeURIComponent('Only the organisation owner can rename it.')}`,
+      );
+    }
+
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      await tx.$executeRawUnsafe(
+        `SELECT set_config('app.current_user_id', $1, true)`,
+        userId,
+      );
+      await tx.organisation.update({
+        where: { id: orgId },
+        data: { name: parsed.data.name },
+      });
+    });
+  } catch (err) {
+    console.error('[profile/updateOrgName] error', err);
     redirect(
-      `/dashboard/profile?orgError=${encodeURIComponent(result.error ?? 'Organisation update failed.')}`,
+      `/dashboard/profile?orgError=${encodeURIComponent('Organisation update failed.')}`,
     );
   }
 
