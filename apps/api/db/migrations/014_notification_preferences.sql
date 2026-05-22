@@ -19,4 +19,6 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
 ALTER TABLE notification_preferences ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY notification_preferences_self ON notification_preferences
-  USING (user_id = auth.uid());
+  FOR ALL
+  USING (user_id = public.current_user_id())
+  WITH CHECK (user_id = public.current_user_id());

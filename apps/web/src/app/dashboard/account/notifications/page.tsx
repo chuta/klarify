@@ -1,4 +1,6 @@
+import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
+import { createClient } from '@/lib/supabase/server';
 import { NotificationsClient } from './_client';
 import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
@@ -7,7 +9,11 @@ export const metadata = {
   description: 'Manage your email notification settings',
 };
 
-export default function NotificationsPage(): JSX.Element {
+export default async function NotificationsPage(): Promise<JSX.Element> {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) redirect('/sign-in');
+
   return (
     <DashboardPageShell>
       <div className="mb-8">
@@ -20,7 +26,7 @@ export default function NotificationsPage(): JSX.Element {
       </div>
 
       <Suspense fallback={<NotificationsSkeleton />}>
-        <NotificationsClient />
+        <NotificationsClient accessToken={session.access_token} />
       </Suspense>
     </DashboardPageShell>
   );

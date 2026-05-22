@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { authenticateRouteHandler, unauthenticated } from '@/lib/route-auth';
+import { REGULATOR_BASE_SELECT } from '@/lib/regulators';
 
 export async function GET(
   request: Request,
@@ -16,7 +17,10 @@ export async function GET(
         `SELECT set_config('app.current_user_id', $1, true)`,
         auth.userId,
       );
-      return tx.regulator.findUnique({ where: { code } });
+      return tx.regulator.findUnique({
+        where: { code },
+        select: REGULATOR_BASE_SELECT,
+      });
     });
     if (!regulator) {
       return NextResponse.json(

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { authenticateRouteHandler, unauthenticated } from '@/lib/route-auth';
+import { REGULATOR_BASE_SELECT } from '@/lib/regulators';
 
 export async function GET(request: Request): Promise<NextResponse> {
   const auth = await authenticateRouteHandler(request);
@@ -12,7 +13,10 @@ export async function GET(request: Request): Promise<NextResponse> {
         `SELECT set_config('app.current_user_id', $1, true)`,
         auth.userId,
       );
-      return tx.regulator.findMany({ orderBy: { code: 'asc' } });
+      return tx.regulator.findMany({
+        orderBy: { code: 'asc' },
+        select: REGULATOR_BASE_SELECT,
+      });
     });
     return NextResponse.json({ success: true, data: regulators });
   } catch (err) {

@@ -22,6 +22,19 @@ import { requireAuth, type AuthVars } from '../middleware/auth.js';
 import { requireFeature } from '../middleware/featureGate.js';
 import type { CreateInteractionBody, UpdateInteractionBody } from '@klarify/core';
 
+/** Prisma select — omit arip_* until migration 013 is applied everywhere. */
+const REGULATOR_BASE_SELECT = {
+  code: true,
+  name: true,
+  mandate: true,
+  website: true,
+  portal: true,
+  email: true,
+  phone: true,
+  address: true,
+  jurisdictionTags: true,
+} as const;
+
 export const regulatorRoutes = new Hono<{ Variables: AuthVars }>();
 
 // ── Helper: resolve the user's first org ─────────────────────────────────────
@@ -302,7 +315,10 @@ regulatorRoutes.get('/', requireAuth, async (c) => {
         `SELECT set_config('app.current_user_id', $1, true)`,
         userId,
       );
-      return tx.regulator.findMany({ orderBy: { code: 'asc' } });
+      return tx.regulator.findMany({
+        orderBy: { code: 'asc' },
+        select: REGULATOR_BASE_SELECT,
+      });
     });
     return c.json({ success: true as const, data: regulators });
   } catch (err) {
@@ -327,7 +343,10 @@ regulatorRoutes.get('/:code', requireAuth, async (c) => {
         `SELECT set_config('app.current_user_id', $1, true)`,
         userId,
       );
-      return tx.regulator.findUnique({ where: { code } });
+      return tx.regulator.findUnique({
+        where: { code },
+        select: REGULATOR_BASE_SELECT,
+      });
     });
     if (!regulator) {
       return c.json(

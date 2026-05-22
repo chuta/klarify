@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -13,6 +13,10 @@ interface NotificationPrefs {
   emailAripAlerts:       boolean;
   emailBilling:          boolean;
   updatedAt:             string;
+}
+
+interface NotificationsClientProps {
+  accessToken: string;
 }
 
 interface PrefConfig {
@@ -51,22 +55,28 @@ const PREF_CONFIG: PrefConfig[] = [
   },
 ];
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
-
 // ---------------------------------------------------------------------------
 // Main client component
 // ---------------------------------------------------------------------------
 
-export function NotificationsClient(): JSX.Element {
+export function NotificationsClient({ accessToken }: NotificationsClientProps): JSX.Element {
   const [prefs,    setPrefs]   = useState<NotificationPrefs | null>(null);
   const [error,    setError]   = useState<string | null>(null);
   const [loading,  setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
+  const fetchHeaders = useMemo(
+    (): HeadersInit => ({
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    }),
+    [accessToken],
+  );
+
   // ── Load preferences ──────────────────────────────────────────────────────
 
   useEffect(() => {
-    fetch(`${API_URL}/api/notifications/preferences`, { credentials: 'include' })
+    fetch('/api/notifications/preferences', { headers: fetchHeaders })
       .then((r) => r.json())
       .then((json) => {
         if (json.success) setPrefs(json.data as NotificationPrefs);
@@ -74,7 +84,7 @@ export function NotificationsClient(): JSX.Element {
       })
       .catch(() => setError('Failed to load preferences'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [fetchHeaders]);
 
   // ── Toggle handler ────────────────────────────────────────────────────────
 
@@ -86,11 +96,10 @@ export function NotificationsClient(): JSX.Element {
       setPrefs(updated);
       setIsSaving(true);
 
-      fetch(`${API_URL}/api/notifications/preferences`, {
-        method:      'PATCH',
-        credentials: 'include',
-        headers:     { 'Content-Type': 'application/json' },
-        body:        JSON.stringify({ [key]: !prev[key] }),
+      fetch('/api/notifications/preferences', {
+        method:  'PATCH',
+        headers: fetchHeaders,
+        body:    JSON.stringify({ [key]: !prev[key] }),
       })
         .then((r) => r.json() as Promise<{ success: boolean; data?: NotificationPrefs; error?: string }>)
         .then((json) => {
@@ -107,7 +116,7 @@ export function NotificationsClient(): JSX.Element {
         })
         .finally(() => setIsSaving(false));
     },
-    [prefs, isSaving],
+    [prefs, isSaving, fetchHeaders],
   );
 
   // ── Loading state ─────────────────────────────────────────────────────────

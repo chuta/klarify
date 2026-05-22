@@ -2,6 +2,19 @@ import type { Regulator } from '@klarify/core';
 import { NIGERIAN_REGULATORS } from '@klarify/core/regulators';
 import { prisma } from '@/lib/db';
 
+/** Columns present since 003_seed_regulators — safe before 013 adds ARIP JSON fields. */
+export const REGULATOR_BASE_SELECT = {
+  code: true,
+  name: true,
+  mandate: true,
+  website: true,
+  portal: true,
+  email: true,
+  phone: true,
+  address: true,
+  jurisdictionTags: true,
+} as const;
+
 type RegulatorRow = {
   code: string;
   name: string;
@@ -12,8 +25,6 @@ type RegulatorRow = {
   phone: string | null;
   address: string | null;
   jurisdictionTags: string[];
-  aripContacts: unknown;
-  aripFees: unknown;
 };
 
 function mapRow(row: RegulatorRow): Regulator {
@@ -27,8 +38,6 @@ function mapRow(row: RegulatorRow): Regulator {
     phone: row.phone,
     address: row.address,
     jurisdictionTags: row.jurisdictionTags ?? [],
-    aripContacts: row.aripContacts as Regulator['aripContacts'],
-    aripFees: row.aripFees as Regulator['aripFees'],
   };
 }
 
@@ -60,7 +69,10 @@ export async function loadRegulatorsForUser(userId: string): Promise<Regulator[]
         `SELECT set_config('app.current_user_id', $1, true)`,
         userId,
       );
-      return tx.regulator.findMany({ orderBy: { code: 'asc' } });
+      return tx.regulator.findMany({
+        orderBy: { code: 'asc' },
+        select: REGULATOR_BASE_SELECT,
+      });
     });
 
     if (rows.length > 0) {
