@@ -28,6 +28,7 @@ export interface TemplateMeta {
   documentName: string;
   regulatoryBasis: string;
   category: Exclude<TemplateCategoryKey, 'ALL'>;
+  requiredPlan?: 'navigator' | 'compass' | 'flagship';
 }
 
 export interface GeneratedMeta {
@@ -206,6 +207,7 @@ export function DocumentLibraryClient({
                   currentVersion={existing?.version ?? null}
                   plan={plan}
                   quotaExhausted={quotaExhausted}
+                  requiredPlan={t.requiredPlan}
                 />
               );
             })}

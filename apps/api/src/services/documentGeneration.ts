@@ -200,6 +200,14 @@ function fieldSchema(f: DocumentField): z.ZodTypeAny {
     case 'boolean':
       s = z.boolean();
       break;
+    case 'dynamic_list': {
+      // Accepts an array of objects. Each item's internal structure is validated
+      // by the UI form (itemFields) — here we only enforce array length.
+      const minItems = f.minItems ?? (f.required ? 1 : 0);
+      const arr = z.array(z.record(z.unknown()));
+      s = f.required ? arr.min(minItems, `${f.label} requires at least ${minItems} item(s).`) : arr;
+      break;
+    }
     default:
       // exhaustiveness guard
       s = z.unknown();
@@ -815,7 +823,22 @@ function renderUserMessage(
 function formatFieldValue(value: unknown): string {
   if (value === undefined || value === null || value === '') return 'not provided';
   if (Array.isArray(value)) {
-    return value.length === 0 ? 'not provided' : value.join(', ');
+    if (value.length === 0) return 'not provided';
+    // Array of plain strings (multiselect)
+    if (typeof value[0] === 'string') return value.join(', ');
+    // Array of objects (dynamic_list) — format each item as a structured block
+    if (typeof value[0] === 'object' && value[0] !== null) {
+      return value
+        .map((item, i) => {
+          if (typeof item !== 'object' || item === null) return String(item);
+          const pairs = Object.entries(item as Record<string, unknown>)
+            .filter(([, v]) => v !== undefined && v !== null && v !== '')
+            .map(([k, v]) => `  ${k}: ${typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v)}`);
+          return `Item ${i + 1}:\n${pairs.join('\n')}`;
+        })
+        .join('\n\n');
+    }
+    return value.map(String).join(', ');
   }
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   if (typeof value === 'string') return value;

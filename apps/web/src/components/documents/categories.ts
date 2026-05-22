@@ -10,7 +10,9 @@ export type TemplateCategoryKey =
   | 'KYC'
   | 'LICENSING'
   | 'ARIP'
-  | 'OTHER';
+  | 'OTHER'
+  /** Sprint 5: 4 ARIP Framework application documents — Compass+ gated. */
+  | 'ARIP_FRAMEWORK';
 
 export interface CategoryMeta {
   label: string;
@@ -26,6 +28,13 @@ export const CATEGORY_DETAILS: Record<TemplateCategoryKey, CategoryMeta> = {
   LICENSING: { label: 'Licensing', icon: '📜', tintBg: '#FDF6E3', tintFg: '#A87C00' },
   ARIP: { label: 'ARIP', icon: '🏛', tintBg: '#FDF6E3', tintFg: '#A87C00' },
   OTHER: { label: 'Other', icon: '📄', tintBg: '#F5F5F5', tintFg: '#555555' },
+  /** Sprint 5 — 4 ARIP Framework application documents. Compass+ only. */
+  ARIP_FRAMEWORK: {
+    label: 'ARIP Framework',
+    icon: '⚖️',
+    tintBg: '#E8EEF4',
+    tintFg: '#0D2B45',
+  },
 };
 
 /** Categories shown in the sidebar, in display order. */
@@ -35,5 +44,6 @@ export const CATEGORY_ORDER: TemplateCategoryKey[] = [
   'KYC',
   'LICENSING',
   'ARIP',
+  'ARIP_FRAMEWORK',
   'OTHER',
 ];

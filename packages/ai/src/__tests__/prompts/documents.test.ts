@@ -31,6 +31,11 @@ const EXPECTED_IDS: TemplateId[] = [
   'PEP_REGISTER',
   'CO_APPOINTMENT',
   'REG_BRIEF',
+  // Sprint 5 ARIP Framework templates
+  'ARIP_OPERATIONAL_PLAN',
+  'ARIP_SWORN_UNDERTAKING',
+  'SPONSORED_INDIVIDUAL',
+  'ARIP_ENTITY_RULES',
 ];
 
 const VALID_PREFILL_ROOTS = new Set(['org', 'user', 'profile', 'today']);
@@ -42,8 +47,8 @@ const SYNTHETIC_PREFILL_KEYS: Record<string, Set<string>> = {
 };
 
 describe('DOCUMENT_TEMPLATES registry', () => {
-  it('exposes exactly the 9 Sprint 4 templates', () => {
-    expect(ALL_TEMPLATE_IDS).toHaveLength(9);
+  it('exposes exactly the 13 templates (9 Sprint 4 + 4 Sprint 5 ARIP Framework)', () => {
+    expect(ALL_TEMPLATE_IDS).toHaveLength(13);
     expect(new Set(ALL_TEMPLATE_IDS)).toEqual(new Set(EXPECTED_IDS));
   });
 
@@ -60,7 +65,7 @@ describe('DOCUMENT_TEMPLATES registry', () => {
     expect(getTemplate('')).toBeNull();
   });
 
-  it('listTemplates() returns 9 templates in canonical order', () => {
+  it('listTemplates() returns 13 templates in canonical order', () => {
     const list = listTemplates();
     expect(list.map((t) => t.templateId)).toEqual(EXPECTED_IDS);
   });

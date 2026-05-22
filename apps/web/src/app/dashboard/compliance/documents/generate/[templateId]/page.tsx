@@ -7,6 +7,7 @@ import {
 } from '@klarify/ai/prompts/documents';
 import { getPublicApiBaseUrl } from '@/lib/env';
 import { DocumentGeneratorForm } from '@/components/documents/DocumentGeneratorForm';
+import { SponsoredIndividualForm } from '@/components/documents/SponsoredIndividualForm';
 
 interface PageProps {
   params: { templateId: string };
@@ -66,6 +67,18 @@ export default async function GenerateDocumentPage({
       ? searchParams.taskId
       : null;
 
+  // SPONSORED_INDIVIDUAL uses a special multi-person form (Sprint 5 S5-E1).
+  if (template.templateId === 'SPONSORED_INDIVIDUAL') {
+    return (
+      <SponsoredIndividualForm
+        apiBaseUrl={getPublicApiBaseUrl()}
+        companyName={(initialValues.company_name as string | undefined) ?? ''}
+        previousVersion={existing?.version ?? null}
+        tinyApiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY ?? ''}
+      />
+    );
+  }
+
   return (
     <DocumentGeneratorForm
       apiBaseUrl={getPublicApiBaseUrl()}
@@ -82,6 +95,17 @@ export default async function GenerateDocumentPage({
           helpText: f.helpText,
           options: (f.options ?? null) as string[] | null,
           prefilledFrom: f.prefilledFrom ?? null,
+          itemFields: f.itemFields
+            ? f.itemFields.map((sf) => ({
+                key: sf.key,
+                label: sf.label,
+                type: sf.type,
+                required: sf.required,
+                helpText: sf.helpText,
+                options: (sf.options ?? null) as string[] | null,
+              }))
+            : null,
+          minItems: f.minItems ?? null,
         })),
       }}
       initialValues={initialValues}

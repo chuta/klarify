@@ -37,6 +37,16 @@ interface ApiEnvelope {
   data?: unknown;
 }
 
+/** A single item-field definition within a `dynamic_list` field. */
+export interface DynamicListItemField {
+  key: string;
+  label: string;
+  type: 'text' | 'textarea' | 'select' | 'boolean';
+  required: boolean;
+  helpText: string;
+  options: string[] | null;
+}
+
 export interface TemplateForUI {
   templateId: string;
   documentName: string;
@@ -51,11 +61,16 @@ export interface TemplateForUI {
       | 'select'
       | 'multiselect'
       | 'date'
-      | 'boolean';
+      | 'boolean'
+      | 'dynamic_list';
     required: boolean;
     helpText: string;
     options: string[] | null;
     prefilledFrom: string | null;
+    /** Sub-fields for `dynamic_list` type. */
+    itemFields: DynamicListItemField[] | null;
+    /** Minimum items required for `dynamic_list`. */
+    minItems: number | null;
   }>;
 }
 
@@ -182,6 +197,12 @@ export function DocumentGeneratorForm({
       if (!f.required) continue;
       const v = values[f.key];
       if (v === undefined || v === null) return false;
+      if (f.type === 'dynamic_list') {
+        const arr = Array.isArray(v) ? v : [];
+        const minNeeded = f.minItems ?? 1;
+        if (arr.length < minNeeded) return false;
+        continue;
+      }
       if (typeof v === 'string' && v.trim().length === 0) return false;
       if (Array.isArray(v) && v.length === 0) return false;
     }
@@ -601,6 +622,18 @@ interface FieldInputProps {
 function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
   const className =
     'mt-1 block w-full rounded-md border border-[#D1D5DB] bg-white px-3 py-2 text-sm text-[#1A1A1A] shadow-sm focus:border-[#0B6E6E] focus:outline-none focus:ring-1 focus:ring-[#0B6E6E]';
+
+  if (field.type === 'dynamic_list') {
+    return (
+      <DynamicListInput
+        field={field}
+        value={value}
+        onChange={onChange}
+        inputClassName={className}
+      />
+    );
+  }
+
   switch (field.type) {
     case 'text':
       return (
@@ -695,5 +728,135 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
     default:
       return <input type="text" className={className} />;
   }
+}
+
+// =============================================================================
+// DynamicListInput — repeatable sub-form for `dynamic_list` fields.
+// Used by ARIP Sworn Undertaking (directors) and is the fallback renderer;
+// SPONSORED_INDIVIDUAL uses SponsoredIndividualForm (full page replacement).
+// =============================================================================
+
+interface DynamicListInputProps {
+  field: TemplateForUI['requiredFields'][number];
+  value: unknown;
+  onChange: (next: unknown) => void;
+  inputClassName: string;
+}
+
+function DynamicListInput({
+  field,
+  value,
+  onChange,
+  inputClassName,
+}: DynamicListInputProps): JSX.Element {
+  const items = Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
+  const itemFields = field.itemFields ?? [];
+  const minItems = field.minItems ?? 0;
+
+  const setItemField = (idx: number, key: string, val: unknown): void => {
+    const next = [...items];
+    next[idx] = { ...(next[idx] ?? {}), [key]: val };
+    onChange(next);
+  };
+
+  const addItem = (): void => {
+    const empty: Record<string, unknown> = {};
+    for (const f of itemFields) empty[f.key] = '';
+    onChange([...items, empty]);
+  };
+
+  const removeItem = (idx: number): void => {
+    onChange(items.filter((_, i) => i !== idx));
+  };
+
+  return (
+    <div className="mt-1 space-y-3">
+      {items.map((item, idx) => (
+        <div
+          key={idx}
+          className="rounded-lg border border-[#E5E5E5] bg-[#FAFAFA] p-3"
+        >
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-semibold text-[#0D2B45]">
+              {field.label} {idx + 1}
+            </span>
+            {items.length > minItems ? (
+              <button
+                type="button"
+                onClick={(): void => removeItem(idx)}
+                className="text-[10px] text-[#C0392B] hover:underline"
+              >
+                Remove
+              </button>
+            ) : null}
+          </div>
+          <div className="space-y-2">
+            {itemFields.map((sub) => (
+              <div key={sub.key}>
+                <label className="block text-[11px] font-medium text-[#555]">
+                  {sub.label}
+                  {sub.required ? (
+                    <span className="ml-1 text-[#C0392B]">*</span>
+                  ) : null}
+                </label>
+                {sub.type === 'select' ? (
+                  <select
+                    value={(item[sub.key] as string) ?? ''}
+                    onChange={(e): void => setItemField(idx, sub.key, e.target.value)}
+                    className={`${inputClassName} mt-0.5 py-1 text-xs`}
+                  >
+                    <option value="">Select…</option>
+                    {(sub.options ?? []).map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                ) : sub.type === 'textarea' ? (
+                  <textarea
+                    rows={2}
+                    value={(item[sub.key] as string) ?? ''}
+                    onChange={(e): void => setItemField(idx, sub.key, e.target.value)}
+                    className={`${inputClassName} mt-0.5 min-h-[56px] text-xs`}
+                  />
+                ) : sub.type === 'boolean' ? (
+                  <label className="mt-0.5 inline-flex items-center gap-2 text-xs text-[#1A1A1A]">
+                    <input
+                      type="checkbox"
+                      checked={(item[sub.key] as boolean) === true}
+                      onChange={(e): void => setItemField(idx, sub.key, e.target.checked)}
+                      className="h-3.5 w-3.5"
+                    />
+                    <span>Yes</span>
+                  </label>
+                ) : (
+                  <input
+                    type="text"
+                    value={(item[sub.key] as string) ?? ''}
+                    onChange={(e): void => setItemField(idx, sub.key, e.target.value)}
+                    className={`${inputClassName} mt-0.5 py-1 text-xs`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={addItem}
+        className="text-xs font-medium text-[#0B6E6E] hover:underline"
+      >
+        + Add {field.label.replace(/\s*\(.*?\)/, '').toLowerCase()}
+      </button>
+
+      {items.length < minItems ? (
+        <p className="text-[11px] text-amber-700">
+          Minimum {minItems} {field.label.replace(/\s*\(.*?\)/, '').toLowerCase()} required.
+        </p>
+      ) : null}
+    </div>
+  );
 }
 

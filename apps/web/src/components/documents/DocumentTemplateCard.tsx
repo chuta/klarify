@@ -28,6 +28,12 @@ export interface DocumentTemplateCardProps {
   currentVersion: number | null;
   plan: 'free' | 'navigator' | 'compass' | 'flagship';
   quotaExhausted: boolean;
+  /**
+   * Minimum plan required to generate this template.
+   * Defaults to 'navigator' (blocks free only).
+   * Sprint 5 ARIP Framework templates pass 'compass'.
+   */
+  requiredPlan?: 'navigator' | 'compass' | 'flagship';
   /** Optional query string appended to the generate link (e.g. roadmap deep-link). */
   generateHrefSuffix?: string;
 }
@@ -41,9 +47,20 @@ export function DocumentTemplateCard({
   currentVersion,
   plan,
   quotaExhausted,
+  requiredPlan = 'navigator',
   generateHrefSuffix,
 }: DocumentTemplateCardProps): JSX.Element {
-  const isLocked = plan === 'free';
+  const PLAN_RANK: Record<'free' | 'navigator' | 'compass' | 'flagship', number> = {
+    free: 0,
+    navigator: 1,
+    compass: 2,
+    flagship: 3,
+  };
+  const isLocked = PLAN_RANK[plan] < PLAN_RANK[requiredPlan];
+  const lockPlanLabel =
+    requiredPlan === 'compass' || requiredPlan === 'flagship'
+      ? 'Compass'
+      : 'Navigator';
   const meta = CATEGORY_DETAILS[category] ?? CATEGORY_DETAILS.OTHER;
   const ctaLabel = isGenerated ? 'Regenerate' : 'Generate';
   const ctaDisabled = isLocked || quotaExhausted;
@@ -53,17 +70,19 @@ export function DocumentTemplateCard({
 
   return (
     <div className="relative flex flex-col rounded-xl border border-[#E5E5E5] bg-white p-5 transition hover:border-[#0B6E6E] hover:shadow-sm">
-      {/* Plan lock overlay — free tier only */}
+      {/* Plan lock overlay */}
       {isLocked ? (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-white/85 backdrop-blur-sm">
           <div className="mb-2 text-2xl" aria-hidden="true">
             🔒
           </div>
           <p className="mb-1 text-sm font-semibold text-[#1A1A1A]">
-            Available on Navigator
+            Available on {lockPlanLabel}+
           </p>
           <p className="mb-3 text-xs text-[#555]">
-            Upgrade to generate up to 3 documents per month.
+            {requiredPlan === 'compass'
+              ? 'Upgrade to Compass to generate ARIP Framework documents.'
+              : 'Upgrade to generate up to 3 documents per month.'}
           </p>
           <Link
             href="/billing/upgrade"

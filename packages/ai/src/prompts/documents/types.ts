@@ -5,7 +5,10 @@
 // so the surface for document generation is explicit and easy to audit.
 // =============================================================================
 
-/** Template identifier — one of the 9 templates in CLAUDE.md §14. */
+/**
+ * Template identifier — 9 Sprint 4 templates + 4 Sprint 5 ARIP Framework
+ * templates (CLAUDE.md §14 + Sprint 5 S5-E1).
+ */
 export type TemplateId =
   | 'BWRA'
   | 'AML_POLICY'
@@ -15,7 +18,12 @@ export type TemplateId =
   | 'STR_TEMPLATE'
   | 'PEP_REGISTER'
   | 'CO_APPOINTMENT'
-  | 'REG_BRIEF';
+  | 'REG_BRIEF'
+  // Sprint 5 ARIP Framework templates (Compass+ only)
+  | 'ARIP_OPERATIONAL_PLAN'
+  | 'ARIP_SWORN_UNDERTAKING'
+  | 'SPONSORED_INDIVIDUAL'
+  | 'ARIP_ENTITY_RULES';
 
 /** Sidebar category used to group templates in the library UI (CLAUDE.md S4-B2). */
 export type TemplateCategory =
@@ -23,7 +31,9 @@ export type TemplateCategory =
   | 'KYC'
   | 'LICENSING'
   | 'ARIP'
-  | 'OTHER';
+  | 'OTHER'
+  /** Sprint 5: 4 ARIP Framework application documents — Compass+ gated. */
+  | 'ARIP_FRAMEWORK';
 
 /**
  * A single form field on a template. The library UI renders these
@@ -42,13 +52,35 @@ export interface DocumentField {
     | 'select'
     | 'multiselect'
     | 'date'
-    | 'boolean';
+    | 'boolean'
+    /**
+     * `dynamic_list` — a repeatable sub-form. The value is an
+     * `Array<Record<string, unknown>>`. The structure of each item is
+     * defined by `itemFields`. Used by ARIP Sworn Undertaking (directors)
+     * and Sponsored Individual (individuals list).
+     */
+    | 'dynamic_list';
   /** Whether the field MUST be supplied for generation to proceed. */
   readonly required: boolean;
   /** Plain-English help text below the field (collapsible tooltip). */
   readonly helpText: string;
   /** Options for `select` and `multiselect`. */
   readonly options?: readonly string[];
+  /**
+   * Sub-fields for `dynamic_list` type. Each item in the list is an
+   * object with these fields. Intentionally a subset of `DocumentField`
+   * (no nesting beyond one level).
+   */
+  readonly itemFields?: readonly {
+    readonly key: string;
+    readonly label: string;
+    readonly type: 'text' | 'textarea' | 'select' | 'boolean';
+    readonly required: boolean;
+    readonly helpText: string;
+    readonly options?: readonly string[];
+  }[];
+  /** Minimum number of items for a `dynamic_list` field. */
+  readonly minItems?: number;
   /**
    * Dot-path on the runtime prefill context built by
    * `apps/api/src/services/documentGeneration.ts`. Currently supported:
@@ -73,6 +105,12 @@ export interface DocumentField {
 export interface DocumentTemplate {
   readonly templateId: TemplateId;
   readonly documentName: string;
+  /**
+   * Minimum subscription plan required to generate this template.
+   * Defaults to `'navigator'` (all paid plans) if omitted.
+   * Sprint 5 ARIP Framework templates require `'compass'`.
+   */
+  readonly requiredPlan?: 'navigator' | 'compass' | 'flagship';
   /**
    * CLAUDE.md §14 regulatory basis — verbatim. Used as the document footer
    * AND surfaced in the library card so users always see what authority

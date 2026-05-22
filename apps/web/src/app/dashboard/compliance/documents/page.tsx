@@ -52,6 +52,7 @@ export default async function DocumentLibraryPage(): Promise<JSX.Element> {
         documentName: t.documentName,
         regulatoryBasis: t.regulatoryBasis,
         category: t.category,
+        requiredPlan: t.requiredPlan,
       }))}
       generated={generated.map((g) => ({
         id: g.id,
