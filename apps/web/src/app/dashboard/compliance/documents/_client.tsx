@@ -133,7 +133,7 @@ export function DocumentLibraryClient({
           </span>
           {quotaExhausted ? (
             <Link
-              href="/billing/upgrade"
+              href="/dashboard/billing?plan=navigator"
               className="ml-1 underline underline-offset-2"
             >
               Upgrade
@@ -149,7 +149,7 @@ export function DocumentLibraryClient({
             Upgrade to Navigator to generate up to 3 compliance documents per
             month, or to Compass for unlimited.{' '}
             <Link
-              href="/billing/upgrade"
+              href="/dashboard/billing?plan=navigator"
               className="font-medium underline underline-offset-2"
             >
               See plans

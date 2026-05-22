@@ -85,7 +85,7 @@ export function DocumentTemplateCard({
               : 'Upgrade to generate up to 3 documents per month.'}
           </p>
           <Link
-            href="/billing/upgrade"
+            href={`/dashboard/billing?plan=${requiredPlan}`}
             className="rounded-md bg-[#0B6E6E] px-3 py-1.5 text-xs font-medium text-white"
           >
             Upgrade

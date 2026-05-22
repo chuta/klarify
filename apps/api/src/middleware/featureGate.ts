@@ -115,7 +115,7 @@ export function requireFeature(feature: FeatureKey) {
             feature,
             currentPlan: plan,
             requiredPlan,
-            upgradeUrl: '/billing/upgrade',
+            upgradeUrl: '/dashboard/billing',
           },
         },
         402,

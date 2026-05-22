@@ -194,7 +194,7 @@ export const rateLimitAI = createMiddleware<{ Variables: RateLimitVars }>(
             limit,
             used,
             resetDate: RESET_DATE_FORMAT(now),
-            upgradeUrl: '/billing/upgrade',
+            upgradeUrl: '/dashboard/billing',
           },
         },
         402,

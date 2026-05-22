@@ -60,7 +60,7 @@ export function ChatInput({
       <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
         <p className="text-sm text-amber-900">{blockedMessage}</p>
         <a
-          href="/billing/upgrade"
+          href="/dashboard/billing"
           className="mt-2 inline-block rounded-lg bg-[#0B6E6E] px-4 py-1.5 text-xs font-medium text-white hover:bg-[#0a5a5a]"
         >
           Upgrade →

@@ -237,7 +237,7 @@ export function DocumentGeneratorForm({
       if (res.status === 402) {
         // Quota / upgrade gate
         if (body?.code === 'UPGRADE_REQUIRED') {
-          window.location.href = '/billing/upgrade';
+          window.location.href = '/dashboard/billing';
           return;
         }
         setError(
