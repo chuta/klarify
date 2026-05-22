@@ -227,9 +227,9 @@ export async function advanceStage(
   );
 
   // Create compliance calendar events when AIP activates.
-  if (toStage === 'aip' && updated.aipExpiryDate) {
-    void createAipCalendarEvents(orgId, updated.aipExpiryDate).catch((e: unknown) =>
-      console.error('[aripTracker/advanceStage] calendar events error', e),
+  if (toStage === 'aip' && updated.aipIssuedDate && updated.aipExpiryDate) {
+    void createAipCalendarEvents(orgId, updated.aipIssuedDate, updated.aipExpiryDate).catch(
+      (e: unknown) => console.error('[aripTracker/advanceStage] calendar events error', e),
     );
   }
 
@@ -677,19 +677,25 @@ function buildChecklist(
 
 /**
  * Create compliance calendar events when AIP period activates.
- * Creates reminders before AIP expiry and recurring reporting events.
+ * Weekly, monthly, and quarterly SEC filings plus AIP expiry reminders
+ * (Section 21, ARIP Framework, June 2024).
  */
 async function createAipCalendarEvents(
   orgId: string,
-  expiryDate: Date,
+  aipIssuedDate: Date,
+  aipExpiryDate: Date,
 ): Promise<void> {
+  const existing = await prisma.complianceEvent.count({
+    where: { orgId, eventType: 'ARIP_DEADLINE' },
+  });
+  if (existing > 0) return;
+
   const events: Prisma.ComplianceEventCreateInput[] = [];
 
-  // AIP expiry reminders.
-  const thirtyDaysBefore = new Date(expiryDate);
+  const thirtyDaysBefore = new Date(aipExpiryDate);
   thirtyDaysBefore.setDate(thirtyDaysBefore.getDate() - 30);
 
-  const sevenDaysBefore = new Date(expiryDate);
+  const sevenDaysBefore = new Date(aipExpiryDate);
   sevenDaysBefore.setDate(sevenDaysBefore.getDate() - 7);
 
   events.push({
@@ -714,20 +720,58 @@ async function createAipCalendarEvents(
     isComplete: false,
   });
 
-  // Monthly growth report (next 6 months during AIP period).
-  for (let month = 1; month <= 6; month++) {
-    const dueDate = new Date(expiryDate);
-    dueDate.setMonth(dueDate.getMonth() - (6 - month));
-    dueDate.setDate(1); // First of each month
+  // Weekly trading statistics — up to 52 weeks within AIP period.
+  for (let week = 1; week <= 52; week++) {
+    const dueDate = new Date(aipIssuedDate);
+    dueDate.setDate(dueDate.getDate() + week * 7);
+    if (dueDate > aipExpiryDate) break;
 
     events.push({
       org: { connect: { id: orgId } },
       eventType: 'ARIP_DEADLINE',
-      title: `Monthly AIP Growth & Compliance Report to SEC — Month ${month}`,
+      title: `Weekly Trading Statistics — SEC Filing (Week ${week})`,
       description:
-        'Submit monthly trading statistics and compliance report to SEC Nigeria (Section 21b, ARIP Framework).',
+        'Submit weekly trading statistics to SEC Nigeria (Section 21a, ARIP Framework).',
+      dueDate,
+      recurrence: 'weekly',
+      isComplete: false,
+    });
+  }
+
+  // Monthly reports — 12 months from AIP issued date.
+  for (let month = 1; month <= 12; month++) {
+    const dueDate = new Date(aipIssuedDate);
+    dueDate.setMonth(dueDate.getMonth() + month);
+    if (dueDate > aipExpiryDate) break;
+
+    events.push({
+      org: { connect: { id: orgId } },
+      eventType: 'ARIP_DEADLINE',
+      title: `Monthly Trading Statistics & Reports — SEC (Month ${month})`,
+      description:
+        'Submit full trading statistics and all monthly reporting requirements to SEC Nigeria ' +
+        '(Section 21a, ARIP Framework).',
       dueDate,
       recurrence: 'monthly',
+      isComplete: false,
+    });
+  }
+
+  // Quarterly financial & compliance reports — 4 quarters.
+  for (let quarter = 1; quarter <= 4; quarter++) {
+    const dueDate = new Date(aipIssuedDate);
+    dueDate.setMonth(dueDate.getMonth() + quarter * 3);
+    if (dueDate > aipExpiryDate) break;
+
+    events.push({
+      org: { connect: { id: orgId } },
+      eventType: 'ARIP_DEADLINE',
+      title: `Quarterly Financial & Compliance Report — SEC (Q${quarter})`,
+      description:
+        'File quarterly financial statements and compliance reports demonstrating adherence to ' +
+        'all SEC ARIP conditions (Section 21b, ARIP Framework).',
+      dueDate,
+      recurrence: 'quarterly',
       isComplete: false,
     });
   }
