@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { submitOnboarding } from './actions';
 import type { OnboardingCompleteInput } from '@klarify/core';
 
@@ -197,24 +198,42 @@ export function OnboardingWizard({ initialStep = 1 }: OnboardingWizardProps): JS
 
         {/* ── Step content ── */}
         {step === 1 && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {PRODUCT_TYPE_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => toggleMulti('product_types', opt.value)}
-                className={[
-                  'rounded-xl border-2 p-4 text-left transition',
-                  state.product_types.includes(opt.value)
-                    ? 'border-[#0B6E6E] bg-[#E6F4F4]'
-                    : 'border-[#CCCCCC] hover:border-[#0B6E6E]/40',
-                ].join(' ')}
+          <>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {PRODUCT_TYPE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => toggleMulti('product_types', opt.value)}
+                  className={[
+                    'rounded-xl border-2 p-4 text-left transition',
+                    state.product_types.includes(opt.value)
+                      ? 'border-[#0B6E6E] bg-[#E6F4F4]'
+                      : 'border-[#CCCCCC] hover:border-[#0B6E6E]/40',
+                  ].join(' ')}
+                >
+                  <p className="text-sm font-semibold text-[#1A1A1A]">{opt.label}</p>
+                  <p className="mt-0.5 text-xs text-[#555555]">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-4 rounded-xl border border-[#D4A843]/40 bg-[#FDF6E3] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-[#1A1A1A]">Not sure which category fits?</p>
+                <p className="mt-0.5 text-xs text-[#555555]">
+                  Describe your product in plain language — Klarify will classify it against Nigerian
+                  regulatory frameworks and tell you which licences you need.
+                </p>
+              </div>
+              <Link
+                href="/dashboard/classify"
+                className="shrink-0 rounded-lg border border-[#D4A843] bg-white px-4 py-2.5 text-center text-sm font-semibold text-[#D4A843] transition hover:bg-[#D4A843]/10"
               >
-                <p className="text-sm font-semibold text-[#1A1A1A]">{opt.label}</p>
-                <p className="mt-0.5 text-xs text-[#555555]">{opt.desc}</p>
-              </button>
-            ))}
-          </div>
+                Classify your product →
+              </Link>
+            </div>
+          </>
         )}
 
         {step === 2 && (
