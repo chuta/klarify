@@ -110,6 +110,23 @@ export function BillingClient({
   const [isLoading, setIsLoading] = useState<string | null>(null); // 'subscribe' | 'cancel' | plan name
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    label: string;
+    originalAmount: number;
+    discountedAmount: number;
+    plan: 'navigator' | 'compass' | 'flagship';
+    billingCycle: 'monthly' | 'annual';
+  } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [couponPlan, setCouponPlan] = useState<'navigator' | 'compass' | 'flagship'>('compass');
+
+  useEffect(() => {
+    setAppliedCoupon(null);
+    setCouponError(null);
+  }, [billingCycle, couponPlan]);
 
   const showToast = useCallback((type: 'success' | 'error', msg: string) => {
     setToast({ type, msg });
@@ -163,15 +180,28 @@ export function BillingClient({
 
       setIsLoading(plan);
 
+      const couponCode =
+        appliedCoupon &&
+        appliedCoupon.plan === plan &&
+        appliedCoupon.billingCycle === cycle
+          ? appliedCoupon.code
+          : undefined;
+
       try {
         const res = await fetch(`${apiBaseUrl}/api/billing/subscribe`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-          body: JSON.stringify({ plan, billingCycle: cycle }),
+          body: JSON.stringify({ plan, billingCycle: cycle, couponCode }),
         });
         const json = (await res.json()) as {
           success: boolean;
-          data?: { reference: string; amount: number; currency: string };
+          data?: {
+            reference: string;
+            amount: number;
+            originalAmount?: number;
+            discountAmount?: number;
+            couponLabel?: string;
+          };
           error?: string;
         };
 
@@ -209,7 +239,58 @@ export function BillingClient({
         showToast('error', 'Something went wrong. Please try again.');
       }
     },
-    [accessToken, billingCycle, korapayReady, pollUntilPlanChanges, showToast, userEmail, userName],
+    [accessToken, appliedCoupon, korapayReady, pollUntilPlanChanges, showToast, userEmail, userName],
+  );
+
+  const applyCoupon = useCallback(
+    async (plan: 'navigator' | 'compass' | 'flagship') => {
+      const code = couponInput.trim();
+      if (code.length < 3) {
+        setCouponError('Enter a coupon code.');
+        return;
+      }
+      setValidatingCoupon(true);
+      setCouponError(null);
+      try {
+        const res = await fetch(`${apiBaseUrl}/api/billing/validate-coupon`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ code, plan, billingCycle }),
+        });
+        const json = (await res.json()) as {
+          success: boolean;
+          data?: {
+            code: string;
+            discountLabel: string;
+            originalAmount: number;
+            discountedAmount: number;
+          };
+          error?: string;
+        };
+        if (!json.success || !json.data) {
+          setAppliedCoupon(null);
+          setCouponError(json.error ?? 'Invalid coupon code.');
+          return;
+        }
+        setAppliedCoupon({
+          code: json.data.code,
+          label: json.data.discountLabel,
+          originalAmount: json.data.originalAmount,
+          discountedAmount: json.data.discountedAmount,
+          plan,
+          billingCycle,
+        });
+        showToast('success', `Coupon applied: ${json.data.discountLabel}`);
+      } catch {
+        setCouponError('Could not validate coupon. Try again.');
+      } finally {
+        setValidatingCoupon(false);
+      }
+    },
+    [accessToken, apiBaseUrl, billingCycle, couponInput, showToast],
   );
 
   // Cancel subscription.
@@ -404,10 +485,80 @@ export function BillingClient({
           </div>
         </div>
 
+        {/* Coupon code */}
+        <div className="mb-4 rounded-xl border border-[#D4A843]/40 bg-[#FDF6E3] p-4">
+          <p className="mb-2 text-sm font-semibold text-[#1A1A1A]">Have a coupon code?</p>
+          <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <label className="text-xs text-[#555555] sm:mr-1">Apply to plan</label>
+            <select
+              value={couponPlan}
+              onChange={(e) =>
+                setCouponPlan(e.target.value as 'navigator' | 'compass' | 'flagship')
+              }
+              className="rounded-lg border border-[#CCCCCC] bg-white px-3 py-2 text-sm outline-none focus:border-[#0B6E6E]"
+            >
+              <option value="navigator">Navigator</option>
+              <option value="compass">Compass</option>
+              <option value="flagship">Flagship</option>
+            </select>
+            <span className="hidden text-xs text-[#555555] sm:inline">
+              · {billingCycle === 'annual' ? 'Annual' : 'Monthly'} billing
+            </span>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              value={couponInput}
+              onChange={(e) => {
+                setCouponInput(e.target.value.toUpperCase());
+                setCouponError(null);
+              }}
+              placeholder="e.g. COMPASS20"
+              className="flex-1 rounded-lg border border-[#CCCCCC] bg-white px-3 py-2 font-mono text-sm uppercase outline-none focus:border-[#0B6E6E]"
+            />
+            <button
+              type="button"
+              onClick={() => void applyCoupon(couponPlan)}
+              disabled={validatingCoupon || !couponInput.trim()}
+              className="rounded-lg border border-[#D4A843] bg-white px-4 py-2 text-sm font-semibold text-[#D4A843] hover:bg-[#D4A843]/10 disabled:opacity-50"
+            >
+              {validatingCoupon ? 'Checking…' : 'Apply coupon'}
+            </button>
+          </div>
+          {couponError ? (
+            <p className="mt-2 text-xs text-[#C0392B]">{couponError}</p>
+          ) : appliedCoupon ? (
+            <p className="mt-2 text-xs text-[#1A7A4A]">
+              <strong>{appliedCoupon.code}</strong> applied ({appliedCoupon.label}) — ₦
+              {appliedCoupon.discountedAmount.toLocaleString()} for{' '}
+              {PLAN_NAMES[appliedCoupon.plan]} {appliedCoupon.billingCycle}.{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setAppliedCoupon(null);
+                  setCouponInput('');
+                }}
+                className="underline"
+              >
+                Remove
+              </button>
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-[#555555]">
+              Coupon applies to the plan selected at checkout. Change billing cycle above before
+              applying.
+            </p>
+          )}
+        </div>
+
         <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {(['navigator', 'compass', 'flagship'] as const).map((plan) => {
             const pricing = status.pricing[plan];
             const amount = pricing ? pricing[billingCycle] : 0;
+            const couponApplies =
+              appliedCoupon !== null &&
+              appliedCoupon.plan === plan &&
+              appliedCoupon.billingCycle === billingCycle;
+            const displayAmount = couponApplies ? appliedCoupon.discountedAmount : amount;
             const isCurrent = status.plan === plan;
             const isHigher = (PLAN_RANK[plan] ?? 0) > currentPlanRank;
             const isCompass = plan === 'compass';
@@ -444,11 +595,25 @@ export function BillingClient({
                   {PLAN_NAMES[plan]}
                 </p>
                 <p className={['mb-3 text-2xl font-bold', isCompass ? 'text-white' : 'text-[#1A1A1A]'].join(' ')}>
-                  ₦{(amount ?? 0).toLocaleString()}
+                  {couponApplies ? (
+                    <>
+                      <span className={['mr-2 text-lg line-through opacity-60', isCompass ? 'text-white/50' : 'text-[#999]'].join(' ')}>
+                        ₦{amount.toLocaleString()}
+                      </span>
+                      ₦{displayAmount.toLocaleString()}
+                    </>
+                  ) : (
+                    <>₦{(amount ?? 0).toLocaleString()}</>
+                  )}
                   <span className={['text-sm font-normal', isCompass ? 'text-white/60' : 'text-[#555]'].join(' ')}>
                     /{billingCycle === 'annual' ? 'yr' : 'mo'}
                   </span>
                 </p>
+                {couponApplies ? (
+                  <p className={['mb-2 text-[10px] font-semibold uppercase tracking-wide', isCompass ? 'text-[#D4A843]' : 'text-[#1A7A4A]'].join(' ')}>
+                    {appliedCoupon.code} · {appliedCoupon.label}
+                  </p>
+                ) : null}
 
                 <PlanFeatureList plan={plan} isCompass={isCompass} />
 

@@ -19,6 +19,7 @@ import {
   getSubscriptionStatus,
   PLAN_PRICING_NGN,
 } from '../../services/billing.js';
+import { validateCouponForCheckout } from '../../services/couponService.js';
 
 export const billingRoutes = new Hono<{ Variables: AuthVars }>();
 
@@ -42,11 +43,12 @@ async function resolveOrgId(userId: string): Promise<string | null> {
 const subscribeSchema = z.object({
   plan: z.enum(['navigator', 'compass', 'flagship']),
   billingCycle: z.enum(['monthly', 'annual']),
+  couponCode: z.string().trim().min(3).max(32).optional(),
 });
 
 billingRoutes.post('/subscribe', requireAuth, zValidator('json', subscribeSchema), async (c) => {
   const userId = c.get('userId');
-  const { plan, billingCycle } = c.req.valid('json');
+  const { plan, billingCycle, couponCode } = c.req.valid('json');
 
   const orgId = await resolveOrgId(userId);
   if (!orgId) {
@@ -57,24 +59,68 @@ billingRoutes.post('/subscribe', requireAuth, zValidator('json', subscribeSchema
   }
 
   try {
-    const ref = await createCheckoutRef(orgId, plan, billingCycle);
+    const ref = await createCheckoutRef(orgId, plan, billingCycle, couponCode);
     return c.json({
       success: true as const,
       data: {
         reference: ref.reference,
         amount: ref.amount,
+        originalAmount: ref.originalAmount,
+        discountAmount: ref.discountAmount,
         currency: ref.currency,
         plan: ref.plan,
         billingCycle: ref.billingCycle,
+        couponCode: ref.couponCode,
+        couponLabel: ref.couponLabel,
       },
     });
   } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to create checkout.';
     console.error('[billing/subscribe] error', err);
     return c.json(
-      { success: false as const, error: 'Failed to create checkout.', code: 'CHECKOUT_ERROR' },
-      500,
+      { success: false as const, error: message, code: 'CHECKOUT_ERROR' },
+      400,
     );
   }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/billing/validate-coupon
+// ---------------------------------------------------------------------------
+
+const validateCouponBodySchema = z.object({
+  code: z.string().trim().min(3).max(32),
+  plan: z.enum(['navigator', 'compass', 'flagship']),
+  billingCycle: z.enum(['monthly', 'annual']),
+});
+
+billingRoutes.post('/validate-coupon', requireAuth, zValidator('json', validateCouponBodySchema), async (c) => {
+  const userId = c.get('userId');
+  const body = c.req.valid('json');
+
+  const orgId = await resolveOrgId(userId);
+  if (!orgId) {
+    return c.json(
+      { success: false as const, error: 'No organisation found.', code: 'NO_ORG' },
+      400,
+    );
+  }
+
+  const result = await validateCouponForCheckout({
+    code: body.code,
+    orgId,
+    plan: body.plan,
+    billingCycle: body.billingCycle,
+  });
+
+  if (!('couponId' in result)) {
+    return c.json(
+      { success: false as const, error: result.error, code: result.code },
+      422,
+    );
+  }
+
+  return c.json({ success: true as const, data: result });
 });
 
 // ---------------------------------------------------------------------------
@@ -84,11 +130,12 @@ billingRoutes.post('/subscribe', requireAuth, zValidator('json', subscribeSchema
 const upgradeSchema = z.object({
   newPlan: z.enum(['navigator', 'compass', 'flagship']),
   billingCycle: z.enum(['monthly', 'annual']),
+  couponCode: z.string().trim().min(3).max(32).optional(),
 });
 
 billingRoutes.post('/upgrade', requireAuth, zValidator('json', upgradeSchema), async (c) => {
   const userId = c.get('userId');
-  const { newPlan, billingCycle } = c.req.valid('json');
+  const { newPlan, billingCycle, couponCode } = c.req.valid('json');
 
   const orgId = await resolveOrgId(userId);
   if (!orgId) {
@@ -99,22 +146,27 @@ billingRoutes.post('/upgrade', requireAuth, zValidator('json', upgradeSchema), a
   }
 
   try {
-    const ref = await createCheckoutRef(orgId, newPlan, billingCycle);
+    const ref = await createCheckoutRef(orgId, newPlan, billingCycle, couponCode);
     return c.json({
       success: true as const,
       data: {
         reference: ref.reference,
         amount: ref.amount,
+        originalAmount: ref.originalAmount,
+        discountAmount: ref.discountAmount,
         currency: ref.currency,
         plan: ref.plan,
         billingCycle: ref.billingCycle,
+        couponCode: ref.couponCode,
+        couponLabel: ref.couponLabel,
       },
     });
   } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to create upgrade checkout.';
     console.error('[billing/upgrade] error', err);
     return c.json(
-      { success: false as const, error: 'Failed to create upgrade checkout.', code: 'CHECKOUT_ERROR' },
-      500,
+      { success: false as const, error: message, code: 'CHECKOUT_ERROR' },
+      400,
     );
   }
 });

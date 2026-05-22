@@ -49,6 +49,8 @@ model User {
   productClassifications   ProductClassification[]
   createdInteractions      RegulatorInteraction[]
   notificationPreference   NotificationPreference?
+  couponsCreated           Coupon[]                @relation("CouponCreator")
+  couponRedemptions        CouponRedemption[]
 
   @@map("users")
 }
@@ -72,6 +74,7 @@ model Organisation {
   regulatorInteractions  RegulatorInteraction[]
   aripApplication        AripApplication?
   complianceEvents       ComplianceEvent[]
+  couponRedemptions      CouponRedemption[]
   subscriptions          Subscription[]
   productClassifications ProductClassification[]
 
@@ -473,16 +476,68 @@ model Subscription {
   korapayTransactionRef   String?   @map("korapay_transaction_ref")
   /// Korapay subscription code if provided in the charge.success webhook.
   korapaySubscriptionCode String?   @map("korapay_subscription_code")
+  couponId                String?   @map("coupon_id") @db.Uuid
+  originalAmount          Int?      @map("original_amount")
+  discountAmount          Int?      @map("discount_amount")
   status                  String    @default("active")
   currentPeriodEnd        DateTime? @map("current_period_end") @db.Timestamptz()
   createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  org              Organisation      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  coupon           Coupon?           @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  couponRedemption CouponRedemption?
 
   @@index([orgId])
   @@index([korapayTransactionRef])
+  @@index([couponId])
   @@map("subscriptions")
+}
+
+model Coupon {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code             String
+  description      String?
+  discountType     String    @map("discount_type")
+  discountValue    Decimal   @map("discount_value") @db.Decimal(12, 2)
+  applicablePlans  String[]  @map("applicable_plans")
+  billingCycles    String[]  @map("billing_cycles")
+  maxRedemptions   Int?      @map("max_redemptions")
+  redemptionCount  Int       @default(0) @map("redemption_count")
+  maxPerOrg        Int       @default(1) @map("max_per_org")
+  validFrom        DateTime  @default(now()) @map("valid_from") @db.Timestamptz()
+  validUntil       DateTime? @map("valid_until") @db.Timestamptz()
+  isActive         Boolean   @default(true) @map("is_active")
+  createdBy        String?   @map("created_by") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  creator     User?              @relation("CouponCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  redemptions CouponRedemption[]
+  subscriptions Subscription[]
+
+  @@index([isActive, validUntil])
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  couponId       String   @map("coupon_id") @db.Uuid
+  orgId          String   @map("org_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  subscriptionId String?  @unique @map("subscription_id") @db.Uuid
+  amountBefore   Int      @map("amount_before")
+  amountAfter    Int      @map("amount_after")
+  redeemedAt     DateTime @default(now()) @map("redeemed_at") @db.Timestamptz()
+
+  coupon       Coupon        @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  org          Organisation  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@unique([couponId, orgId])
+  @@index([couponId])
+  @@map("coupon_redemptions")
 }
 
 // =============================================================================

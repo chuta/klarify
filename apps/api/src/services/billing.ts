@@ -14,6 +14,10 @@
 import { randomBytes } from 'node:crypto';
 import { prisma } from '../db.js';
 import type { Plan } from '@klarify/core';
+import {
+  validateCouponForCheckout,
+  type PaidPlan,
+} from './couponService.js';
 
 // ---------------------------------------------------------------------------
 // NGN price table — mirrors PLAN_PRICING (CLAUDE.md §10) converted to Naira.
@@ -34,9 +38,13 @@ export const PLAN_PRICING_NGN: Record<
 export interface CheckoutRef {
   reference: string;
   amount: number;
+  originalAmount: number;
+  discountAmount: number;
   currency: 'NGN';
   plan: Exclude<Plan, 'free'>;
   billingCycle: 'monthly' | 'annual';
+  couponCode?: string;
+  couponLabel?: string;
 }
 
 export interface SubscriptionStatus {
@@ -85,14 +93,34 @@ export async function createCheckoutRef(
   orgId: string,
   plan: Exclude<Plan, 'free'>,
   billingCycle: 'monthly' | 'annual',
+  couponCode?: string,
 ): Promise<CheckoutRef> {
   const prices = PLAN_PRICING_NGN[plan];
-  const amount = prices[billingCycle];
+  const originalAmount = prices[billingCycle];
+  let amount = originalAmount;
+  let couponId: string | undefined;
+  let couponLabel: string | undefined;
+  let normalizedCode: string | undefined;
+
+  if (couponCode && couponCode.trim().length > 0) {
+    const validation = await validateCouponForCheckout({
+      code: couponCode,
+      orgId,
+      plan: plan as PaidPlan,
+      billingCycle,
+    });
+    if (!('couponId' in validation)) {
+      throw new Error(validation.error);
+    }
+    amount = validation.discountedAmount;
+    couponId = validation.couponId;
+    couponLabel = validation.discountLabel;
+    normalizedCode = validation.code;
+  }
 
   const reference = `KLR-${shortOrgId(orgId)}-${nanoRef()}`;
+  const discountAmount = originalAmount - amount;
 
-  // Insert pending row. If another pending row exists for this org+plan we can
-  // simply create a new one — each represents one checkout attempt.
   await prisma.subscription.create({
     data: {
       orgId,
@@ -101,10 +129,23 @@ export async function createCheckoutRef(
       korapayTransactionRef: reference,
       status: 'pending',
       currentPeriodEnd: null,
+      couponId: couponId ?? null,
+      originalAmount,
+      discountAmount: discountAmount > 0 ? discountAmount : null,
     },
   });
 
-  return { reference, amount, currency: 'NGN', plan, billingCycle };
+  return {
+    reference,
+    amount,
+    originalAmount,
+    discountAmount,
+    currency: 'NGN',
+    plan,
+    billingCycle,
+    couponCode: normalizedCode,
+    couponLabel,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -161,6 +202,28 @@ export async function activateSubscription(
     where: { id: pending.orgId },
     data: { plan: pending.plan },
   });
+
+  // Record coupon redemption if a code was applied at checkout.
+  if (pending.couponId && pending.originalAmount !== null) {
+    const owner = await prisma.orgMember.findFirst({
+      where: { orgId: pending.orgId, role: 'owner' },
+      orderBy: { createdAt: 'asc' },
+      select: { userId: true },
+    });
+    if (owner) {
+      const { recordCouponRedemption } = await import('./couponService.js');
+      await recordCouponRedemption({
+        couponId: pending.couponId,
+        orgId: pending.orgId,
+        userId: owner.userId,
+        subscriptionId: pending.id,
+        amountBefore: pending.originalAmount,
+        amountAfter: pending.originalAmount - (pending.discountAmount ?? 0),
+      }).catch((err: unknown) => {
+        console.error('[billing] coupon redemption record failed', err);
+      });
+    }
+  }
 
   return { orgId: pending.orgId, plan: pending.plan as Plan };
 }
