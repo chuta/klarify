@@ -81,3 +81,9 @@ export {
   adminCriticalEventSubject,
   type AdminCriticalEventProps,
 } from './AdminCriticalEvent.js';
+
+export {
+  AripGrowthAlertEmail,
+  aripGrowthAlertSubject,
+  type AripGrowthAlertProps,
+} from './AripGrowthAlert.js';

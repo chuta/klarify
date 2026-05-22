@@ -183,3 +183,15 @@ export async function sendAdminCriticalEventEmail(
     tag:      'admin_critical_event',
   });
 }
+
+export async function sendAripGrowthAlertEmail(
+  args: BaseSend & T.AripGrowthAlertProps,
+): Promise<SendEmailResult> {
+  const { to, replyTo, idempotencyKey, ...props } = args;
+  return sendEmail({
+    to, replyTo, idempotencyKey,
+    subject:  T.aripGrowthAlertSubject(props),
+    template: createElement(T.AripGrowthAlertEmail, props),
+    tag:      'arip_growth_alert',
+  });
+}

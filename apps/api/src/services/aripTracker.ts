@@ -16,6 +16,7 @@
 import type { Prisma, AripApplication } from '@prisma/client';
 import { prisma } from '../db.js';
 import { recalculateScore } from './scoreRecalculation.js';
+import { sendARIPGrowthAlert } from './emailService.js';
 
 // ── Stage ordering ─────────────────────────────────────────────────────────────
 
@@ -374,6 +375,13 @@ export async function recordGrowthEvent(
     });
   });
 
+  // Fire growth alert emails when approaching (>= 90%) or breaching the cap.
+  if (customerUtilPct >= 90) {
+    void sendGrowthAlertEmails(orgId, app, newTotalCustomers, customerUtilPct, customerCapBreached).catch(
+      (err: unknown) => console.error('[aripTracker/recordGrowthEvent] growth alert email error', err),
+    );
+  }
+
   return {
     withinLimits: !customerCapBreached,
     warnings,
@@ -381,6 +389,46 @@ export async function recordGrowthEvent(
     newTotalAumNgn,
     customerUtilPct: Math.round(customerUtilPct * 10) / 10,
   };
+}
+
+/** Send ARIP growth alert to all active org members. Fire-and-forget helper. */
+async function sendGrowthAlertEmails(
+  orgId: string,
+  app: AripApplication,
+  currentCustomers: number,
+  utilPct: number,
+  capBreached: boolean,
+): Promise<void> {
+  const org = await prisma.organisation.findUnique({
+    where: { id: orgId },
+    include: {
+      members: {
+        include: { user: { select: { id: true, email: true, name: true } } },
+      },
+    },
+  });
+  if (!org) return;
+
+  const daysUntilAipExpiry = app.aipExpiryDate
+    ? Math.ceil((app.aipExpiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  await Promise.allSettled(
+    org.members.map((m) =>
+      sendARIPGrowthAlert({
+        userId:           m.user.id,
+        to:               m.user.email,
+        name:             m.user.name ?? m.user.email,
+        organisationName: org.name,
+        currentCustomers,
+        maxCustomers:     app.aipMaxCustomers,
+        utilPct,
+        daysUntilAipExpiry,
+        capBreached,
+        idempotencyKey: `arip_growth:${app.id}:${currentCustomers}`,
+      }),
+    ),
+  );
 }
 
 /**

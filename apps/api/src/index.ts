@@ -49,6 +49,8 @@ import { conversationRoutes } from './routes/ai/conversations.js';
 import { classifyRoutes } from './routes/ai/classify.js';
 import { billingRoutes } from './routes/billing/index.js';
 import { billingWebhookRoutes } from './routes/billing/webhooks.js';
+import { notificationRoutes } from './routes/notifications.js';
+import { scheduleJobs } from './jobs/deadlineAlerts.js';
 
 const app = new Hono();
 
@@ -117,6 +119,9 @@ app.route('/api/documents', documentRoutes);
 app.route('/api/billing/webhook', billingWebhookRoutes);
 app.route('/api/billing', billingRoutes);
 
+// Notification preferences + unsubscribe (Sprint 5-D2).
+app.route('/api/notifications', notificationRoutes);
+
 // FounderCounsel — Sprint 2 streaming AI chat (RAG + Claude SSE).
 app.route('/api/ai', chatRoutes);
 app.route('/api/ai/conversations', conversationRoutes);
@@ -145,6 +150,9 @@ app.onError((err, c) => {
     500,
   );
 });
+
+// Start background cron jobs — deadline alerts + weekly digest (Sprint 5-D2).
+scheduleJobs();
 
 // Bind explicitly to 0.0.0.0 — Fly.io and most container platforms route to
 // `0.0.0.0:$PORT`. Defaulting to `localhost` would silently 502 in production.
