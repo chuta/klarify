@@ -222,7 +222,7 @@ export function OnboardingWizard({ initialStep = 1 }: OnboardingWizardProps): JS
               <div>
                 <p className="text-sm font-semibold text-[#1A1A1A]">Not sure which category fits?</p>
                 <p className="mt-0.5 text-xs text-[#555555]">
-                  Describe your product in plain language — Klarify will classify it against Nigerian
+                  Describe your product in plain language. Klarify will classify it against Nigerian
                   regulatory frameworks and tell you which licences you need.
                 </p>
               </div>

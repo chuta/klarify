@@ -41,7 +41,7 @@ export default async function SpecialistsPage(): Promise<JSX.Element> {
         <h1 className="text-2xl font-bold text-[#1A1A1A]">Vetted Specialist Network</h1>
         <p className="mt-1 text-sm text-[#555555]">
           Lawyers and compliance professionals vetted for Nigerian digital asset regulation.
-          Request a warm introduction — Klarify routes every request personally.
+          Request a warm introduction. Klarify routes every request personally.
         </p>
       </div>
 

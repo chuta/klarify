@@ -61,7 +61,7 @@ export default function DashboardOnboardingPage(): JSX.Element {
           </svg>
           <p className="text-xs text-[#0B6E6E]">
             Takes less than 3 minutes. Your answers seed your personalised compliance roadmap and
-            live Readiness Score — you can update them any time from your profile.
+            live Readiness Score. You can update them any time from your profile.
           </p>
         </div>
       </div>

@@ -21,8 +21,8 @@ export function Footer(): JSX.Element {
               className="mb-2 object-contain"
             />
             <p className="mb-4 text-sm text-[#555555]">
-              AI-powered regulatory compliance and advisory for founders building digital asset and
-              fintech products in African regulated markets.
+              Compliance OS for African fintech &amp; digital assets. Know what licence you need,
+              what to do next, and stay regulator-ready. Starting with Nigeria.
             </p>
             <p className="text-xs text-[#555555]">
               Klarify is a product of Blockspace Technologies Limited · Lagos, Nigeria

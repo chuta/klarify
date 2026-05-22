@@ -174,7 +174,7 @@ export function SpecialistRequestModal({
           <div>
             <h2 className="text-base font-semibold text-[#1A1A1A]">Request specialist introduction</h2>
             <p className="text-xs text-[#555555]">
-              Klarify arranges a warm intro to a vetted practitioner. Not legal advice — introductions only.
+              Klarify arranges a warm intro to a vetted practitioner. Introductions only.
             </p>
           </div>
           <button

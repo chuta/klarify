@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   metadataBase: resolveMetadataBase(),
   title: 'Klarify — Navigate Regulated Markets with Confidence',
   description:
-    'AI-powered regulatory compliance and advisory platform for African digital asset and fintech founders.',
+    'Compliance OS for African fintech & digital assets. Know what licence you need, what to do next, and stay regulator-ready. Starting with Nigeria.',
   icons: {
     icon: [
       { url: '/klarity_icon.png', type: 'image/png' },
