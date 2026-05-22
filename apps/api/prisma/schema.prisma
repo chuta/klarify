@@ -45,8 +45,10 @@ model User {
   conversations          Conversation[]
   generatedDocs          GeneratedDocument[]
   uploadedDocs           UploadedDocument[]
-  ownedRoadmapTasks      RoadmapTask[]
-  productClassifications ProductClassification[]
+  ownedRoadmapTasks        RoadmapTask[]
+  productClassifications   ProductClassification[]
+  createdInteractions      RegulatorInteraction[]
+  notificationPreference   NotificationPreference?
 
   @@map("users")
 }
@@ -308,6 +310,9 @@ model Regulator {
   phone            String?
   address          String?
   jurisdictionTags String[] @default([]) @map("jurisdiction_tags")
+  // Sprint 5-C1: ARIP contacts and fee schedule (SEC_NIGERIA only).
+  aripContacts     Json?    @map("arip_contacts")
+  aripFees         Json?    @map("arip_fees")
 
   contacts     RegulatorContact[]
   interactions RegulatorInteraction[]
@@ -342,11 +347,15 @@ model RegulatorInteraction {
   outcome          String?
   followUpRequired Boolean   @default(false) @map("follow_up_required")
   followUpDate     DateTime? @map("follow_up_date") @db.Date
+  // Sprint 5-C1: follow-up completion tracking.
+  isComplete       Boolean   @default(false) @map("is_complete")
+  createdBy        String?   @map("created_by") @db.Uuid
   occurredAt       DateTime  @default(now()) @map("occurred_at") @db.Timestamptz()
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
   org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   regulator Regulator    @relation(fields: [regulatorCode], references: [code])
+  creator   User?        @relation(fields: [createdBy], references: [id], onDelete: SetNull)
 
   @@index([orgId, occurredAt(sort: Desc)])
   @@map("regulator_interactions")
@@ -535,4 +544,22 @@ model ProductClassification {
   @@index([orgId, createdAt(sort: Desc)])
   @@index([userId])
   @@map("product_classifications")
+}
+
+// =============================================================================
+// Sprint 5 — notification preferences (S5-D2)
+// =============================================================================
+
+model NotificationPreference {
+  userId                 String   @id @map("user_id") @db.Uuid
+  emailDeadlineAlerts    Boolean  @default(true) @map("email_deadline_alerts")
+  emailWeeklyDigest      Boolean  @default(true) @map("email_weekly_digest")
+  emailDocumentAnalysis  Boolean  @default(true) @map("email_document_analysis")
+  emailAripAlerts        Boolean  @default(true) @map("email_arip_alerts")
+  emailBilling           Boolean  @default(true) @map("email_billing")
+  updatedAt              DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
 }

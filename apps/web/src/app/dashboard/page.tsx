@@ -21,6 +21,7 @@ import { ARIP_STAGE_LABELS } from '@/components/dashboard/aripLabels';
 import type { DimensionKey } from '@klarify/core';
 import { DimensionBreakdown } from '@/components/compliance/DimensionBreakdown';
 import { ScoreHistorySection } from './_score-history';
+import { FollowUpAlertsWidget, type FollowUpAlert } from '@/components/dashboard/FollowUpAlertsWidget';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -98,11 +99,12 @@ export default async function DashboardPage(): Promise<JSX.Element> {
   // Parallelise all independent API fetches. With Supabase in eu-north-1
   // and Netlify functions likely in us-east-1, each call is a transatlantic
   // round-trip — running them serially roughly doubled the dashboard's TTFB.
-  const [scoreResult, aripResult, recentDocs, historyResult] = await Promise.all([
+  const [scoreResult, aripResult, recentDocs, historyResult, followUpAlerts] = await Promise.all([
     apiFetch<ComplianceScoreData>('/api/compliance/score', accessToken),
     apiFetch<ARIPData>('/api/arip', accessToken),
     loadRecentDocs(user.id),
     apiFetch<ScoreHistoryData>('/api/compliance/score/history?days=30', accessToken),
+    loadFollowUpAlerts(user.id),
   ]);
 
   const score: ComplianceScoreData | null = scoreResult.success ? scoreResult.data : null;
@@ -131,6 +133,11 @@ export default async function DashboardPage(): Promise<JSX.Element> {
 
       {/* ── CRITICAL document banner (highest priority — supersedes ARIP) ── */}
       <CriticalDocumentBanner doc={criticalDoc} />
+
+      {/* ── Outstanding follow-up alerts from Regulator CRM ── */}
+      {followUpAlerts.length > 0 && (
+        <FollowUpAlertsWidget alerts={followUpAlerts} />
+      )}
 
       {/* ── AIP Restrictions Widget (next-highest urgency) ── */}
       {isAIPActive && arip && (
@@ -345,6 +352,49 @@ function extractDaysRemaining(analysis: unknown): number | null {
   if (!deadline || typeof deadline !== 'object') return null;
   const days = (deadline as Record<string, unknown>)['days_remaining'];
   return typeof days === 'number' ? days : null;
+}
+
+/** Follow-up interactions due within 7 days and not yet completed. */
+async function loadFollowUpAlerts(userId: string): Promise<FollowUpAlert[]> {
+  try {
+    const membership = await prisma.orgMember.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+      select: { orgId: true },
+    });
+    if (!membership) return [];
+    const { orgId } = membership;
+
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
+    const interactions = await prisma.regulatorInteraction.findMany({
+      where: {
+        orgId,
+        followUpRequired: true,
+        isComplete: false,
+        followUpDate: { lte: sevenDaysFromNow },
+      },
+      orderBy: { followUpDate: 'asc' },
+      take: 5,
+      select: {
+        id: true,
+        regulatorCode: true,
+        subject: true,
+        followUpDate: true,
+      },
+    });
+
+    return interactions.map((i): FollowUpAlert => ({
+      id: i.id,
+      regulatorCode: i.regulatorCode,
+      subject: i.subject,
+      followUpDate: i.followUpDate?.toISOString().slice(0, 10) ?? null,
+    }));
+  } catch (err) {
+    console.warn('[dashboard] follow-up alerts query failed', err);
+    return [];
+  }
 }
 
 function QuickAction({ title, description, href, accent, urgent, aripStageBadge }: QuickActionProps): JSX.Element {
