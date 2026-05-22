@@ -48,9 +48,9 @@ export function Footer(): JSX.Element {
               Legal
             </p>
             <ul className="space-y-2 text-sm text-[#555555]">
-              <li><a href="#" className="hover:text-[#0B6E6E]">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-[#0B6E6E]">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-[#0B6E6E]">Cookie Policy</a></li>
+              <li><Link href="/legal/privacy" className="hover:text-[#0B6E6E]">Privacy Policy</Link></li>
+              <li><Link href="/legal/terms" className="hover:text-[#0B6E6E]">Terms of Service</Link></li>
+              <li><Link href="/legal/cookies" className="hover:text-[#0B6E6E]">Cookie Policy</Link></li>
             </ul>
           </div>
         </div>
