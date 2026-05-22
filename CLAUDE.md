@@ -1131,9 +1131,9 @@ These rules are non-negotiable. Violating them creates liability for the product
 
 ## 17. CURRENT SPRINT
 
-**Sprint:** Sprint 3 — Document Analyser, Email Alerts, Dashboard Integration
-**Week:** 7–8
-**Goal:** A founder who receives a regulatory letter can upload it (or paste the text) and receive an AI-generated plain-language analysis, 72-hour action plan, draft acknowledgement, and email alert within 30 seconds — without ever leaving Klarify.
+**Sprint:** Sprint 5 — Billing, ARIP Tracker, Regulator CRM, Email Notifications, 4 ARIP Templates
+**Week:** 9–10
+**Goal:** A founder can subscribe and pay, track their full ARIP application lifecycle, manage regulator relationships, receive automated deadline and compliance email alerts, and generate all 4 ARIP Framework documents — making Klarify a commercially live, end-to-end compliance platform.
 
 **Completed in Sprint 0:**
 - Turborepo monorepo + pnpm workspaces ✅
@@ -1148,24 +1148,57 @@ These rules are non-negotiable. Violating them creates liability for the product
 - apps/api: POST /api/onboarding/complete (org creation + score seeding + Phase 1 roadmap), PUT /api/compliance/indicators ✅
 - apps/web: 5-step onboarding wizard, real dashboard shell (ScoreGauge + 8 dimension cards + quick actions), /profile page ✅
 
-**Completed in Sprint 2:** (Core AI Live — see S2-C3 acceptance checklist)
+**Completed in Sprint 2:** (Core AI Live)
 - packages/ai/rag: full RAG pipeline (pdf-parse → semantic chunker → Voyage AI `voyage-law-2` embeddings → pgvector search + jurisdiction re-rank → context assembly under 8k-token budget) ✅
-- Corpus ingestion of all Sprint-2 mandated documents — Founder's Guide, ISA 2025, SEC DAR (2022/2024/2025), MLPPA 2022, CBN VASP 2023, NFIU VASP 2024, NTAA 2025, BOFIA 2020, NDPA 2023, FATF Rec 15 + Targeted Updates 2023–2025, Ghana VASP Act 2025, Kenya VASP Act 2025 ✅
-- apps/api: POST /api/ai/chat (SSE streaming, RAG + multi-turn history + citation extraction + monthly query quota), POST /api/ai/classify (Opus 4 + temp=0 + structured JSON validation + profile projection), GET/DELETE /api/ai/conversations ✅
-- packages/ai/chat: framework-agnostic SSE parser + `useKlarifyChat` React hook + Anthropic error classifier (5 stable buckets: service_unavailable / overloaded / rate_limited / invalid_request / unknown, with provider-agnostic copy and a privacy-contract test) ✅
-- apps/web: FounderCounsel chat UI (sidebar + active chat + citation badges + 80% orange quota warning + 100% upgrade block), Regulatory Identity Card with dual-licence warning, dashboard nudge for unclassified products ✅
-- Live on Fly.io (`api.klarify.africa`) + Netlify (`klarify.africa`) with corrected hybrid surface routing ✅
-- Tests: `pnpm -r test` → 119 passing (core 21 / ai 81 / api 17 / ui 0–no-tests) | `pnpm -r typecheck` → zero errors ✅
+- Corpus ingestion of all mandated documents — Founder's Guide, ISA 2025, SEC DAR (2022/2024/2025), MLPPA 2022, CBN VASP 2023, NFIU VASP 2024, NTAA 2025, BOFIA 2020, NDPA 2023, FATF Rec 15 + Targeted Updates 2023–2025, Ghana VASP Act 2025, Kenya VASP Act 2025 ✅
+- apps/api: POST /api/ai/chat (SSE streaming, RAG + multi-turn history + citation extraction + monthly query quota), POST /api/ai/classify (Opus 4 + temp=0 + structured JSON validation), GET/DELETE /api/ai/conversations ✅
+- packages/ai/chat: framework-agnostic SSE parser + `useKlarifyChat` React hook + Anthropic error classifier ✅
+- apps/web: FounderCounsel chat UI, Regulatory Identity Card with dual-licence warning, dashboard nudge ✅
+- Live on Fly.io (`api.klarify.africa`) + Netlify (`klarify.africa`) ✅
 
-**Sprint 3 deliverables (in flight):**
-- Document upload service — multipart → S3 (SSE/KMS encrypted, signed URLs only) → status polling endpoint
-- OCR — pdf-parse for text PDFs with AWS Textract fallback for scanned PDFs and images
-- Document analyser — Opus 4 (`temperature=0`) + RAG context → plain-language summary, urgency level (CRITICAL/HIGH/MEDIUM/LOW), 72-hour action plan, draft acknowledgement letter, citations
-- Analysis queue (in-process) — upload → OCR → analyse → notify, with status transitions + error recovery
-- Document Analyser UI — three input tabs (upload / paste / recent), animated processing stepper, urgency banner, results layout (summary + asks + deadline countdown + action plan with checkable steps + draft response editor)
-- .docx export — letterhead, recipient block, draft body, AI-assistance footer, S3-signed download URL with 1h TTL
-- Email alerts — wire `@klarify/email` templates `DocumentAnalysisCritical` / `DocumentAnalysisStandard` into the queue with idempotency keys
-- Dashboard integration — recent-documents widget, persistent CRITICAL banner when deadline <7 days, "Upload a document" quick action
+**Completed in Sprint 3:** (Document Analyser Live)
+- Document upload service — multipart → S3 (AES-256 encrypted, private ACLs, UUID-only keys) ✅
+- OCR — pdf-parse for text PDFs + AWS Textract fallback for scanned PDFs and images ✅
+- Document analyser — Opus 4 (temperature=0) + RAG → plain-language summary, urgency level (CRITICAL/HIGH/MEDIUM/LOW), 72-hour action plan, draft acknowledgement letter, citations ✅
+- Analysis queue (in-process) — upload → OCR → analyse → notify ✅
+- Document Analyser UI — 3 input tabs (upload / paste / recent), animated processing stepper, urgency banner, deadline countdown, action plan with checkable steps, TinyMCE draft editor ✅
+- .docx export — smart letterhead detection, markdown-to-Word rendering, S3-signed 1h TTL download URL ✅
+- Email alerts — DocumentAnalysisCritical / DocumentAnalysisStandard templates via Resend ✅
+- Dashboard integration — recent-documents widget, persistent CRITICAL banner, upload quick action ✅
+- Auth UX — SubmitButton with useFormStatus() spinner on login/register/forgot-password ✅
+- Plan-tier gating — rateLimitDocumentAnalyses + rateLimitDocumentTemplates Redis middleware ✅
+
+**Completed in Sprint 4:** (ComplianceOS v1 Live)
+- Smart Compliance Roadmap (US-007): 33-task Kanban (4 phases), phase-locking (N-1 must complete), task CRUD, custom tasks, solicitor blocker on P3-01, one-way indicator sync on task completion ✅
+- Compliance Document Generator (US-008, 9 templates): BWRA, AML_POLICY, KYC_TIERS, TOKEN_MEMO, ARIP_WHITEPAPER, STR_TEMPLATE, PEP_REGISTER, CO_APPOINTMENT, REG_BRIEF — all with Claude+RAG generation, TinyMCE editor, .docx export, version history, plan-tier gate (Navigator: 3/month, Compass+: unlimited) ✅
+- Readiness Score Enhancements (US-006): event-driven `scoreRecalculation.ts` (triggered by task completion, ARIP stage change, document analysis), GET /api/compliance/score/history?days=30|60|90, ScoreHistoryChart (Recharts line chart with 30/60/90d toggle + delta badge), DimensionBreakdown (8 expandable rows with progress bars and indicator explanations) ✅
+- Profile editing: `PUT /api/user/org/:orgId` — org name editing for owners only; visible on /dashboard/profile ✅
+- Tests: 138 API / 115 core / 97 AI passing | zero TypeScript errors ✅
+- Deployed: Fly.io (forced --no-cache to resolve Depot build cache issue) + Netlify ✅
+
+**Sprint 5 deliverables (in flight):**
+
+Phase A — Billing & Subscriptions:
+- S5-A1 🖐 MANUAL: Set up Flutterwave + Stripe accounts, obtain API keys, create subscription plans/price IDs
+- S5-A2: Billing service (createSubscription, cancelSubscription, upgradeSubscription), webhook handlers (Flutterwave + Stripe), feature gate middleware (`requireFeature()`), free tier enforcement
+- S5-A3: Pricing page (public, 3-column, monthly/annual toggle), /billing subscription management page, UpgradePrompt component
+
+Phase B — ARIP Tracker (US-009):
+- S5-B1: ARIP service + DB migration (5-stage model, growth cap tracking, restrictions log), API endpoints (GET/PUT /api/arip, POST /api/arip/incident), AIP calendar automation
+- S5-B2: ARIP Tracker UI — 5-stage stepper, stage detail panels (solicitor blocker, fee tracker, document checklist, growth cap gauge), Compass+ gate
+
+Phase C — Regulator CRM (US-010):
+- S5-C1: Regulator hub page + interaction log backend + CSV export, follow-up alerts in dashboard, Compass+ gate
+
+Phase D — Email Notifications:
+- S5-D1 🖐 MANUAL: Set up Resend domain (klarify.africa), verify DNS, add API key to env
+- S5-D2: emailService.ts (deadline alerts, ARIP growth alerts, billing emails, weekly digest), daily cron for deadline alerts, notification preferences UI + unsubscribe tokens
+
+Phase E — 4 ARIP Document Templates (US-008 Sprint 5 additions):
+- S5-E1: ARIP_OPERATIONAL_PLAN, ARIP_SWORN_UNDERTAKING, SPONSORED_INDIVIDUAL (dynamic multi-person form, min 4), ARIP_ENTITY_RULES — all Compass+ only, shown in new "ARIP Framework" category tab
+
+Phase F — Final verification:
+- S5-E2 🔍 VERIFY: Full Sprint 5 checkpoint; update CLAUDE.md §17 to Beta sprint; begin 20-user closed beta
 
 *Update this section at the start of every new sprint.*
 
@@ -1183,7 +1216,7 @@ The following must not be modified without explicit instruction from the product
 
 ---
 
-*Last updated: May 21, 2026*
+*Last updated: May 22, 2026*
 *Product owner: Chimezie Chuta — chimeziechuta@gmail.com*
 *Company: Blockspace Technologies Limited, Lagos, Nigeria*
 *Repository: klarify (private)*
