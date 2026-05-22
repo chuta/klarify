@@ -195,3 +195,17 @@ export async function sendAripGrowthAlertEmail(
     tag:      'arip_growth_alert',
   });
 }
+
+export async function sendFlagshipEnquiryEmail(
+  args: BaseSend & T.FlagshipEnquiryProps,
+): Promise<SendEmailResult> {
+  const { to, replyTo, idempotencyKey, ...props } = args;
+  return sendEmail({
+    to,
+    replyTo: replyTo ?? props.email,
+    idempotencyKey,
+    subject: T.flagshipEnquirySubject(props),
+    template: createElement(T.FlagshipEnquiryEmail, props),
+    tag: 'flagship_enquiry',
+  });
+}

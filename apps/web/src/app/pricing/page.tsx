@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getOptionalUser } from '@/lib/supabase/server';
 import { Navbar } from '@/components/marketing/Navbar';
 import { Footer } from '@/components/marketing/Footer';
+import { FlagshipContactButton } from '@/components/billing/FlagshipContactButton';
 
 export const metadata: Metadata = {
   title: 'Pricing — Klarify',
@@ -150,12 +151,10 @@ function PricingTiers(): JSX.Element {
               <li>✓ Full compliance export</li>
               <li>✓ API access</li>
             </ul>
-            <Link
-              href="mailto:hello@klarify.africa?subject=Flagship%20Plan%20Enquiry"
+            <FlagshipContactButton
+              source="pricing"
               className="block w-full rounded-lg border border-[#D4A843] px-4 py-2.5 text-center text-sm font-semibold text-[#D4A843] transition hover:bg-[#D4A843]/10"
-            >
-              Contact us
-            </Link>
+            />
           </div>
         </div>
 

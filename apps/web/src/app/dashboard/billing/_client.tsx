@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { Plan } from '@klarify/core';
 import { PLAN_LIMITS } from '@klarify/core';
+import { FlagshipContactButton } from '@/components/billing/FlagshipContactButton';
 
 // ---------------------------------------------------------------------------
 // Korapay types
@@ -453,12 +454,13 @@ export function BillingClient({
 
                 <div className="mt-4">
                   {plan === 'flagship' ? (
-                    <a
-                      href="mailto:hello@klarify.africa?subject=Flagship Plan Enquiry"
-                      className="block w-full rounded-lg border border-[#D4A843] py-2.5 text-center text-sm font-semibold text-[#D4A843] hover:bg-[#D4A843]/10"
-                    >
-                      Contact us
-                    </a>
+                    <FlagshipContactButton
+                      source="billing"
+                      defaultName={userName}
+                      defaultEmail={userEmail}
+                      currentPlan={initial.plan}
+                      accessToken={accessToken}
+                    />
                   ) : isCurrent ? (
                     <div className="rounded-lg border border-[#D4A843]/40 py-2.5 text-center text-sm font-semibold text-[#D4A843]">
                       Current plan

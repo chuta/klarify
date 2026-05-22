@@ -87,3 +87,9 @@ export {
   aripGrowthAlertSubject,
   type AripGrowthAlertProps,
 } from './AripGrowthAlert.js';
+
+export {
+  FlagshipEnquiryEmail,
+  flagshipEnquirySubject,
+  type FlagshipEnquiryProps,
+} from './FlagshipEnquiry.js';
