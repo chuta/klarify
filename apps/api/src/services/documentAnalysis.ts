@@ -42,6 +42,7 @@ import { retrieveRelevantChunks, assembleContext } from '@klarify/ai/rag';
 import type { JurisdictionCode } from '@klarify/ai/rag';
 import { classifyAnthropicError } from '@klarify/ai/chat';
 import { prisma } from '../db.js';
+import { recalculateScore } from './scoreRecalculation.js';
 
 export type UrgencyLevel = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 export type ActionUrgency = 'IMMEDIATE' | 'TODAY' | 'THIS_WEEK';
@@ -262,6 +263,12 @@ export async function analyseDocument(
     documentId,
     parsed.urgency_level,
     tokensUsed,
+  );
+
+  // Fire-and-forget score resync — document analysis completion is an
+  // activity signal that warrants a fresh history snapshot (§16 Rule 6).
+  void recalculateScore(doc.orgId).catch((e: unknown) =>
+    console.error('[ai/analyse] recalc error', e),
   );
 
   return parsed;

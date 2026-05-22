@@ -78,6 +78,80 @@ interface GenerationResult {
   expiresAt: string;
 }
 
+// =============================================================================
+// Generating state — animated panel shown while the API call is in-flight.
+// Defined before DocumentGeneratorForm so TypeScript resolves the reference.
+// =============================================================================
+
+const GENERATING_STEPS = [
+  'Searching Nigerian regulatory corpus…',
+  'Applying NFIU AML/CFT compliance framework…',
+  'Cross-referencing SEC Digital Asset Rules…',
+  'Structuring document sections…',
+  'Formatting for regulatory submission…',
+  'Finalising your document…',
+] as const;
+
+function GeneratingState({ templateName }: { templateName: string }): JSX.Element {
+  const [stepIdx, setStepIdx] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const stepTimer = setInterval(() => {
+      setStepIdx((i) => (i + 1) % GENERATING_STEPS.length);
+    }, 3000);
+    const elapsedTimer = setInterval(() => {
+      setElapsed((s) => s + 1);
+    }, 1000);
+    return (): void => {
+      clearInterval(stepTimer);
+      clearInterval(elapsedTimer);
+    };
+  }, []);
+
+  return (
+    <div className="flex h-full min-h-[420px] flex-col items-center justify-center px-6 py-12 text-center">
+      {/* Dual-ring spinner */}
+      <div className="relative mb-6 h-16 w-16" aria-hidden="true">
+        <div className="absolute inset-0 rounded-full border-4 border-[#E6F4F4]" />
+        <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-[#0B6E6E]" />
+        <div
+          className="absolute inset-[6px] animate-spin rounded-full border-2 border-transparent border-t-[#D4A843]"
+          style={{ animationDuration: '1.4s', animationDirection: 'reverse' }}
+        />
+      </div>
+
+      <h3 className="mb-1 text-base font-semibold text-[#0D2B45]">
+        Generating your {templateName}…
+      </h3>
+
+      {/* Rotating step message */}
+      <p
+        key={stepIdx}
+        className="mb-5 text-sm text-[#0B6E6E] transition-opacity duration-500"
+      >
+        {GENERATING_STEPS[stepIdx]}
+      </p>
+
+      {/* Indeterminate progress bar */}
+      <div className="w-full max-w-xs">
+        <div className="h-1.5 overflow-hidden rounded-full bg-[#E6F4F4]">
+          <div className="klarify-indeterminate-bar h-full rounded-full bg-[#0B6E6E]" />
+        </div>
+      </div>
+
+      {/* Elapsed / estimated time */}
+      <p className="mt-4 text-xs text-[#999]">
+        {elapsed < 6
+          ? 'Typically takes 10–20 seconds'
+          : elapsed < 25
+            ? `${elapsed}s — almost there…`
+            : `${elapsed}s — larger documents take a moment, hang tight`}
+      </p>
+    </div>
+  );
+}
+
 export function DocumentGeneratorForm({
   apiBaseUrl,
   template,
@@ -623,75 +697,3 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
   }
 }
 
-// =============================================================================
-// Generating state — animated panel shown while the API call is in-flight
-// =============================================================================
-
-const GENERATING_STEPS = [
-  'Searching Nigerian regulatory corpus…',
-  'Applying NFIU AML/CFT compliance framework…',
-  'Cross-referencing SEC Digital Asset Rules…',
-  'Structuring document sections…',
-  'Formatting for regulatory submission…',
-  'Finalising your document…',
-] as const;
-
-function GeneratingState({ templateName }: { templateName: string }): JSX.Element {
-  const [stepIdx, setStepIdx] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
-
-  useEffect(() => {
-    const stepTimer = setInterval(() => {
-      setStepIdx((i) => (i + 1) % GENERATING_STEPS.length);
-    }, 3000);
-    const elapsedTimer = setInterval(() => {
-      setElapsed((s) => s + 1);
-    }, 1000);
-    return (): void => {
-      clearInterval(stepTimer);
-      clearInterval(elapsedTimer);
-    };
-  }, []);
-
-  return (
-    <div className="flex h-full min-h-[420px] flex-col items-center justify-center px-6 py-12 text-center">
-      {/* Dual-ring spinner */}
-      <div className="relative mb-6 h-16 w-16" aria-hidden="true">
-        <div className="absolute inset-0 rounded-full border-4 border-[#E6F4F4]" />
-        <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-[#0B6E6E]" />
-        <div
-          className="absolute inset-[6px] animate-spin rounded-full border-2 border-transparent border-t-[#D4A843]"
-          style={{ animationDuration: '1.4s', animationDirection: 'reverse' }}
-        />
-      </div>
-
-      <h3 className="mb-1 text-base font-semibold text-[#0D2B45]">
-        Generating your {templateName}…
-      </h3>
-
-      {/* Rotating step message */}
-      <p
-        key={stepIdx}
-        className="mb-5 text-sm text-[#0B6E6E] transition-opacity duration-500"
-      >
-        {GENERATING_STEPS[stepIdx]}
-      </p>
-
-      {/* Indeterminate progress bar */}
-      <div className="w-full max-w-xs">
-        <div className="h-1.5 overflow-hidden rounded-full bg-[#E6F4F4]">
-          <div className="klarify-indeterminate-bar h-full rounded-full bg-[#0B6E6E]" />
-        </div>
-      </div>
-
-      {/* Elapsed / estimated time */}
-      <p className="mt-4 text-xs text-[#999]">
-        {elapsed < 6
-          ? 'Typically takes 10–20 seconds'
-          : elapsed < 25
-            ? `${elapsed}s — almost there…`
-            : `${elapsed}s — larger documents take a moment, hang tight`}
-      </p>
-    </div>
-  );
-}

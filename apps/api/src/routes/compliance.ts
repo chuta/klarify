@@ -1,6 +1,7 @@
 // Compliance endpoints — CLAUDE.md §9 (ComplianceOS routes).
 // §16 Rule 6: score MUST update in real time on every indicator change.
 // Sprint 4 — Smart Compliance Roadmap (US-007) extensions.
+// Sprint 4-C — Score history endpoint (US-006 enhancement).
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
@@ -17,6 +18,7 @@ import {
   materialiseRoadmapIfEmpty,
   reconcileLockState,
 } from '../services/roadmapService.js';
+import { recalculateScore } from '../services/scoreRecalculation.js';
 
 export const complianceRoutes = new Hono<{ Variables: AuthVars }>();
 
@@ -163,6 +165,12 @@ complianceRoutes.put(
         const lockChanges = await reconcileLockState(tx, orgId, nextState);
         return { scoreUpdate, lockChanges };
       });
+
+      // Full resync fire-and-forget: catches any task-linked indicators not
+      // yet applied and produces an additional history point (§16 Rule 6).
+      void recalculateScore(orgId).catch((e: unknown) =>
+        console.error('[compliance/indicators] recalc error', e),
+      );
 
       return c.json({ success: true as const, data: result });
     } catch (err) {
@@ -368,6 +376,13 @@ complianceRoutes.put(
           409,
         );
       }
+
+      // Fire-and-forget full resync — catches tasks without indicatorKey and
+      // adds a fresh history point regardless (§16 Rule 6).
+      void recalculateScore(orgId).catch((e: unknown) =>
+        console.error('[compliance/roadmap/task PUT] recalc error', e),
+      );
+
       return c.json({
         success: true as const,
         data: { task: result.task, scoreUpdate: result.scoreUpdate },
@@ -381,6 +396,81 @@ complianceRoutes.put(
     }
   },
 );
+
+// ========================================================================== //
+// GET /score/history — readiness score over time (US-006 enhancement).       //
+// Query param: ?days=30 (default) | 60 | 90                                  //
+// ========================================================================== //
+complianceRoutes.get('/score/history', requireAuth, async (c) => {
+  const userId = c.get('userId');
+  const rawDays = c.req.query('days');
+  const days = rawDays === '60' ? 60 : rawDays === '90' ? 90 : 30;
+
+  try {
+    const orgId = await resolveOrgId(userId);
+    if (orgId === null) {
+      return c.json({
+        success: true as const,
+        data: { days, points: [], current: null, baseline: null, delta: 0 },
+      });
+    }
+
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const rows = await withRls({ userId, orgId }, (tx) =>
+      tx.readinessScore.findMany({
+        where: { orgId, calculatedAt: { gte: since } },
+        orderBy: { calculatedAt: 'asc' },
+        select: {
+          totalScore: true,
+          corporateStructure: true,
+          capitalLicensing: true,
+          kycInfrastructure: true,
+          amlCftProgramme: true,
+          transactionMonitoring: true,
+          regulatoryReporting: true,
+          regulatoryRelationships: true,
+          productClassification: true,
+          calculatedAt: true,
+        },
+      }),
+    );
+
+    const points = rows.map((r) => ({
+      date: r.calculatedAt.toISOString(),
+      total: r.totalScore,
+      corporate_structure:      r.corporateStructure,
+      capital_licensing:        r.capitalLicensing,
+      kyc_infrastructure:       r.kycInfrastructure,
+      aml_cft_programme:        r.amlCftProgramme,
+      transaction_monitoring:   r.transactionMonitoring,
+      regulatory_reporting:     r.regulatoryReporting,
+      regulatory_relationships: r.regulatoryRelationships,
+      product_classification:   r.productClassification,
+    }));
+
+    const current = points.at(-1) ?? null;
+    const baseline = points[0] ?? null;
+    const delta = current !== null && baseline !== null
+      ? current.total - baseline.total
+      : 0;
+
+    return c.json({
+      success: true as const,
+      data: { days, points, current, baseline, delta },
+    });
+  } catch (err) {
+    console.error('[compliance/score/history] error', err);
+    return c.json(
+      {
+        success: false as const,
+        error: 'Failed to fetch score history.',
+        code: 'SCORE_HISTORY_ERROR',
+      },
+      500,
+    );
+  }
+});
 
 // Legacy PATCH (used by Sprint 1 UI). Kept for backward-compat: marks complete.
 complianceRoutes.patch('/roadmap/task/:id', requireAuth, async (c) => {

@@ -9,6 +9,7 @@ import { Hono } from 'hono';
 import { type Prisma } from '@prisma/client';
 import { prisma, withRls } from '../db.js';
 import { requireAuth, type AuthVars } from '../middleware/auth.js';
+import { recalculateScore } from '../services/scoreRecalculation.js';
 
 export const aripRoutes = new Hono<{ Variables: AuthVars }>();
 
@@ -171,6 +172,12 @@ aripRoutes.put('/', requireAuth, async (c) => {
         },
       });
     });
+
+    // ARIP stage changes can advance capital_licensing indicators — fire-and-forget
+    // full resync to produce a fresh history snapshot (§16 Rule 6).
+    void recalculateScore(orgId).catch((e: unknown) =>
+      console.error('[arip/put] recalc error', e),
+    );
 
     return c.json({ success: true as const, data: updated });
   } catch (err) {

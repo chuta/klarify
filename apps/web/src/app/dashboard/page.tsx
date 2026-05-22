@@ -18,8 +18,9 @@ import { CriticalDocumentBanner } from '@/components/dashboard/CriticalDocumentB
 //    `…ARIPRestrictionsWidget.tsx#ARIP_STAGE_LABELS#…` in the React Client
 //    Manifest."
 import { ARIP_STAGE_LABELS } from '@/components/dashboard/aripLabels';
-import { formatDimensionName } from '@klarify/core';
 import type { DimensionKey } from '@klarify/core';
+import { DimensionBreakdown } from '@/components/compliance/DimensionBreakdown';
+import { ScoreHistorySection } from './_score-history';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -42,17 +43,24 @@ interface ComplianceScoreData {
   orgId?: string;
 }
 
-// Dimension display order — highest weight first.
-const DIMENSION_MAP: Array<{ key: DimensionKey; weight: string }> = [
-  { key: 'capital_licensing',        weight: '20%' },
-  { key: 'aml_cft_programme',        weight: '20%' },
-  { key: 'kyc_infrastructure',       weight: '15%' },
-  { key: 'corporate_structure',      weight: '10%' },
-  { key: 'transaction_monitoring',   weight: '10%' },
-  { key: 'regulatory_reporting',     weight: '10%' },
-  { key: 'regulatory_relationships', weight: '10%' },
-  { key: 'product_classification',   weight: '5%'  },
-];
+interface ScoreHistoryData {
+  days: number;
+  points: Array<{
+    date: string;
+    total: number;
+    corporate_structure: number;
+    capital_licensing: number;
+    kyc_infrastructure: number;
+    aml_cft_programme: number;
+    transaction_monitoring: number;
+    regulatory_reporting: number;
+    regulatory_relationships: number;
+    product_classification: number;
+  }>;
+  current: ScoreHistoryData['points'][number] | null;
+  baseline: ScoreHistoryData['points'][number] | null;
+  delta: number;
+}
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
@@ -87,18 +95,19 @@ export default async function DashboardPage(): Promise<JSX.Element> {
     ?? user.email?.split('@')[0]
     ?? 'Founder';
 
-  // Parallelise the two independent API fetches. With Supabase in
-  // eu-north-1 and Netlify functions likely in us-east-1, each call is a
-  // transatlantic round-trip — running them serially roughly doubled the
-  // dashboard's TTFB.
-  const [scoreResult, aripResult, recentDocs] = await Promise.all([
+  // Parallelise all independent API fetches. With Supabase in eu-north-1
+  // and Netlify functions likely in us-east-1, each call is a transatlantic
+  // round-trip — running them serially roughly doubled the dashboard's TTFB.
+  const [scoreResult, aripResult, recentDocs, historyResult] = await Promise.all([
     apiFetch<ComplianceScoreData>('/api/compliance/score', accessToken),
     apiFetch<ARIPData>('/api/arip', accessToken),
     loadRecentDocs(user.id),
+    apiFetch<ScoreHistoryData>('/api/compliance/score/history?days=30', accessToken),
   ]);
 
   const score: ComplianceScoreData | null = scoreResult.success ? scoreResult.data : null;
   const hasOnboarded = score !== null && score.totalScore >= 0;
+  const historyData: ScoreHistoryData | null = historyResult.success ? historyResult.data : null;
 
   const arip: ARIPData | null = aripResult.success ? aripResult.data : null;
   const isAIPActive =
@@ -192,21 +201,21 @@ export default async function DashboardPage(): Promise<JSX.Element> {
             </div>
           </div>
 
-          {/* 8 dimension cards */}
-          <h2 className="mb-4 text-base font-semibold text-[#1A1A1A]">Dimension Breakdown</h2>
-          <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {DIMENSION_MAP.map(({ key, weight }) => {
-              const dimScore = score.dimensions?.[key] ?? 0;
-              return (
-                <DimensionCard
-                  key={key}
-                  label={formatDimensionName(key)}
-                  score={dimScore}
-                  weight={weight}
-                />
-              );
-            })}
+          {/* Dimension Breakdown — interactive expandable list (Sprint 4-C) */}
+          <div className="mb-8 overflow-hidden rounded-2xl border border-[#CCCCCC] bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-base font-semibold text-[#1A1A1A]">Dimension Breakdown</h2>
+            <DimensionBreakdown dimensions={score.dimensions} />
           </div>
+
+          {/* Score History — client wrapper handles days-switching (Sprint 4-C) */}
+          {historyData && (
+            <div className="mb-8">
+              <ScoreHistorySection
+                initialData={historyData}
+                accessToken={accessToken}
+              />
+            </div>
+          )}
 
           {/* Recent documents widget — S3-C2 */}
           <div className="mb-8">
@@ -250,47 +259,6 @@ export default async function DashboardPage(): Promise<JSX.Element> {
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
-
-interface DimensionCardProps {
-  label: string;
-  score: number;
-  weight: string;
-}
-
-function DimensionCard({ label, score, weight }: DimensionCardProps): JSX.Element {
-  const color = score <= 40
-    ? '#C0392B'
-    : score <= 70
-      ? '#D4A843'
-      : score <= 90
-        ? '#1A7A4A'
-        : '#0B6E6E';
-
-  return (
-    <div className="rounded-xl border border-[#CCCCCC] bg-white p-4 shadow-sm">
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <p className="text-xs font-medium text-[#555555] leading-tight">{label}</p>
-        <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold text-[#CCCCCC] bg-[#F5F5F5]">
-          {weight}
-        </span>
-      </div>
-
-      {/* Score */}
-      <p className="mb-2 text-2xl font-bold" style={{ color }}>
-        {score}
-        <span className="ml-0.5 text-sm font-normal text-[#CCCCCC]">/100</span>
-      </p>
-
-      {/* Progress bar */}
-      <div className="h-1.5 overflow-hidden rounded-full bg-[#F5F5F5]">
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${score}%`, backgroundColor: color }}
-        />
-      </div>
-    </div>
-  );
-}
 
 interface QuickActionProps {
   title: string;
