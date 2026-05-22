@@ -215,7 +215,7 @@ export default async function DashboardPage(): Promise<JSX.Element> {
           </div>
 
           {/* Score History — client wrapper handles days-switching (Sprint 4-C) */}
-          {historyData && (
+          {historyData && Array.isArray(historyData.points) && (
             <div className="mb-8">
               <ScoreHistorySection
                 initialData={historyData}

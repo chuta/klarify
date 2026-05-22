@@ -74,11 +74,12 @@ export function ScoreHistoryChart({
   delta,
   onDaysChange,
 }: ScoreHistoryChartProps): JSX.Element {
-  const latestScore = points.at(-1)?.total ?? 0;
+  const safePoints = Array.isArray(points) ? points : [];
+  const latestScore = safePoints.at(-1)?.total ?? 0;
   const lineColor = scoreColor(latestScore);
 
   // Deduplicate by date (keep last point per calendar day) and format for Recharts.
-  const chartData = deduplicateByDay(points).map((p) => ({
+  const chartData = deduplicateByDay(safePoints).map((p) => ({
     date: fmtDate(p.date),
     score: p.total,
   }));
