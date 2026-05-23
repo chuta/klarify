@@ -59,6 +59,12 @@ function PageHeader(): JSX.Element {
           Two engines, one platform. FounderCounsel answers the questions. ComplianceOS turns
           the answers into systematic, auditable action.
         </p>
+        <Link
+          href="/product-tour"
+          className="mt-8 inline-block text-sm font-semibold text-[#0B6E6E] transition hover:text-[#0A5F5F]"
+        >
+          Preview the dashboard →
+        </Link>
       </div>
     </section>
   );
@@ -541,10 +547,10 @@ function CtaBanner(): JSX.Element {
             Get started free
           </Link>
           <Link
-            href="/pricing"
+            href="/product-tour"
             className="w-full rounded-xl border border-white/20 px-8 py-4 text-base font-semibold text-white transition hover:border-white/40 sm:w-auto"
           >
-            See pricing
+            Take the product tour
           </Link>
         </div>
       </div>

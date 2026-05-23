@@ -36,6 +36,7 @@ export function Footer(): JSX.Element {
             </p>
             <ul className="space-y-2 text-sm text-[#555555]">
               <li><Link href="/features" className="hover:text-[#0B6E6E]">Features</Link></li>
+              <li><Link href="/product-tour" className="hover:text-[#0B6E6E]">Product Tour</Link></li>
               <li><Link href="/who-its-for" className="hover:text-[#0B6E6E]">Who It&apos;s For</Link></li>
               <li><Link href="/pricing" className="hover:text-[#0B6E6E]">Pricing</Link></li>
               <li><Link href="/sign-in" className="hover:text-[#0B6E6E]">Sign in</Link></li>

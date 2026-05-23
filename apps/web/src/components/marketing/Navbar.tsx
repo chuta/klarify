@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 
 const LINKS = [
   { href: '/features', label: 'Features' },
+  { href: '/product-tour', label: 'Product Tour' },
   { href: '/who-its-for', label: "Who It's For" },
   { href: '/pricing', label: 'Pricing' },
 ] as const;
@@ -14,7 +15,7 @@ const LINKS = [
 /**
  * Shared marketing navbar.
  *
- * Used on /, /features, /pricing, /who-its-for. Links route to real pages
+ * Used on /, /features, /pricing, /who-its-for, /product-tour. Links route to real pages
  * (not hash anchors) so they remain navigable from any marketing page.
  *
  * Mobile: collapses behind a hamburger that opens an in-header drop-down

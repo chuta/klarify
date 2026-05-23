@@ -17,6 +17,7 @@ import { Footer } from '@/components/marketing/Footer';
  *   - /features  → full feature grid + ARIP + Regulator Intelligence + Banking + full Readiness breakdown
  *   - /who-its-for → 6 personas + Institutional Investor enterprise card
  *   - /pricing → 4-tier pricing + comparison + FAQ
+ *   - /product-tour → guided dashboard preview with screenshots
  */
 export default async function HomePage(): Promise<JSX.Element> {
   const user = await getOptionalUser();
@@ -68,7 +69,7 @@ function Hero(): JSX.Element {
             Get your Readiness Score, Free
           </Link>
           <Link
-            href="/features"
+            href="/product-tour"
             className="w-full rounded-xl border border-white/20 px-8 py-4 text-base font-semibold text-white transition hover:border-white/40 sm:w-auto"
           >
             See how it works
@@ -266,7 +267,13 @@ function TwoEngines(): JSX.Element {
           </div>
         </div>
 
-        <div className="mt-10 text-center">
+        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Link
+            href="/product-tour"
+            className="inline-block rounded-lg bg-[#0B6E6E] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#0A5F5F]"
+          >
+            View inside the app →
+          </Link>
           <Link
             href="/features"
             className="inline-block rounded-lg border border-[#0B6E6E] px-6 py-3 text-sm font-semibold text-[#0B6E6E] transition hover:bg-[#E6F4F4]"
@@ -413,6 +420,15 @@ function HowItWorks(): JSX.Element {
             </div>
           ))}
         </div>
+
+        <div className="mt-12 text-center">
+          <Link
+            href="/product-tour"
+            className="inline-block text-sm font-semibold text-[#0B6E6E] transition hover:text-[#0A5F5F]"
+          >
+            Preview the dashboard before you sign up →
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -440,10 +456,10 @@ function CtaBanner(): JSX.Element {
             Get your Readiness Score, Free
           </Link>
           <Link
-            href="/sign-in"
+            href="/product-tour"
             className="w-full rounded-xl border border-white/20 px-8 py-4 text-base font-semibold text-white transition hover:border-white/40 sm:w-auto"
           >
-            Sign in to your account
+            Take the product tour
           </Link>
         </div>
       </div>

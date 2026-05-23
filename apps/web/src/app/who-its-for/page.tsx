@@ -243,10 +243,10 @@ function CtaBanner(): JSX.Element {
             Get started free
           </Link>
           <Link
-            href="/features"
+            href="/product-tour"
             className="w-full rounded-xl border border-[#CCCCCC] px-8 py-4 text-base font-semibold text-[#1A1A1A] transition hover:border-[#0B6E6E] hover:text-[#0B6E6E] sm:w-auto"
           >
-            See all features
+            See inside the app
           </Link>
         </div>
       </div>
