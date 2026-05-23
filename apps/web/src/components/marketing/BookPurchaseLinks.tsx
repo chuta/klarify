@@ -17,11 +17,11 @@ const BOOK_LINKS = {
  */
 export function BookPurchaseLinks(): JSX.Element {
   return (
-    <footer className="mt-3 text-sm not-italic">
+    <footer className="mt-4 text-center text-sm not-italic">
       <p className="font-semibold text-[#0B6E6E]">
         — <em>The Founder&apos;s Guide to Building in Regulated Markets</em>, Chimezie Chuta, 2026
       </p>
-      <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-normal text-[#555555]">
+      <p className="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs font-normal text-[#555555]">
         <span>Digital edition:</span>
         <PurchaseLink {...BOOK_LINKS.selar} />
         <span className="text-[#CCCCCC]" aria-hidden>

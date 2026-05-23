@@ -138,7 +138,7 @@ function ProblemSection(): JSX.Element {
   return (
     <section className="bg-[#FAFAFA] px-6 py-20">
       <div className="mx-auto max-w-5xl">
-        <blockquote className="mb-16 border-l-4 border-[#0B6E6E] bg-white px-8 py-6 text-base italic text-[#555555] shadow-sm">
+        <blockquote className="mx-auto mb-16 max-w-3xl rounded-2xl border border-[#CCCCCC] border-t-4 border-t-[#0B6E6E] bg-white px-8 py-8 text-center text-base italic text-[#555555] shadow-sm">
           &ldquo;African founders face recurring, and expensive regulatory gaps. They do not know what they
           do not know.&rdquo;
           <BookPurchaseLinks />
