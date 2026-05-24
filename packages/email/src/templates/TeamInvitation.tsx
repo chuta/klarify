@@ -2,7 +2,7 @@ import { Heading, Hr, Section, Text } from '@react-email/components';
 import { EmailLayout } from '../components/EmailLayout.js';
 import { Button } from '../components/Button.js';
 import { emailColors, emailFonts } from '../components/tokens.js';
-import { emailConfig } from '../config.js';
+import { emailConfig, buildAppUrl } from '../config.js';
 
 export interface TeamInvitationProps {
   /** The recipient's email (used in the salutation when no name is known). */
@@ -28,7 +28,7 @@ export function TeamInvitationEmail({
   inviteToken,
   expiresAt,
 }: TeamInvitationProps): JSX.Element {
-  const inviteUrl = `${emailConfig.appUrl}/invite?token=${encodeURIComponent(inviteToken)}`;
+  const inviteUrl = buildAppUrl(`/invite?token=${encodeURIComponent(inviteToken)}`);
 
   return (
     <EmailLayout

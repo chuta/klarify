@@ -117,6 +117,7 @@ export function TeamClient({
       const json: { success: boolean; error?: string; code?: string } = await res.json();
       if (!json.success) {
         setInviteError(json.error ?? 'Failed to send invitation.');
+        await loadTeam();
         return;
       }
       setInviteEmail('');

@@ -204,24 +204,49 @@ export async function createTeamInvite(params: {
       },
     });
 
-    return { invite, org, inviter, expiresAt };
+    return { invite, org, inviter, expiresAt, token };
   });
 
-  void sendTeamInvitationEmail({
+  const emailResult = await sendTeamInvitationEmail({
     to: email,
     inviteeEmail: email,
     inviterName: result.inviter?.name ?? result.inviter?.email ?? 'A team member',
     organisationName: result.org.name,
     role: params.role,
-    inviteToken: token,
+    inviteToken: result.token,
     expiresAt: result.expiresAt.toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     }),
-    idempotencyKey: `team-invite:${result.invite.id}`,
-  }).catch((err: unknown) => {
-    console.error('[teamService] invite email failed', err);
+    idempotencyKey: `team-invite/${result.invite.id}`,
+  });
+
+  if (!emailResult.success) {
+    console.error('[teamService] invite email failed', {
+      inviteId: result.invite.id,
+      to: email,
+      error: emailResult.error,
+    });
+
+    // Roll back the pending invite so seat count stays accurate and the user can retry.
+    await prisma.orgInvite.update({
+      where: { id: result.invite.id },
+      data: { revokedAt: new Date() },
+    });
+
+    throw new TeamError(
+      'EMAIL_DELIVERY_FAILED',
+      emailResult.error === 'RESEND_API_KEY_MISSING'
+        ? 'Email delivery is not configured. Contact support@klarify.africa.'
+        : 'We could not send the invitation email. Check the address and try again.',
+    );
+  }
+
+  console.info('[teamService] invite email sent', {
+    inviteId: result.invite.id,
+    to: email,
+    resendId: emailResult.id,
   });
 
   return { inviteId: result.invite.id };

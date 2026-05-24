@@ -12,7 +12,9 @@ let _resend: Resend | null = null;
 
 function getResend(): Resend {
   if (_resend) return _resend;
-  const apiKey = emailConfig.apiKey || process.env.RESEND_API_KEY;
+  // Read at call time — emailConfig.apiKey is captured at module load and may
+  // be empty in serverless contexts where env vars hydrate after import.
+  const apiKey = process.env.RESEND_API_KEY || emailConfig.apiKey;
   if (!apiKey) {
     throw new Error(
       'RESEND_API_KEY is not configured. Set it in the environment before sending emails.',
@@ -64,12 +66,16 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     const { html, text } = await renderEmail(input.template);
 
     // Local-dev safety: if no key, render-only mode.
-    if (!emailConfig.apiKey && !process.env.RESEND_API_KEY) {
-      console.warn(
-        `[email] RESEND_API_KEY missing — skipping send to ${
-          Array.isArray(input.to) ? input.to.join(', ') : input.to
-        } (subject: "${input.subject}")`,
-      );
+    // Must read process.env at send time (not emailConfig.apiKey alone) — see getResend().
+    if (!process.env.RESEND_API_KEY && !emailConfig.apiKey) {
+      const msg = `[email] RESEND_API_KEY missing — cannot send to ${
+        Array.isArray(input.to) ? input.to.join(', ') : input.to
+      } (subject: "${input.subject}")`;
+      if (process.env.NODE_ENV === 'production') {
+        console.error(msg);
+      } else {
+        console.warn(msg);
+      }
       return { success: false, error: 'RESEND_API_KEY_MISSING' };
     }
 
@@ -89,7 +95,13 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     );
 
     if (response.error) {
-      console.error('[email] Resend error', response.error);
+      console.error('[email] Resend API error', {
+        to: input.to,
+        subject: input.subject,
+        tag: input.tag,
+        message: response.error.message,
+        name: response.error.name,
+      });
       return { success: false, error: response.error.message };
     }
 
