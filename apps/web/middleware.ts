@@ -1,5 +1,7 @@
-import { type NextRequest } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
+
+const CANONICAL_HOST = 'klarify.africa';
 
 /**
  * Root Next.js middleware — runs on every matched request.
@@ -10,6 +12,16 @@ import { updateSession } from '@/lib/supabase/middleware';
  * createClient().auth.getUser() — middleware only handles token refresh.
  */
 export async function middleware(request: NextRequest) {
+  const host = request.headers.get('host') ?? '';
+
+  // Auth email links and bookmarks should never stay on the Netlify default URL.
+  if (process.env.NODE_ENV === 'production' && host.endsWith('.netlify.app')) {
+    const url = request.nextUrl.clone();
+    url.protocol = 'https:';
+    url.host = CANONICAL_HOST;
+    return NextResponse.redirect(url, 308);
+  }
+
   return updateSession(request);
 }
 

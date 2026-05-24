@@ -1,16 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import { SubmitButton } from '@/components/ui/SubmitButton';
-import { signUp } from './actions';
+import { useRouter } from 'next/navigation';
+import { getAuthCallbackUrl } from '@/lib/auth-redirect';
+import { createClient } from '@/lib/supabase/client';
 
 interface SignUpFormProps {
   error: string | null;
 }
 
+function mapSignUpError(raw: string): string {
+  const m = raw.toLowerCase();
+  if (m.includes('already registered') || m.includes('already been registered')) {
+    return 'An account with this email already exists. Try signing in instead.';
+  }
+  if (m.includes('rate limit') || m.includes('too many')) {
+    return 'Too many attempts. Please wait a minute and try again.';
+  }
+  return raw;
+}
+
 export function SignUpForm({ error: initialError }: SignUpFormProps): JSX.Element {
+  const router = useRouter();
   const [clientError, setClientError] = useState<string | null>(null);
   const [showPw, setShowPw]           = useState(false);
+  const [pending, setPending]         = useState(false);
 
   const error = clientError ?? initialError;
 
@@ -27,18 +41,62 @@ export function SignUpForm({ error: initialError }: SignUpFormProps): JSX.Elemen
     return null;
   }
 
-  async function handleSubmit(formData: FormData): Promise<void> {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
+    e.preventDefault();
     setClientError(null);
+    setPending(true);
+
+    const formData = new FormData(e.currentTarget);
     const validationError = validate(formData);
     if (validationError) {
       setClientError(validationError);
+      setPending(false);
       return;
     }
+
+    const name     = (formData.get('name') as string).trim();
+    const email    = (formData.get('email') as string).trim().toLowerCase();
+    const password = formData.get('password') as string;
+
     try {
-      await signUp(formData);
+      const supabase = createClient();
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name },
+          emailRedirectTo: getAuthCallbackUrl(),
+        },
+      });
+
+      if (signUpError) {
+        setClientError(mapSignUpError(signUpError.message));
+        return;
+      }
+
+      if (!data.session) {
+        router.push('/sign-up?sent=1');
+        router.refresh();
+        return;
+      }
+
+      const syncRes = await fetch('/api/auth/sync', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${data.session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name }),
+      });
+      const syncJson = await syncRes.json() as { success: boolean; data?: { redirect: string } };
+      router.push(syncJson.success && syncJson.data?.redirect
+        ? syncJson.data.redirect
+        : '/dashboard/onboarding');
+      router.refresh();
     } catch {
-      // signUp redirects on success — any caught error is unexpected.
       setClientError('Something went wrong. Please try again.');
+    } finally {
+      setPending(false);
     }
   }
 
@@ -50,7 +108,7 @@ export function SignUpForm({ error: initialError }: SignUpFormProps): JSX.Elemen
         </div>
       )}
 
-      <form action={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Full name */}
         <div>
           <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-[#1A1A1A]">
@@ -137,7 +195,14 @@ export function SignUpForm({ error: initialError }: SignUpFormProps): JSX.Elemen
           />
         </div>
 
-        <SubmitButton label="Create account" pendingLabel="Creating your account…" />
+        <button
+          type="submit"
+          disabled={pending}
+          aria-busy={pending}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0B6E6E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0D2B45] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {pending ? 'Creating your account…' : 'Create account'}
+        </button>
       </form>
     </>
   );

@@ -20,17 +20,24 @@ configuration of Resend SMTP + template installation.
 ## Template variables
 
 Supabase substitutes these variables at send time. **Do not change their
-spelling or capitalisation** — they must be `{{ .ConfirmationURL }}` etc.
+spelling or capitalisation**.
 
 | Variable                | Used in                                              |
 | ----------------------- | ---------------------------------------------------- |
-| `{{ .ConfirmationURL }}`| confirm-signup, magic-link, reset-password, email-change |
+| `{{ .TokenHash }}`      | confirm-signup, magic-link, reset-password, email-change — **primary auth link** |
+| `{{ .ConfirmationURL }}`| Legacy PKCE link — **do not use** (breaks cross-browser) |
 | `{{ .Token }}`          | magic-link, reauthentication                         |
-| `{{ .TokenHash }}`      | (available everywhere, used by /auth/callback fallback) |
 | `{{ .Email }}`          | reset-password, email-change                         |
 | `{{ .NewEmail }}`       | email-change                                         |
 | `{{ .SiteURL }}`        | (available everywhere)                               |
 | `{{ .Data.name }}`      | available if you stored `name` in `signUp().options.data` |
+
+Auth emails link directly to:
+
+`https://klarify.africa/auth/callback?token_hash={{ .TokenHash }}&type=<signup|magiclink|recovery|email_change>&next=…`
+
+This avoids Supabase's PKCE verifier endpoint, which requires the user to open
+the link in the same browser that requested the email.
 
 ## Brand conformance
 

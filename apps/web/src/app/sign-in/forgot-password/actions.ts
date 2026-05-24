@@ -1,34 +1,15 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { getAppBaseUrl } from '@/lib/env';
-
-function getRequestOrigin(): string {
-  const h = headers();
-  const origin = h.get('origin');
-  if (origin && origin !== 'null') return origin;
-
-  const referer = h.get('referer');
-  if (referer) {
-    try {
-      return new URL(referer).origin;
-    } catch {
-      // Malformed referer — fall through to validated env helper.
-    }
-  }
-
-  return getAppBaseUrl();
-}
 
 /**
  * Server Action: send a password-reset email via Supabase Auth.
  *
- * Supabase will send the "Reset Password" template (configured in the
- * Dashboard) which contains a {{ .ConfirmationURL }} pointing to
- * /auth/callback?type=recovery&code=…  — the callback then redirects
- * the user to /auth/reset-password where they choose a new password.
+ * Branded reset emails link directly to /auth/callback with token_hash
+ * (see packages/email/src/supabase/reset-password.html). redirectTo is
+ * still set for Supabase allowlist compatibility.
  *
  * Security note: we always redirect to the "check your inbox" state
  * regardless of whether the email exists in our system. This prevents
@@ -43,10 +24,10 @@ export async function requestPasswordReset(formData: FormData): Promise<void> {
   }
 
   const supabase = createClient();
-  const origin   = getRequestOrigin();
+  const appUrl   = getAppBaseUrl();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/reset-password`,
+    redirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent('/auth/reset-password')}`,
   });
 
   if (error) {

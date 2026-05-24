@@ -87,6 +87,29 @@ export function getAppBaseUrl(): string {
 }
 
 /**
+ * Origin to use for auth redirects (callback success/error, email links).
+ * Never sends users to a Netlify deploy subdomain when production is
+ * configured for klarify.africa.
+ */
+export function getCanonicalAppOrigin(requestUrl?: URL): string {
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (isUsableUrl(envUrl)) return normalise(envUrl);
+
+  if (requestUrl) {
+    const host = requestUrl.hostname;
+    if (host === 'klarify.africa' || host === 'localhost' || host === '127.0.0.1') {
+      return requestUrl.origin;
+    }
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://klarify.africa';
+  }
+
+  return requestUrl?.origin ?? 'http://localhost:3000';
+}
+
+/**
  * Returns the canonical base URL of the Hono API for SERVER-SIDE fetches
  * (no trailing slash).
  *

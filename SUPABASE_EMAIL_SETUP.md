@@ -19,19 +19,30 @@ After completing this guide:
 
 ---
 
-## ⚠️ Critical — do this first or magic links will silently break
+## ⚠️ Critical — do this first or auth email links will break
 
-> **If magic links click but don't sign users in**, this is the cause:
-> Supabase only honours the `emailRedirectTo` URL (which our code sets to
-> `https://klarify.africa/auth/callback`) if that URL is explicitly in the
-> **Redirect URLs allowlist**. If it's not there, Supabase silently falls
-> back to the Site URL (`https://klarify.africa`). The PKCE auth code then
-> arrives at the root page instead of `/auth/callback`, is never exchanged,
-> and the user is silently not logged in.
+> **If confirmation / magic links show "expired or invalid"**, the usual cause is
+> using Supabase's default `{{ .ConfirmationURL }}` in email templates. That URL
+> routes through Supabase's PKCE verifier endpoint (`…/auth/v1/verify?token=pkce_…`).
+> The PKCE code exchange only works when the user opens the link in the **same
+> browser** that requested the email. Mail apps, mobile, and in-app previews do
+> not have the PKCE cookie → `/auth/callback` fails → user sees an error.
 >
-> Fix: **Supabase Dashboard → Authentication → URL Configuration** → add
-> `https://klarify.africa/auth/callback` (and `http://localhost:3000/auth/callback`
-> for local dev) to the Redirect URLs list. See Section 1.3 below.
+> **Fix (code + dashboard):**
+> 1. Use the branded templates in `packages/email/src/supabase/` — they link
+>    directly to `https://klarify.africa/auth/callback?token_hash={{ .TokenHash }}&type=…`
+>    which works in any browser (no PKCE cookie required).
+> 2. Re-paste all 4 link-based templates into Supabase Dashboard after pulling
+>    this repo (templates are NOT auto-synced).
+> 3. **Supabase Dashboard → Authentication → URL Configuration:**
+>    - **Site URL:** `https://klarify.africa` (NOT `weklarify.netlify.app`)
+>    - **Redirect URLs:** include `https://klarify.africa/auth/callback`
+> 4. **Netlify env:** `NEXT_PUBLIC_APP_URL=https://klarify.africa`
+
+> **If magic links click but don't sign users in** (legacy PKCE-only flow):
+> Supabase only honours `emailRedirectTo` if that URL is in the Redirect URLs
+> allowlist. Add `https://klarify.africa/auth/callback` and
+> `http://localhost:3000/auth/callback` for local dev. See Section 1.3 below.
 
 ## Prerequisites
 

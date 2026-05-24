@@ -1,31 +1,49 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { apiFetch } from '@/lib/api';
+import { getCanonicalAppOrigin } from '@/lib/env';
 import { isPkceVerifierError } from '@/lib/supabase/auth-errors';
 import { createSupabaseRouteHandlerClient } from '@/lib/supabase/route-handler';
+
+type OtpType =
+  | 'magiclink'
+  | 'email'
+  | 'recovery'
+  | 'invite'
+  | 'signup'
+  | 'email_change';
+
+function resolveOtpType(type: string | null): OtpType {
+  if (
+    type === 'magiclink'
+    || type === 'recovery'
+    || type === 'invite'
+    || type === 'signup'
+    || type === 'email_change'
+    || type === 'email'
+  ) {
+    return type;
+  }
+  return 'email';
+}
 
 /**
  * GET /auth/callback
  *
  * Supabase redirects here after the user clicks their magic link OR confirms
  * their email after sign-up. The URL contains either:
- *   - `code`       (PKCE flow — preferred by @supabase/ssr)
- *   - `token_hash` + `type` (email OTP hash flow — fallback)
+ *   - `code`       (PKCE flow — requires verifier cookie in same browser)
+ *   - `token_hash` + `type` (email OTP hash — works in any browser; preferred)
  *
- * After exchanging the code for a session we:
- *   1. Call POST /api/auth/sync with the fresh access token so the user row
- *      is guaranteed to exist in our `users` table (FK anchor for everything).
- *   2. Let the API decide the redirect: '/onboarding' for first-time users,
- *      '/dashboard' for returning users who already have a profile.
- *
- * On any error we redirect to /sign-in with a human-readable message.
+ * Branded auth emails link directly with token_hash (see packages/email).
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const { searchParams, origin } = new URL(request.url);
+  const requestUrl = new URL(request.url);
+  const { searchParams } = requestUrl;
+  const origin = getCanonicalAppOrigin(requestUrl);
 
   const code      = searchParams.get('code');
   const tokenHash = searchParams.get('token_hash');
-  const type      = searchParams.get('type') as
-    | 'magiclink' | 'email' | 'recovery' | 'invite' | 'signup' | null;
+  const type      = searchParams.get('type');
   const next      = searchParams.get('next');
 
   const pkceErrorRedirect = `${origin}/sign-in?error=${encodeURIComponent(
@@ -37,7 +55,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const { supabase, applyCookiesTo } = createSupabaseRouteHandlerClient(request);
 
-  // ── 1. Exchange code / token for a Supabase session ───────────────────── //
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
@@ -49,10 +66,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return applyCookiesTo(NextResponse.redirect(errorRedirect));
     }
   } else if (tokenHash && type) {
-    const otpType = type === 'magiclink' || type === 'recovery' || type === 'invite' || type === 'signup' || type === 'email'
-      ? type
-      : 'email';
-    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: otpType });
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: resolveOtpType(type),
+    });
     if (error) {
       console.warn('[auth/callback] OTP verify error', error.message);
       return applyCookiesTo(NextResponse.redirect(errorRedirect));
@@ -62,12 +79,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(errorRedirect);
   }
 
-  // ── 1b. Password-recovery flow short-circuits user sync ─────────────── //
   if (type === 'recovery' || next === '/auth/reset-password') {
     return applyCookiesTo(NextResponse.redirect(`${origin}/auth/reset-password`));
   }
 
-  // ── 2. Sync user to our database + determine routing ─────────────────── //
   const { data: { session } } = await supabase.auth.getSession();
   const { data: { user } } = await supabase.auth.getUser();
 

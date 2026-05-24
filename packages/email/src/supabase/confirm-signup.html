@@ -7,9 +7,14 @@
   Subject: "Confirm your Klarify account"
 
   Supabase variables used:
-    {{ .ConfirmationURL }}   — link the user clicks to confirm their email
+    {{ .TokenHash }}         — one-time token; linked directly to our callback
     {{ .Email }}             — recipient email
     {{ .Data.name }}         — display name (set in supabase.auth.signUp options.data.name)
+
+  IMPORTANT: We link directly to klarify.africa/auth/callback with token_hash
+  instead of {{ .ConfirmationURL }}. ConfirmationURL routes through Supabase's
+  PKCE verifier endpoint, which fails when the user opens the email in a
+  different browser or mail app (the PKCE cookie is missing).
 -->
 <html lang="en">
 <head>
@@ -60,7 +65,7 @@
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:8px auto 16px auto;">
                 <tr>
                   <td align="center" bgcolor="#0B6E6E" style="border-radius:6px;">
-                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block;padding:12px 28px;font-family:'Inter',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;background:#0B6E6E;border:1px solid #0B6E6E;line-height:20px;">
+                    <a href="https://klarify.africa/auth/callback?token_hash={{ .TokenHash }}&amp;type=signup&amp;next=/dashboard/onboarding" target="_blank" style="display:inline-block;padding:12px 28px;font-family:'Inter',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;background:#0B6E6E;border:1px solid #0B6E6E;line-height:20px;">
                       Confirm my email →
                     </a>
                   </td>
@@ -69,7 +74,7 @@
 
               <p style="margin:16px 0 0 0;font-size:13px;line-height:20px;color:#555555;">
                 Or paste this link into your browser:<br />
-                <a href="{{ .ConfirmationURL }}" style="color:#0B6E6E;word-break:break-all;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+                <a href="https://klarify.africa/auth/callback?token_hash={{ .TokenHash }}&amp;type=signup&amp;next=/dashboard/onboarding" style="color:#0B6E6E;word-break:break-all;text-decoration:underline;">https://klarify.africa/auth/callback?token_hash={{ .TokenHash }}&amp;type=signup&amp;next=/dashboard/onboarding</a>
               </p>
 
               <hr style="border:none;border-top:1px solid #E5E7EB;margin:24px 0 16px 0;" />

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SubmitButton } from '@/components/ui/SubmitButton';
+import { getAuthCallbackUrl } from '@/lib/auth-redirect';
 import { createClient } from '@/lib/supabase/client';
 import { signInWithPassword } from './actions';
 
@@ -86,7 +87,7 @@ function MagicLinkForm(): JSX.Element {
         options: {
           // Browser client stores the PKCE verifier in cookies — required for
           // /auth/callback exchangeCodeForSession to succeed.
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: getAuthCallbackUrl(),
         },
       });
 
