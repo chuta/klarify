@@ -72,6 +72,7 @@ billingRoutes.post('/subscribe', requireAuth, zValidator('json', subscribeSchema
         billingCycle: ref.billingCycle,
         couponCode: ref.couponCode,
         couponLabel: ref.couponLabel,
+        complimentary: ref.complimentary ?? false,
       },
     });
   } catch (err) {
@@ -159,6 +160,7 @@ billingRoutes.post('/upgrade', requireAuth, zValidator('json', upgradeSchema), a
         billingCycle: ref.billingCycle,
         couponCode: ref.couponCode,
         couponLabel: ref.couponLabel,
+        complimentary: ref.complimentary ?? false,
       },
     });
   } catch (err) {

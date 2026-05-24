@@ -45,6 +45,8 @@ export interface CheckoutRef {
   billingCycle: 'monthly' | 'annual';
   couponCode?: string;
   couponLabel?: string;
+  /** True when a 100% (or full-value) coupon zeroes the charge — no Korapay step. */
+  complimentary?: boolean;
 }
 
 export interface SubscriptionStatus {
@@ -135,6 +137,11 @@ export async function createCheckoutRef(
     },
   });
 
+  // 100% (or full-value) coupons — activate immediately; Korapay cannot charge ₦0.
+  if (amount === 0) {
+    await activateSubscription(reference);
+  }
+
   return {
     reference,
     amount,
@@ -145,6 +152,7 @@ export async function createCheckoutRef(
     billingCycle,
     couponCode: normalizedCode,
     couponLabel,
+    complimentary: amount === 0,
   };
 }
 

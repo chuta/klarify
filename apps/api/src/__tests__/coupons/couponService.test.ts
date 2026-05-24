@@ -24,16 +24,22 @@ describe('applyDiscount', () => {
     ).toBe(37_000);
   });
 
-  it('never charges below ₦100 minimum', () => {
+  it('100% percent discount is zero (complimentary checkout)', () => {
     expect(
-      applyDiscount(500, { discountType: 'fixed_ngn', discountValue: 900 }),
-    ).toBe(100);
+      applyDiscount(159_000, { discountType: 'percent', discountValue: 100 }),
+    ).toBe(0);
+    expect(
+      applyDiscount(47_000, { discountType: 'percent', discountValue: 100 }),
+    ).toBe(0);
   });
 
-  it('caps discount at original amount for fixed NGN', () => {
+  it('fixed NGN discount equal to or greater than price is zero', () => {
+    expect(
+      applyDiscount(500, { discountType: 'fixed_ngn', discountValue: 900 }),
+    ).toBe(0);
     expect(
       applyDiscount(1_000, { discountType: 'fixed_ngn', discountValue: 5_000 }),
-    ).toBe(100);
+    ).toBe(0);
   });
 
   it('rounds percent discounts to whole naira', () => {

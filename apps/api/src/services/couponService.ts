@@ -25,8 +25,6 @@ export interface CouponValidationError {
 
 export type CouponValidationResult = CouponApplyResult | CouponValidationError;
 
-const MIN_CHARGE_NGN = 100;
-
 export function normalizeCouponCode(code: string): string {
   return code.trim().toUpperCase();
 }
@@ -41,7 +39,7 @@ export function applyDiscount(originalAmount: number, coupon: Pick<Coupon, 'disc
     discounted = Math.round(originalAmount - value);
   }
 
-  return Math.max(MIN_CHARGE_NGN, Math.min(originalAmount, discounted));
+  return Math.max(0, Math.min(originalAmount, discounted));
 }
 
 export function formatDiscountLabel(coupon: Pick<Coupon, 'discountType' | 'discountValue'>): string {

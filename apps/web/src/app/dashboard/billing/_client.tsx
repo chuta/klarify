@@ -229,6 +229,7 @@ export function BillingClient({
             originalAmount?: number;
             discountAmount?: number;
             couponLabel?: string;
+            complimentary?: boolean;
           };
           error?: string;
         };
@@ -239,7 +240,14 @@ export function BillingClient({
           return;
         }
 
-        const { reference, amount } = json.data;
+        const { reference, amount, complimentary } = json.data;
+
+        if (complimentary || amount === 0) {
+          setIsLoading('activating');
+          showToast('success', 'Complimentary plan activated — no payment required.');
+          void pollUntilPlanChanges(plan);
+          return;
+        }
 
         window.Korapay.initialize({
           key: korapayPublicKey,
@@ -557,9 +565,11 @@ export function BillingClient({
             <p className="mt-2 text-xs text-[#C0392B]">{couponError}</p>
           ) : appliedCoupon ? (
             <p className="mt-2 text-xs text-[#1A7A4A]">
-              <strong>{appliedCoupon.code}</strong> applied ({appliedCoupon.label}) — ₦
-              {appliedCoupon.discountedAmount.toLocaleString()} for{' '}
-              {PLAN_NAMES[appliedCoupon.plan]} {appliedCoupon.billingCycle}.{' '}
+              <strong>{appliedCoupon.code}</strong> applied ({appliedCoupon.label}) —{' '}
+              {appliedCoupon.discountedAmount === 0
+                ? 'Free'
+                : `₦${appliedCoupon.discountedAmount.toLocaleString()}`}{' '}
+              for {PLAN_NAMES[appliedCoupon.plan]} {appliedCoupon.billingCycle}.{' '}
               <button
                 type="button"
                 onClick={() => {
@@ -625,18 +635,29 @@ export function BillingClient({
                 </p>
                 <p className={['mb-3 text-2xl font-bold', isCompass ? 'text-white' : 'text-[#1A1A1A]'].join(' ')}>
                   {couponApplies ? (
-                    <>
-                      <span className={['mr-2 text-lg line-through opacity-60', isCompass ? 'text-white/50' : 'text-[#999]'].join(' ')}>
-                        ₦{amount.toLocaleString()}
-                      </span>
-                      ₦{displayAmount.toLocaleString()}
-                    </>
+                    displayAmount === 0 ? (
+                      <>Free</>
+                    ) : (
+                      <>
+                        <span className={['mr-2 text-lg line-through opacity-60', isCompass ? 'text-white/50' : 'text-[#999]'].join(' ')}>
+                          ₦{amount.toLocaleString()}
+                        </span>
+                        ₦{displayAmount.toLocaleString()}
+                      </>
+                    )
                   ) : (
                     <>₦{(amount ?? 0).toLocaleString()}</>
                   )}
+                  {displayAmount > 0 && (
                   <span className={['text-sm font-normal', isCompass ? 'text-white/60' : 'text-[#555]'].join(' ')}>
                     /{billingCycle === 'annual' ? 'yr' : 'mo'}
                   </span>
+                  )}
+                  {couponApplies && displayAmount === 0 && (
+                  <span className={['text-sm font-normal', isCompass ? 'text-white/60' : 'text-[#555]'].join(' ')}>
+                    {' '}· {billingCycle === 'annual' ? 'annual' : 'monthly'}
+                  </span>
+                  )}
                 </p>
                 {couponApplies ? (
                   <p className={['mb-2 text-[10px] font-semibold uppercase tracking-wide', isCompass ? 'text-[#D4A843]' : 'text-[#1A7A4A]'].join(' ')}>
