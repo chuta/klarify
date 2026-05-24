@@ -1,10 +1,15 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
-import { apiFetch } from '@/lib/api';
+import { resolveOrgId } from '@/lib/db';
+import {
+  defaultSubscriptionStatus,
+  getSubscriptionStatusForOrg,
+  normalizeSubscriptionStatus,
+  type SubscriptionStatusData,
+} from '@/lib/billingStatus';
 import { getPublicApiBaseUrl } from '@/lib/env';
-import type { UserMeResponse } from '@klarify/core';
-import { BillingClient, type SubscriptionStatusData } from './_client';
+import { BillingClient } from './_client';
 import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
 export const metadata: Metadata = {
@@ -12,45 +17,21 @@ export const metadata: Metadata = {
   description: 'Manage your Klarify subscription and billing.',
 };
 
-const DEFAULT_PRICING = {
-  navigator: { monthly: 47_000, annual: 445_000 },
-  compass: { monthly: 159_000, annual: 1_520_000 },
-  flagship: { monthly: 479_000, annual: 4_600_000 },
-};
-
 interface PageProps {
   searchParams?: { plan?: string };
 }
 
-async function loadBillingStatus(accessToken: string): Promise<SubscriptionStatusData> {
-  const flyApiBase = getPublicApiBaseUrl();
-
-  // Billing routes live on the Hono API (Fly), not Netlify Route Handlers.
-  const result = await apiFetch<SubscriptionStatusData>(
-    '/api/billing/status',
-    accessToken,
-    {},
-    flyApiBase,
-  );
-
-  if (result.success) {
-    return result.data;
+async function loadBillingStatus(userId: string): Promise<SubscriptionStatusData> {
+  try {
+    const orgId = await resolveOrgId(userId);
+    if (!orgId) {
+      return defaultSubscriptionStatus();
+    }
+    return await getSubscriptionStatusForOrg(orgId);
+  } catch (err) {
+    console.error('[billing/page] loadBillingStatus error:', err);
+    return defaultSubscriptionStatus();
   }
-
-  console.error('[billing/page] Fly billing/status failed:', result.error, result.code);
-
-  // Fallback: align plan with Profile (/api/user/me reads organisations.plan).
-  const meResult = await apiFetch<UserMeResponse>('/api/user/me', accessToken);
-  const membership = meResult.success ? meResult.data.memberships[0] : undefined;
-
-  return {
-    plan: (membership?.plan ?? 'free') as SubscriptionStatusData['plan'],
-    status: 'active',
-    billingCycle: null,
-    currentPeriodEnd: null,
-    seatsUsed: 1,
-    pricing: DEFAULT_PRICING,
-  };
 }
 
 export default async function BillingPage({ searchParams }: PageProps): Promise<JSX.Element> {
@@ -66,7 +47,7 @@ export default async function BillingPage({ searchParams }: PageProps): Promise<
   if (userRes.error || !user || !session) redirect('/sign-in');
 
   const accessToken = session.access_token;
-  const statusData = await loadBillingStatus(accessToken);
+  const statusData = normalizeSubscriptionStatus(await loadBillingStatus(user.id));
   const apiBaseUrl = getPublicApiBaseUrl();
 
   const userName =

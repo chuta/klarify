@@ -54,7 +54,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return NextResponse.redirect(errorRedirect);
     }
   } else {
-    console.error('[auth/callback] missing code and token_hash');
+    // Bots, prefetchers, or stale bookmarks — not a real auth failure.
+    console.warn('[auth/callback] missing code and token_hash');
     return NextResponse.redirect(errorRedirect);
   }
 

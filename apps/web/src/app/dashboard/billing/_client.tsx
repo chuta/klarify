@@ -2,10 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import type { Plan } from '@klarify/core';
 import { PLAN_LIMITS } from '@klarify/core';
 import { FlagshipContactButton } from '@/components/billing/FlagshipContactButton';
+import {
+  normalizeSubscriptionStatus,
+  PLAN_PRICING_NGN,
+  type SubscriptionStatusData,
+} from '@/lib/billingStatus';
 
 // ---------------------------------------------------------------------------
 // Korapay types
@@ -36,14 +41,7 @@ declare global {
 // Types
 // ---------------------------------------------------------------------------
 
-export interface SubscriptionStatusData {
-  plan: Plan;
-  status: string;
-  billingCycle: string | null;
-  currentPeriodEnd: string | null;
-  seatsUsed: number;
-  pricing: Record<string, { monthly: number; annual: number }>;
-}
+export type { SubscriptionStatusData };
 
 interface BillingClientProps {
   initial: SubscriptionStatusData;
@@ -105,7 +103,7 @@ export function BillingClient({
   const router = useRouter();
   const korapayReady = useKorapayScript();
 
-  const [status, setStatus] = useState(initial);
+  const [status, setStatus] = useState(() => normalizeSubscriptionStatus(initial));
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [isLoading, setIsLoading] = useState<string | null>(null); // 'subscribe' | 'cancel' | plan name
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
@@ -128,28 +126,35 @@ export function BillingClient({
     setCouponError(null);
   }, [billingCycle, couponPlan]);
 
-  // Sync plan from Fly on mount — corrects stale SSR if env was misconfigured.
+  const mergeStatus = useCallback(
+    (data: Partial<SubscriptionStatusData> | undefined) => {
+      setStatus((prev) => normalizeSubscriptionStatus(data, prev));
+    },
+    [],
+  );
+
+  // Refresh status from same-origin route on mount.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
-        const res = await fetch(`${apiBaseUrl}/api/billing/status`, {
+        const res = await fetch('/api/billing/status', {
           headers: { Authorization: `Bearer ${accessToken}` },
           cache: 'no-store',
         });
         if (!res.ok || cancelled) return;
         const json = (await res.json()) as { success: boolean; data?: SubscriptionStatusData };
         if (json.success && json.data && !cancelled) {
-          setStatus(json.data);
+          mergeStatus(json.data);
         }
       } catch {
-        // Non-fatal — keep SSR / fallback initial state.
+        // Non-fatal — keep SSR initial state.
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [accessToken, apiBaseUrl]);
+  }, [accessToken, mergeStatus]);
 
   const showToast = useCallback((type: 'success' | 'error', msg: string) => {
     setToast({ type, msg });
@@ -163,13 +168,13 @@ export function BillingClient({
       for (let i = 0; i < maxAttempts; i++) {
         await new Promise((r) => setTimeout(r, 2000));
         try {
-          const res = await fetch(`${apiBaseUrl}/api/billing/status`, {
+          const res = await fetch('/api/billing/status', {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
           if (res.ok) {
             const json = (await res.json()) as { success: boolean; data?: SubscriptionStatusData };
             if (json.success && json.data && json.data.plan === expectedPlan) {
-              setStatus(json.data);
+              mergeStatus(json.data);
               setIsLoading(null);
               showToast('success', `Plan upgraded to ${PLAN_NAMES[expectedPlan] ?? expectedPlan}!`);
               router.refresh();
@@ -184,7 +189,7 @@ export function BillingClient({
       setIsLoading(null);
       router.refresh();
     },
-    [accessToken, apiBaseUrl, router, showToast],
+    [accessToken, mergeStatus, router, showToast],
   );
 
   // Start a Korapay checkout.
@@ -328,12 +333,12 @@ export function BillingClient({
       const json = (await res.json()) as { success: boolean; error?: string };
       if (json.success) {
         showToast('success', 'Subscription cancelled. You retain access until period end.');
-        const statusRes = await fetch(`${apiBaseUrl}/api/billing/status`, {
+        const statusRes = await fetch('/api/billing/status', {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (statusRes.ok) {
           const statusJson = (await statusRes.json()) as { success: boolean; data?: SubscriptionStatusData };
-          if (statusJson.success && statusJson.data) setStatus(statusJson.data);
+          if (statusJson.success && statusJson.data) mergeStatus(statusJson.data);
         }
       } else {
         showToast('error', json.error ?? 'Failed to cancel subscription.');
@@ -343,7 +348,7 @@ export function BillingClient({
     } finally {
       setIsLoading(null);
     }
-  }, [accessToken, showToast]);
+  }, [accessToken, apiBaseUrl, mergeStatus, showToast]);
 
   // `initialPlan` from URL search params (e.g. ?plan=compass) — pre-select
   // checkout if user landed from the pricing page. Triggered once on mount.
@@ -467,9 +472,10 @@ export function BillingClient({
           <p className="mt-3 text-xs text-[#555]">
             Seats used: <strong>{status.seatsUsed}</strong> of{' '}
             <strong>
-              {PLAN_LIMITS[status.plan].team_seats === Infinity
-                ? 'unlimited'
-                : PLAN_LIMITS[status.plan].team_seats}
+              {(() => {
+                const seats = PLAN_LIMITS[status.plan]?.team_seats ?? PLAN_LIMITS.free.team_seats;
+                return seats === Infinity ? 'unlimited' : seats;
+              })()}
             </strong>
           </p>
         )}
@@ -575,8 +581,8 @@ export function BillingClient({
 
         <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {(['navigator', 'compass', 'flagship'] as const).map((plan) => {
-            const pricing = status.pricing[plan];
-            const amount = pricing ? pricing[billingCycle] : 0;
+            const pricing = status.pricing?.[plan] ?? PLAN_PRICING_NGN[plan];
+            const amount = pricing[billingCycle];
             const couponApplies =
               appliedCoupon !== null &&
               appliedCoupon.plan === plan &&
