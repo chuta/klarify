@@ -17,11 +17,13 @@ export async function apiFetch<T>(
   path: string,
   accessToken: string,
   options: RequestInit = {},
+  /** Override API origin — use getPublicApiBaseUrl() for Fly-only endpoints (billing, AI). */
+  baseUrl?: string,
 ): Promise<ApiResult<T>> {
   // Resolve the API base URL on every call (cheap, ~µs) so that
   // mis-configured envs surface as the validated localhost fallback
   // with a console.warn rather than crashing with "Invalid URL".
-  const apiBase = getApiBaseUrl();
+  const apiBase = baseUrl ?? getApiBaseUrl();
   let res: Response;
   try {
     res = await fetch(`${apiBase}${path}`, {

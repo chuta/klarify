@@ -2,21 +2,55 @@ import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
+import { getPublicApiBaseUrl } from '@/lib/env';
+import type { UserMeResponse } from '@klarify/core';
 import { BillingClient, type SubscriptionStatusData } from './_client';
 import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
-
-// Billing calls go directly to the Hono API (Fly.io) — they need persistence
-// and aren't short-lived enough for Netlify's serverless timeout.
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? 'http://localhost:3001';
 
 export const metadata: Metadata = {
   title: 'Billing — Klarify',
   description: 'Manage your Klarify subscription and billing.',
 };
 
+const DEFAULT_PRICING = {
+  navigator: { monthly: 47_000, annual: 445_000 },
+  compass: { monthly: 159_000, annual: 1_520_000 },
+  flagship: { monthly: 479_000, annual: 4_600_000 },
+};
+
 interface PageProps {
   searchParams?: { plan?: string };
+}
+
+async function loadBillingStatus(accessToken: string): Promise<SubscriptionStatusData> {
+  const flyApiBase = getPublicApiBaseUrl();
+
+  // Billing routes live on the Hono API (Fly), not Netlify Route Handlers.
+  const result = await apiFetch<SubscriptionStatusData>(
+    '/api/billing/status',
+    accessToken,
+    {},
+    flyApiBase,
+  );
+
+  if (result.success) {
+    return result.data;
+  }
+
+  console.error('[billing/page] Fly billing/status failed:', result.error, result.code);
+
+  // Fallback: align plan with Profile (/api/user/me reads organisations.plan).
+  const meResult = await apiFetch<UserMeResponse>('/api/user/me', accessToken);
+  const membership = meResult.success ? meResult.data.memberships[0] : undefined;
+
+  return {
+    plan: (membership?.plan ?? 'free') as SubscriptionStatusData['plan'],
+    status: 'active',
+    billingCycle: null,
+    currentPeriodEnd: null,
+    seatsUsed: 1,
+    pricing: DEFAULT_PRICING,
+  };
 }
 
 export default async function BillingPage({ searchParams }: PageProps): Promise<JSX.Element> {
@@ -32,25 +66,8 @@ export default async function BillingPage({ searchParams }: PageProps): Promise<
   if (userRes.error || !user || !session) redirect('/sign-in');
 
   const accessToken = session.access_token;
-  const result = await apiFetch<SubscriptionStatusData>(
-    '/api/billing/status',
-    accessToken,
-  );
-
-  const statusData: SubscriptionStatusData = result.success
-    ? result.data
-    : {
-        plan: 'free',
-        status: 'active',
-        billingCycle: null,
-        currentPeriodEnd: null,
-        seatsUsed: 1,
-        pricing: {
-          navigator: { monthly: 47_000,    annual: 445_000 },
-          compass:   { monthly: 159_000,   annual: 1_520_000 },
-          flagship:  { monthly: 479_000,   annual: 4_600_000 },
-        },
-      };
+  const statusData = await loadBillingStatus(accessToken);
+  const apiBaseUrl = getPublicApiBaseUrl();
 
   const userName =
     (user.user_metadata?.name as string | undefined) ??
@@ -73,7 +90,7 @@ export default async function BillingPage({ searchParams }: PageProps): Promise<
         userEmail={user.email ?? ''}
         userName={userName}
         accessToken={accessToken}
-        apiBaseUrl={API_BASE_URL}
+        apiBaseUrl={apiBaseUrl}
         initialPlan={searchParams?.plan ?? null}
       />
     </DashboardPageShell>

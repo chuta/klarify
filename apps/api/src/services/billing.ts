@@ -252,23 +252,12 @@ export async function cancelSubscription(orgId: string): Promise<void> {
 export async function getSubscriptionStatus(
   orgId: string,
 ): Promise<SubscriptionStatus> {
-  // Prefer the active subscription. Fall back to the most recently created one.
-  const sub = await prisma.subscription.findFirst({
-    where: { orgId },
-    orderBy: [
-      // active > pending > cancelled/past_due
-      { status: 'asc' },
-      { createdAt: 'desc' },
-    ],
-  });
-
-  // Resolve the org plan directly (source of truth after activation).
   const org = await prisma.organisation.findUnique({
     where: { id: orgId },
     select: { plan: true, seatsUsed: true },
   });
 
-  if (!sub || !org) {
+  if (!org) {
     return {
       plan: 'free',
       status: 'active',
@@ -278,11 +267,30 @@ export async function getSubscriptionStatus(
     };
   }
 
+  // Prefer the active paid subscription row for billing metadata; fall back to
+  // the most recent subscription of any status.
+  const sub =
+    (await prisma.subscription.findFirst({
+      where: { orgId, status: 'active', plan: { not: 'free' } },
+      orderBy: { createdAt: 'desc' },
+    })) ??
+    (await prisma.subscription.findFirst({
+      where: { orgId, status: 'active' },
+      orderBy: { createdAt: 'desc' },
+    })) ??
+    (await prisma.subscription.findFirst({
+      where: { orgId },
+      orderBy: { createdAt: 'desc' },
+    }));
+
+  // organisations.plan is the source of truth for feature gates (updated on
+  // activateSubscription and coupon redemption). Subscription rows carry
+  // billing-cycle metadata.
   return {
     plan: (org.plan ?? 'free') as Plan,
-    status: sub.status,
-    billingCycle: sub.billingCycle,
-    currentPeriodEnd: sub.currentPeriodEnd,
+    status: sub?.status ?? 'active',
+    billingCycle: sub?.billingCycle ?? null,
+    currentPeriodEnd: sub?.currentPeriodEnd ?? null,
     seatsUsed: org.seatsUsed,
   };
 }

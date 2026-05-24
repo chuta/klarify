@@ -128,6 +128,29 @@ export function BillingClient({
     setCouponError(null);
   }, [billingCycle, couponPlan]);
 
+  // Sync plan from Fly on mount — corrects stale SSR if env was misconfigured.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`${apiBaseUrl}/api/billing/status`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          cache: 'no-store',
+        });
+        if (!res.ok || cancelled) return;
+        const json = (await res.json()) as { success: boolean; data?: SubscriptionStatusData };
+        if (json.success && json.data && !cancelled) {
+          setStatus(json.data);
+        }
+      } catch {
+        // Non-fatal — keep SSR / fallback initial state.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, apiBaseUrl]);
+
   const showToast = useCallback((type: 'success' | 'error', msg: string) => {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 5000);
