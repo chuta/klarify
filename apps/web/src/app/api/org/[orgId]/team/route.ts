@@ -8,7 +8,7 @@ function handleTeamError(err: unknown): NextResponse {
     const status =
       err.code === 'FORBIDDEN' ? 403
       : err.code === 'NOT_FOUND' ? 404
-      : err.code === 'ALREADY_MEMBER' ? 409
+      : err.code === 'ALREADY_MEMBER' || err.code === 'ALREADY_INVITED' ? 409
       : err.code === 'EMAIL_DELIVERY_FAILED' ? 503
       : 402;
     return NextResponse.json(

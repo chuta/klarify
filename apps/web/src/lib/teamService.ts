@@ -173,19 +173,46 @@ export async function createTeamInvite(params: {
       );
     }
 
-    const existingUser = await tx.user.findUnique({ where: { email }, select: { id: true } });
-    if (existingUser) {
-      const existingMember = await tx.orgMember.findUnique({
-        where: { orgId_userId: { orgId: params.orgId, userId: existingUser.id } },
-      });
-      if (existingMember) {
-        throw new TeamError('ALREADY_MEMBER', 'This person is already a member of your organisation.');
-      }
+    const existingMemberByEmail = await tx.orgMember.findFirst({
+      where: {
+        orgId: params.orgId,
+        user: { email: { equals: email, mode: 'insensitive' } },
+      },
+      select: { userId: true },
+    });
+    if (existingMemberByEmail) {
+      throw new TeamError('ALREADY_MEMBER', 'This person is already a member of your organisation.');
     }
 
+    const now = new Date();
+
+    const pendingInvite = await tx.orgInvite.findFirst({
+      where: {
+        orgId: params.orgId,
+        email: { equals: email, mode: 'insensitive' },
+        acceptedAt: null,
+        revokedAt: null,
+        expiresAt: { gt: now },
+      },
+      select: { id: true },
+    });
+    if (pendingInvite) {
+      throw new TeamError(
+        'ALREADY_INVITED',
+        'An invitation is already pending for this email address. Revoke it first to send a new one.',
+      );
+    }
+
+    // Expired but still open invites block the unique index — clear them so re-invites work.
     await tx.orgInvite.updateMany({
-      where: { orgId: params.orgId, email, acceptedAt: null, revokedAt: null },
-      data: { revokedAt: new Date() },
+      where: {
+        orgId: params.orgId,
+        email: { equals: email, mode: 'insensitive' },
+        acceptedAt: null,
+        revokedAt: null,
+        expiresAt: { lte: now },
+      },
+      data: { revokedAt: now },
     });
 
     const inviter = await tx.user.findUnique({
@@ -205,6 +232,19 @@ export async function createTeamInvite(params: {
     });
 
     return { invite, org, inviter, expiresAt, token };
+  }).catch((err: unknown) => {
+    if (
+      typeof err === 'object' &&
+      err !== null &&
+      'code' in err &&
+      (err as { code: string }).code === 'P2002'
+    ) {
+      throw new TeamError(
+        'ALREADY_INVITED',
+        'An invitation is already pending for this email address. Revoke it first to send a new one.',
+      );
+    }
+    throw err;
   });
 
   const emailResult = await sendTeamInvitationEmail({
