@@ -11,7 +11,7 @@ import {
   roleCanManageInvites,
   type InvitableRole,
 } from '@klarify/core';
-import { sendTeamInvitationEmail } from '@klarify/email';
+import { sendTeamInvitationEmail, sendTeamWelcomeEmail } from '@klarify/email';
 import { prisma } from '@/lib/db';
 
 const INVITE_TTL_DAYS = 7;
@@ -330,7 +330,10 @@ export async function acceptTeamInvite(params: {
   const result = await withUserRls(params.userId, async (tx) => {
     const invite = await tx.orgInvite.findUnique({
       where: { tokenHash },
-      include: { org: { select: { id: true, name: true } } },
+      include: {
+        org: { select: { id: true, name: true, plan: true } },
+        inviter: { select: { name: true, email: true } },
+      },
     });
 
     if (!invite) throw new TeamError('NOT_FOUND', 'This invitation link is invalid.');
@@ -343,8 +346,12 @@ export async function acceptTeamInvite(params: {
     });
   });
 
-  await provisionTeamMemberProfile(params.userId, result.orgId);
-  return result;
+  await finalizeTeamInviteAccept({
+    userId: params.userId,
+    userEmail: params.userEmail,
+    result,
+  });
+  return { orgId: result.orgId, orgName: result.orgName, role: result.role };
 }
 
 export async function revokeTeamInvite(params: {
@@ -608,15 +615,25 @@ async function acceptInviteRecord(params: {
     orgId: string;
     email: string;
     role: string;
+    invitedBy: string;
     expiresAt: Date;
     acceptedAt: Date | null;
     revokedAt: Date | null;
-    org: { id: string; name: string };
+    org: { id: string; name: string; plan: string };
+    inviter?: { name: string | null; email: string } | null;
   };
   userId: string;
   userEmail: string;
   tx: Prisma.TransactionClient;
-}): Promise<{ orgId: string; orgName: string; role: string }> {
+}): Promise<{
+  orgId: string;
+  orgName: string;
+  role: string;
+  isNewMember: boolean;
+  inviteId: string;
+  inviterName: string;
+  planLabel: string;
+}> {
   const email = params.userEmail.trim().toLowerCase();
 
   if (params.invite.revokedAt) throw new TeamError('REVOKED', 'This invitation has been revoked.');
@@ -626,6 +643,13 @@ async function acceptInviteRecord(params: {
     throw new TeamError('EMAIL_MISMATCH', 'Sign in with the email address that received this invitation.');
   }
 
+  const inviterName =
+    params.invite.inviter?.name
+    ?? params.invite.inviter?.email
+    ?? 'Your team admin';
+  const planLabel =
+    params.invite.org.plan.charAt(0).toUpperCase() + params.invite.org.plan.slice(1);
+
   const existing = await params.tx.orgMember.findUnique({
     where: { orgId_userId: { orgId: params.invite.orgId, userId: params.userId } },
   });
@@ -634,7 +658,15 @@ async function acceptInviteRecord(params: {
       where: { id: params.invite.id },
       data: { acceptedAt: new Date() },
     });
-    return { orgId: params.invite.orgId, orgName: params.invite.org.name, role: existing.role };
+    return {
+      orgId: params.invite.orgId,
+      orgName: params.invite.org.name,
+      role: existing.role,
+      isNewMember: false,
+      inviteId: params.invite.id,
+      inviterName,
+      planLabel,
+    };
   }
 
   const usage = await getTeamSeatUsage(params.tx, params.invite.orgId);
@@ -651,7 +683,69 @@ async function acceptInviteRecord(params: {
   });
   await syncOrgSeatsUsed(params.tx, params.invite.orgId);
 
-  return { orgId: params.invite.orgId, orgName: params.invite.org.name, role: params.invite.role };
+  return {
+    orgId: params.invite.orgId,
+    orgName: params.invite.org.name,
+    role: params.invite.role,
+    isNewMember: true,
+    inviteId: params.invite.id,
+    inviterName,
+    planLabel,
+  };
+}
+
+interface TeamInviteAcceptResult {
+  orgId: string;
+  orgName: string;
+  role: string;
+  isNewMember: boolean;
+  inviteId: string;
+  inviterName: string;
+  planLabel: string;
+}
+
+async function finalizeTeamInviteAccept(params: {
+  userId: string;
+  userEmail: string;
+  result: TeamInviteAcceptResult;
+}): Promise<void> {
+  await provisionTeamMemberProfile(params.userId, params.result.orgId);
+
+  if (!params.result.isNewMember) return;
+
+  const member = await prisma.user.findUnique({
+    where: { id: params.userId },
+    select: { name: true, email: true },
+  });
+
+  const memberName = member?.name?.trim() || member?.email || params.userEmail;
+
+  const emailResult = await sendTeamWelcomeEmail({
+    to: params.userEmail,
+    memberName,
+    organisationName: params.result.orgName,
+    inviterName: params.result.inviterName,
+    role: params.result.role,
+    planLabel: params.result.planLabel,
+    idempotencyKey: `team-welcome/${params.userId}/${params.result.orgId}`,
+  });
+
+  if (!emailResult.success) {
+    console.error('[teamService] team welcome email failed', {
+      userId: params.userId,
+      orgId: params.result.orgId,
+      to: params.userEmail,
+      error: emailResult.error,
+    });
+    return;
+  }
+
+  console.info('[teamService] team welcome email sent', {
+    userId: params.userId,
+    orgId: params.result.orgId,
+    inviteId: params.result.inviteId,
+    resendId: emailResult.id,
+  });
 }
 
 export async function acceptTeamInviteById(params: {
@@ -662,7 +756,10 @@ export async function acceptTeamInviteById(params: {
   const result = await withUserRls(params.userId, async (tx) => {
     const invite = await tx.orgInvite.findUnique({
       where: { id: params.inviteId },
-      include: { org: { select: { id: true, name: true } } },
+      include: {
+        org: { select: { id: true, name: true, plan: true } },
+        inviter: { select: { name: true, email: true } },
+      },
     });
     if (!invite) throw new TeamError('NOT_FOUND', 'This invitation is invalid.');
 
@@ -674,6 +771,10 @@ export async function acceptTeamInviteById(params: {
     });
   });
 
-  await provisionTeamMemberProfile(params.userId, result.orgId);
-  return result;
+  await finalizeTeamInviteAccept({
+    userId: params.userId,
+    userEmail: params.userEmail,
+    result,
+  });
+  return { orgId: result.orgId, orgName: result.orgName, role: result.role };
 }

@@ -112,6 +112,18 @@ export async function sendTeamInvitationEmail(
   });
 }
 
+export async function sendTeamWelcomeEmail(
+  args: BaseSend & T.TeamWelcomeProps,
+): Promise<SendEmailResult> {
+  const { to, replyTo, idempotencyKey, ...props } = args;
+  return sendEmail({
+    to, replyTo, idempotencyKey,
+    subject:  T.teamWelcomeSubject(props),
+    template: createElement(T.TeamWelcomeEmail, props),
+    tag:      'team_welcome',
+  });
+}
+
 export async function sendSubscriptionReceiptEmail(
   args: BaseSend & T.SubscriptionReceiptProps,
 ): Promise<SendEmailResult> {

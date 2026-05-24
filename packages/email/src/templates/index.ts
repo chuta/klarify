@@ -47,6 +47,12 @@ export {
 } from './TeamInvitation.js';
 
 export {
+  TeamWelcomeEmail,
+  teamWelcomeSubject,
+  type TeamWelcomeProps,
+} from './TeamWelcome.js';
+
+export {
   SubscriptionReceiptEmail,
   subscriptionReceiptSubject,
   type SubscriptionReceiptProps,
