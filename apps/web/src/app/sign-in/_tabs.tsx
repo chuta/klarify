@@ -10,9 +10,10 @@ import { signInWithPassword } from './actions';
 interface SignInTabsProps {
   activeTab: 'magic' | 'password';
   error: string | null;
+  nextUrl?: string | null;
 }
 
-export function SignInTabs({ activeTab: initialTab, error: initialError }: SignInTabsProps): JSX.Element {
+export function SignInTabs({ activeTab: initialTab, error: initialError, nextUrl }: SignInTabsProps): JSX.Element {
   const [tab, setTab] = useState<'magic' | 'password'>(initialTab);
 
   return (
@@ -53,7 +54,7 @@ export function SignInTabs({ activeTab: initialTab, error: initialError }: SignI
         )}
 
         {tab === 'magic' ? (
-          <MagicLinkForm />
+          <MagicLinkForm nextUrl={nextUrl} />
         ) : (
           <PasswordForm />
         )}
@@ -62,7 +63,7 @@ export function SignInTabs({ activeTab: initialTab, error: initialError }: SignI
   );
 }
 
-function MagicLinkForm(): JSX.Element {
+function MagicLinkForm({ nextUrl }: { nextUrl?: string | null }): JSX.Element {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -82,12 +83,13 @@ function MagicLinkForm(): JSX.Element {
 
     try {
       const supabase = createClient();
+      const redirectTo = nextUrl
+        ? `${getAuthCallbackUrl()}?next=${encodeURIComponent(nextUrl)}`
+        : getAuthCallbackUrl();
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          // Browser client stores the PKCE verifier in cookies — required for
-          // /auth/callback exchangeCodeForSession to succeed.
-          emailRedirectTo: getAuthCallbackUrl(),
+          emailRedirectTo: redirectTo,
         },
       });
 

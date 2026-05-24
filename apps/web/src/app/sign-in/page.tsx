@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getOptionalUser } from '@/lib/supabase/server';
+import { resolveUserSetupState } from '@/lib/teamService';
 import { SignInTabs } from './_tabs';
 
 interface SignInPageProps {
@@ -9,6 +10,7 @@ interface SignInPageProps {
     sent?: string;
     error?: string;
     tab?: 'magic' | 'password';
+    next?: string;
   };
 }
 
@@ -29,7 +31,11 @@ export default async function SignInPage({
   searchParams,
 }: SignInPageProps): Promise<JSX.Element> {
   const user = await getOptionalUser();
-  if (user) redirect('/dashboard');
+  if (user) {
+    if (searchParams.next) redirect(searchParams.next);
+    const setup = await resolveUserSetupState(user.id, user.email ?? '');
+    redirect(setup.redirect);
+  }
 
   const sent      = searchParams.sent === '1';
   const error     = searchParams.error ? decodeURIComponent(searchParams.error) : null;
@@ -88,7 +94,7 @@ export default async function SignInPage({
             </div>
           ) : (
             /* ── Tab form ── */
-            <SignInTabs activeTab={activeTab} error={error} />
+            <SignInTabs activeTab={activeTab} error={error} nextUrl={searchParams.next ?? null} />
           )}
         </div>
 

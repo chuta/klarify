@@ -15,7 +15,6 @@ const DISMISS_KEY = 'klarify_onboarding_nudge_dismissed';
 export function OnboardingNudgeBanner({
   hasCompletedOnboarding,
   role,
-  orgName,
 }: OnboardingNudgeBannerProps): JSX.Element | null {
   const pathname = usePathname();
   const [dismissed, setDismissed] = useState(true);
@@ -24,11 +23,13 @@ export function OnboardingNudgeBanner({
     setDismissed(sessionStorage.getItem(DISMISS_KEY) === '1');
   }, []);
 
+  // Team members inherit org context — only owners need the setup wizard.
+  if (role && role !== 'owner') return null;
   if (hasCompletedOnboarding) return null;
   if (pathname.startsWith('/dashboard/onboarding')) return null;
+  if (pathname.startsWith('/dashboard/join-team')) return null;
+  if (pathname.startsWith('/dashboard/welcome')) return null;
   if (dismissed) return null;
-
-  const isInvitedMember = role && role !== 'owner';
 
   return (
     <div className="mb-6 rounded-xl border border-[#D4A843]/40 bg-[#FDF6E3] px-4 py-4 sm:px-5">
@@ -38,22 +39,11 @@ export function OnboardingNudgeBanner({
             Setup incomplete
           </p>
           <h2 className="mt-1 text-base font-semibold text-[#1A1A1A]">
-            {isInvitedMember
-              ? 'Finish your compliance profile'
-              : 'Claim your organisation and calculate your Readiness Score'}
+            Claim your organisation and calculate your Readiness Score
           </h2>
           <p className="mt-1 text-sm text-[#555555]">
-            {isInvitedMember ? (
-              <>
-                You&apos;ve joined <strong>{orgName ?? 'your team'}</strong>. Complete the 5-step
-                setup so Klarify can personalise your roadmap and score.
-              </>
-            ) : (
-              <>
-                Name your organisation, tell us what you&apos;re building, and unlock your live
-                Regulatory Readiness Score — takes about 3 minutes.
-              </>
-            )}
+            Name your organisation, tell us what you&apos;re building, and unlock your live
+            Regulatory Readiness Score — takes about 3 minutes.
           </p>
         </div>
 
@@ -62,7 +52,7 @@ export function OnboardingNudgeBanner({
             href="/dashboard/onboarding"
             className="rounded-lg bg-[#0B6E6E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0D2B45]"
           >
-            {isInvitedMember ? 'Complete setup →' : 'Start setup →'}
+            Start setup →
           </Link>
           <button
             type="button"

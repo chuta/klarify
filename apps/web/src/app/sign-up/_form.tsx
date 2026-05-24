@@ -7,6 +7,15 @@ import { createClient } from '@/lib/supabase/client';
 
 interface SignUpFormProps {
   error: string | null;
+  nextUrl?: string | null;
+}
+
+function buildEmailRedirectTo(nextUrl?: string | null): string {
+  const base = getAuthCallbackUrl();
+  if (nextUrl) {
+    return `${base}?next=${encodeURIComponent(nextUrl)}`;
+  }
+  return base;
 }
 
 function mapSignUpError(raw: string): string {
@@ -20,7 +29,7 @@ function mapSignUpError(raw: string): string {
   return raw;
 }
 
-export function SignUpForm({ error: initialError }: SignUpFormProps): JSX.Element {
+export function SignUpForm({ error: initialError, nextUrl }: SignUpFormProps): JSX.Element {
   const router = useRouter();
   const [clientError, setClientError] = useState<string | null>(null);
   const [showPw, setShowPw]           = useState(false);
@@ -65,7 +74,7 @@ export function SignUpForm({ error: initialError }: SignUpFormProps): JSX.Elemen
         password,
         options: {
           data: { name },
-          emailRedirectTo: getAuthCallbackUrl(),
+          emailRedirectTo: buildEmailRedirectTo(nextUrl),
         },
       });
 
@@ -88,10 +97,13 @@ export function SignUpForm({ error: initialError }: SignUpFormProps): JSX.Elemen
         },
         body: JSON.stringify({ name }),
       });
-      const syncJson = await syncRes.json() as { success: boolean; data?: { redirect: string } };
+      const syncJson = await syncRes.json() as {
+        success: boolean;
+        data?: { redirect: string };
+      };
       router.push(syncJson.success && syncJson.data?.redirect
         ? syncJson.data.redirect
-        : '/dashboard/onboarding');
+        : nextUrl ?? '/dashboard/onboarding');
       router.refresh();
     } catch {
       setClientError('Something went wrong. Please try again.');

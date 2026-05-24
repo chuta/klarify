@@ -326,43 +326,25 @@ export async function acceptTeamInvite(params: {
   userEmail: string;
 }): Promise<{ orgId: string; orgName: string; role: string }> {
   const tokenHash = hashInviteToken(params.token);
-  const email = params.userEmail.trim().toLowerCase();
 
-  return withUserRls(params.userId, async (tx) => {
+  const result = await withUserRls(params.userId, async (tx) => {
     const invite = await tx.orgInvite.findUnique({
       where: { tokenHash },
       include: { org: { select: { id: true, name: true } } },
     });
 
     if (!invite) throw new TeamError('NOT_FOUND', 'This invitation link is invalid.');
-    if (invite.revokedAt) throw new TeamError('REVOKED', 'This invitation has been revoked.');
-    if (invite.acceptedAt) throw new TeamError('ALREADY_ACCEPTED', 'This invitation has already been used.');
-    if (invite.expiresAt <= new Date()) throw new TeamError('EXPIRED', 'This invitation has expired.');
-    if (invite.email.toLowerCase() !== email) {
-      throw new TeamError('EMAIL_MISMATCH', 'Sign in with the email address that received this invitation.');
-    }
 
-    const existing = await tx.orgMember.findUnique({
-      where: { orgId_userId: { orgId: invite.orgId, userId: params.userId } },
+    return acceptInviteRecord({
+      invite,
+      userId: params.userId,
+      userEmail: params.userEmail,
+      tx,
     });
-    if (existing) {
-      await tx.orgInvite.update({ where: { id: invite.id }, data: { acceptedAt: new Date() } });
-      return { orgId: invite.orgId, orgName: invite.org.name, role: existing.role };
-    }
-
-    const usage = await getTeamSeatUsage(tx, invite.orgId);
-    if (countOccupiedSeats(usage.members, 0) >= usage.limit) {
-      throw new TeamError('SEAT_LIMIT_REACHED', 'This organisation has no available seats.');
-    }
-
-    await tx.orgMember.create({
-      data: { orgId: invite.orgId, userId: params.userId, role: invite.role },
-    });
-    await tx.orgInvite.update({ where: { id: invite.id }, data: { acceptedAt: new Date() } });
-    await syncOrgSeatsUsed(tx, invite.orgId);
-
-    return { orgId: invite.orgId, orgName: invite.org.name, role: invite.role };
   });
+
+  await provisionTeamMemberProfile(params.userId, result.orgId);
+  return result;
 }
 
 export async function revokeTeamInvite(params: {
@@ -465,4 +447,233 @@ export async function userHasCompletedOnboarding(userId: string): Promise<boolea
     select: { userId: true },
   });
   return profile !== null;
+}
+
+/** Team members inherit the org owner's compliance profile — no separate onboarding wizard. */
+export async function provisionTeamMemberProfile(userId: string, orgId: string): Promise<void> {
+  const existing = await prisma.userProfile.findUnique({
+    where: { userId },
+    select: { userId: true },
+  });
+  if (existing) return;
+
+  const ownerMember = await prisma.orgMember.findFirst({
+    where: { orgId, role: 'owner' },
+    select: { userId: true },
+  });
+
+  const ownerProfile = ownerMember
+    ? await prisma.userProfile.findUnique({ where: { userId: ownerMember.userId } })
+    : null;
+
+  await prisma.userProfile.create({
+    data: {
+      userId,
+      productTypes: ownerProfile?.productTypes ?? [],
+      targetMarkets: ownerProfile?.targetMarkets?.length
+        ? ownerProfile.targetMarkets
+        : ['NG'],
+      stage: ownerProfile?.stage ?? 'building',
+      teamSize: ownerProfile?.teamSize ?? 1,
+      hasComplianceOfficer: ownerProfile?.hasComplianceOfficer ?? false,
+      existingInfrastructure: ownerProfile?.existingInfrastructure ?? [],
+    },
+  });
+}
+
+export type UserSetupKind = 'complete' | 'owner_setup' | 'team_member' | 'pending_invite';
+
+export interface UserSetupState {
+  kind: UserSetupKind;
+  redirect: string;
+  hasProfile: boolean;
+  membership: { orgId: string; orgName: string; role: string } | null;
+  pendingInvite: { inviteId: string; orgName: string; role: string } | null;
+}
+
+/** Routes users after sign-in / sign-up / email confirmation. */
+export async function resolveUserSetupState(
+  userId: string,
+  email: string,
+): Promise<UserSetupState> {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const [hasProfile, membership, pendingInvite] = await Promise.all([
+    userHasCompletedOnboarding(userId),
+    prisma.orgMember.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+      include: { org: { select: { id: true, name: true } } },
+    }),
+    prisma.orgInvite.findFirst({
+      where: {
+        email: { equals: normalizedEmail, mode: 'insensitive' },
+        acceptedAt: null,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      include: { org: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
+    }),
+  ]);
+
+  const membershipInfo = membership
+    ? { orgId: membership.org.id, orgName: membership.org.name, role: membership.role }
+    : null;
+
+  if (membership && membership.role !== 'owner') {
+    if (!hasProfile) {
+      await provisionTeamMemberProfile(userId, membership.org.id);
+      return {
+        kind: 'team_member',
+        redirect: '/dashboard/welcome',
+        hasProfile: true,
+        membership: membershipInfo,
+        pendingInvite: null,
+      };
+    }
+    return {
+      kind: 'complete',
+      redirect: '/dashboard',
+      hasProfile: true,
+      membership: membershipInfo,
+      pendingInvite: null,
+    };
+  }
+
+  if (hasProfile) {
+    return {
+      kind: 'complete',
+      redirect: '/dashboard',
+      hasProfile: true,
+      membership: membershipInfo,
+      pendingInvite: null,
+    };
+  }
+
+  if (pendingInvite && !membership) {
+    return {
+      kind: 'pending_invite',
+      redirect: `/dashboard/join-team?invite=${pendingInvite.id}`,
+      hasProfile: false,
+      membership: null,
+      pendingInvite: {
+        inviteId: pendingInvite.id,
+        orgName: pendingInvite.org.name,
+        role: pendingInvite.role,
+      },
+    };
+  }
+
+  return {
+    kind: 'owner_setup',
+    redirect: '/dashboard/onboarding',
+    hasProfile: false,
+    membership: membershipInfo,
+    pendingInvite: null,
+  };
+}
+
+export async function getPendingInviteForUser(email: string): Promise<{
+  inviteId: string;
+  organisationName: string;
+  email: string;
+  role: string;
+  expiresAt: string;
+} | null> {
+  const invite = await prisma.orgInvite.findFirst({
+    where: {
+      email: { equals: email.trim().toLowerCase(), mode: 'insensitive' },
+      acceptedAt: null,
+      revokedAt: null,
+      expiresAt: { gt: new Date() },
+    },
+    include: { org: { select: { name: true } } },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (!invite) return null;
+
+  return {
+    inviteId: invite.id,
+    organisationName: invite.org.name,
+    email: invite.email,
+    role: invite.role,
+    expiresAt: invite.expiresAt.toISOString(),
+  };
+}
+
+async function acceptInviteRecord(params: {
+  invite: {
+    id: string;
+    orgId: string;
+    email: string;
+    role: string;
+    expiresAt: Date;
+    acceptedAt: Date | null;
+    revokedAt: Date | null;
+    org: { id: string; name: string };
+  };
+  userId: string;
+  userEmail: string;
+  tx: Prisma.TransactionClient;
+}): Promise<{ orgId: string; orgName: string; role: string }> {
+  const email = params.userEmail.trim().toLowerCase();
+
+  if (params.invite.revokedAt) throw new TeamError('REVOKED', 'This invitation has been revoked.');
+  if (params.invite.acceptedAt) throw new TeamError('ALREADY_ACCEPTED', 'This invitation has already been used.');
+  if (params.invite.expiresAt <= new Date()) throw new TeamError('EXPIRED', 'This invitation has expired.');
+  if (params.invite.email.toLowerCase() !== email) {
+    throw new TeamError('EMAIL_MISMATCH', 'Sign in with the email address that received this invitation.');
+  }
+
+  const existing = await params.tx.orgMember.findUnique({
+    where: { orgId_userId: { orgId: params.invite.orgId, userId: params.userId } },
+  });
+  if (existing) {
+    await params.tx.orgInvite.update({
+      where: { id: params.invite.id },
+      data: { acceptedAt: new Date() },
+    });
+    return { orgId: params.invite.orgId, orgName: params.invite.org.name, role: existing.role };
+  }
+
+  const usage = await getTeamSeatUsage(params.tx, params.invite.orgId);
+  if (countOccupiedSeats(usage.members, 0) >= usage.limit) {
+    throw new TeamError('SEAT_LIMIT_REACHED', 'This organisation has no available seats.');
+  }
+
+  await params.tx.orgMember.create({
+    data: { orgId: params.invite.orgId, userId: params.userId, role: params.invite.role },
+  });
+  await params.tx.orgInvite.update({
+    where: { id: params.invite.id },
+    data: { acceptedAt: new Date() },
+  });
+  await syncOrgSeatsUsed(params.tx, params.invite.orgId);
+
+  return { orgId: params.invite.orgId, orgName: params.invite.org.name, role: params.invite.role };
+}
+
+export async function acceptTeamInviteById(params: {
+  inviteId: string;
+  userId: string;
+  userEmail: string;
+}): Promise<{ orgId: string; orgName: string; role: string }> {
+  const result = await withUserRls(params.userId, async (tx) => {
+    const invite = await tx.orgInvite.findUnique({
+      where: { id: params.inviteId },
+      include: { org: { select: { id: true, name: true } } },
+    });
+    if (!invite) throw new TeamError('NOT_FOUND', 'This invitation is invalid.');
+
+    return acceptInviteRecord({
+      invite,
+      userId: params.userId,
+      userEmail: params.userEmail,
+      tx,
+    });
+  });
+
+  await provisionTeamMemberProfile(params.userId, result.orgId);
+  return result;
 }

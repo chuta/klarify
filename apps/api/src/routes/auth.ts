@@ -9,6 +9,7 @@ import { Hono } from 'hono';
 import { sendWelcomeEmail } from '@klarify/email';
 import { prisma } from '../db.js';
 import { requireAuth, type AuthVars } from '../middleware/auth.js';
+import { resolveUserSetupState } from '../services/userSetup.js';
 
 export const authRoutes = new Hono<{ Variables: AuthVars }>();
 
@@ -83,11 +84,7 @@ authRoutes.post('/sync', requireAuth, async (c) => {
       }
     }
 
-    // Check if user has completed onboarding (has a profile row).
-    const profile = await prisma.userProfile.findUnique({
-      where: { userId },
-      select: { userId: true, stage: true },
-    });
+    const setup = await resolveUserSetupState(userId, email);
 
     return c.json({
       success: true as const,
@@ -95,8 +92,9 @@ authRoutes.post('/sync', requireAuth, async (c) => {
         userId:     user.id,
         email:      user.email,
         name:       user.name,
-        hasProfile: profile !== null,
-        redirect:   profile !== null ? '/dashboard' : '/dashboard/onboarding',
+        hasProfile: setup.hasProfile,
+        setupKind:  setup.kind,
+        redirect:   setup.redirect,
       },
     });
   } catch (err) {

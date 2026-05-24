@@ -1,17 +1,40 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { OnboardingWizard } from '@/app/onboarding/_wizard';
 import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
-import { loadOnboardingWizardProps, requireDashboardSession } from '@/lib/dashboardSession';
+import { requireDashboardSession } from '@/lib/dashboardSession';
+import { resolveUserSetupState } from '@/lib/teamService';
 
 /**
- * /dashboard/onboarding — setup wizard inside the dashboard shell.
- * Owners name their org on step 1; invited members skip that step.
+ * /dashboard/onboarding — setup wizard for organisation owners only.
+ * Invited team members are routed to /dashboard/welcome or /dashboard/join-team.
  */
 export default async function DashboardOnboardingPage(): Promise<JSX.Element> {
-  const { userId } = await requireDashboardSession();
-  const wizardProps = await loadOnboardingWizardProps(userId);
+  const { userId, email } = await requireDashboardSession();
+  const setup = await resolveUserSetupState(userId, email);
 
-  const stepCount = wizardProps.skipOrgStep ? 5 : 6;
+  if (setup.kind === 'complete') {
+    redirect('/dashboard');
+  }
+
+  if (setup.kind === 'team_member') {
+    redirect('/dashboard/welcome');
+  }
+
+  if (setup.kind === 'pending_invite') {
+    redirect(setup.redirect);
+  }
+
+  const membership = setup.membership;
+  if (membership && membership.role !== 'owner') {
+    redirect('/dashboard/welcome');
+  }
+
+  const wizardProps = {
+    skipOrgStep: false,
+    defaultOrgName: membership?.role === 'owner' ? membership.orgName : '',
+    invitedOrgName: undefined as string | undefined,
+  };
 
   return (
     <DashboardPageShell>
@@ -25,14 +48,10 @@ export default async function DashboardOnboardingPage(): Promise<JSX.Element> {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-[#1A1A1A]">
-              {wizardProps.skipOrgStep
-                ? 'Complete your compliance profile'
-                : 'Claim your organisation & calculate your Readiness Score'}
+              Claim your organisation & calculate your Readiness Score
             </h1>
             <p className="mt-1 text-sm text-[#555555]">
-              {wizardProps.skipOrgStep
-                ? `Answer ${stepCount} quick questions to personalise your roadmap for ${wizardProps.invitedOrgName ?? 'your team'}.`
-                : `Name your organisation and answer ${stepCount - 1} questions about your product. Takes about 3 minutes.`}
+              Name your organisation and answer 5 questions about your product. Takes about 3 minutes.
             </p>
           </div>
 
@@ -59,9 +78,7 @@ export default async function DashboardOnboardingPage(): Promise<JSX.Element> {
             />
           </svg>
           <p className="text-xs text-[#0B6E6E]">
-            {wizardProps.skipOrgStep
-              ? 'Your team owner manages billing and org settings. You can update your product profile any time.'
-              : 'Completing setup makes you the organisation owner with full access to billing, team invites, and document exports.'}
+            Completing setup makes you the organisation owner with full access to billing, team invites, and document exports.
           </p>
         </div>
       </div>

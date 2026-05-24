@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { sendWelcomeEmail } from '@klarify/email';
 import { prisma } from '@/lib/db';
 import { authenticateRouteHandler, unauthenticated } from '@/lib/route-auth';
+import { resolveUserSetupState } from '@/lib/teamService';
 
 export async function POST(request: Request): Promise<NextResponse> {
   const auth = await authenticateRouteHandler(request);
@@ -55,10 +56,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       }
     }
 
-    const profile = await prisma.userProfile.findUnique({
-      where: { userId },
-      select: { userId: true },
-    });
+    const setup = await resolveUserSetupState(userId, email);
 
     return NextResponse.json({
       success: true,
@@ -66,8 +64,11 @@ export async function POST(request: Request): Promise<NextResponse> {
         userId: user.id,
         email: user.email,
         name: user.name,
-        hasProfile: profile !== null,
-        redirect: profile !== null ? '/dashboard' : '/dashboard/onboarding',
+        hasProfile: setup.hasProfile,
+        setupKind: setup.kind,
+        redirect: setup.redirect,
+        membership: setup.membership,
+        pendingInvite: setup.pendingInvite,
       },
     });
   } catch (err) {

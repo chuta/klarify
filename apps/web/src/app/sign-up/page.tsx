@@ -2,10 +2,11 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getOptionalUser } from '@/lib/supabase/server';
+import { resolveUserSetupState } from '@/lib/teamService';
 import { SignUpForm } from './_form';
 
 interface SignUpPageProps {
-  searchParams: { sent?: string; error?: string };
+  searchParams: { sent?: string; error?: string; next?: string };
 }
 
 /**
@@ -22,10 +23,15 @@ export default async function SignUpPage({
   searchParams,
 }: SignUpPageProps): Promise<JSX.Element> {
   const user = await getOptionalUser();
-  if (user) redirect('/dashboard');
+  if (user) {
+    if (searchParams.next) redirect(searchParams.next);
+    const setup = await resolveUserSetupState(user.id, user.email ?? '');
+    redirect(setup.redirect);
+  }
 
   const sent  = searchParams.sent === '1';
   const error = searchParams.error ? decodeURIComponent(searchParams.error) : null;
+  const nextUrl = searchParams.next ?? null;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#FAFAFA] px-4 py-12">
@@ -86,7 +92,7 @@ export default async function SignUpPage({
                 Free to start. No credit card required.
               </p>
 
-              <SignUpForm error={error} />
+              <SignUpForm error={error} nextUrl={nextUrl} />
             </>
           )}
         </div>

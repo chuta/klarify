@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 import { loadPrimaryMembership, requireDashboardSession } from '@/lib/dashboardSession';
+import { resolveUserSetupState } from '@/lib/teamService';
 import { TeamClient } from './_client';
 
 export const metadata: Metadata = {
@@ -10,11 +11,12 @@ export const metadata: Metadata = {
 };
 
 export default async function TeamPage(): Promise<JSX.Element> {
-  const { userId, accessToken } = await requireDashboardSession();
+  const { userId, accessToken, email } = await requireDashboardSession();
   const membership = await loadPrimaryMembership(userId);
 
   if (!membership) {
-    redirect('/dashboard/onboarding');
+    const setup = await resolveUserSetupState(userId, email);
+    redirect(setup.redirect);
   }
 
   return (

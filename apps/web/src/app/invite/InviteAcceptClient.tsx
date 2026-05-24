@@ -90,7 +90,7 @@ export function InviteAcceptClient(): JSX.Element {
         setError(json.error ?? 'Failed to accept invitation.');
         return;
       }
-      router.push('/dashboard/onboarding');
+      router.push('/dashboard/welcome');
     } catch {
       setError('Failed to accept invitation.');
     } finally {
