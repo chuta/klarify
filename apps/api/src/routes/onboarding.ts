@@ -64,22 +64,36 @@ onboardingRoutes.post(
       const existingMembership = await prisma.orgMember.findFirst({
         where: { userId },
         orderBy: { createdAt: 'asc' },
-        select: { orgId: true },
+        select: { orgId: true, role: true },
       });
 
       if (existingMembership !== null) {
         orgId = existingMembership.orgId;
+        if (existingMembership.role === 'owner' && body.org_name?.trim()) {
+          await prisma.organisation.update({
+            where: { id: orgId },
+            data: { name: body.org_name.trim() },
+          });
+        }
       } else {
-        // No org — create a default one named after the email domain.
-        const email = c.get('email');
-        const domain = email.includes('@') ? email.split('@')[1] ?? email : email;
-        const orgName = `${domain} (default)`;
+        if (!body.org_name?.trim()) {
+          return c.json(
+            {
+              success: false as const,
+              error: 'Organisation name is required to claim ownership.',
+              code: 'VALIDATION_ERROR',
+            },
+            422,
+          );
+        }
 
+        const email = c.get('email');
         const newOrg = await prisma.organisation.create({
           data: {
-            name: orgName,
+            name: body.org_name.trim(),
             ownerId: userId,
             plan: 'free',
+            seatsUsed: 1,
           },
         });
         await prisma.orgMember.create({

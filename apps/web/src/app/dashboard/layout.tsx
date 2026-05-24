@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { DASHBOARD_NAV } from './_nav';
 import { MobileNav } from './_mobile-nav';
+import { DashboardShellExtras } from '@/components/dashboard/DashboardShellExtras';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -124,7 +125,9 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
         </header>
 
         <main className="flex-1 w-full min-w-0 overflow-y-auto px-6 py-6 md:px-8 md:py-8 lg:px-10 xl:px-12">
-          {children}
+          <DashboardShellExtras userId={user.id}>
+            {children}
+          </DashboardShellExtras>
         </main>
       </div>
     </div>

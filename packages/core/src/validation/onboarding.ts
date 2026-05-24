@@ -1,5 +1,15 @@
-// Zod schemas for the 5-step onboarding wizard — CLAUDE.md §5 (user_profiles table).
+// Zod schemas for the onboarding wizard — CLAUDE.md §5 (user_profiles table).
 import { z } from 'zod';
+
+/** Step 0 — organisation name (owners creating a new org). Optional for invited members. */
+export const onboardingOrgSchema = z.object({
+  org_name: z
+    .string()
+    .trim()
+    .min(2, 'Organisation name must be at least 2 characters')
+    .max(200, 'Organisation name is too long')
+    .optional(),
+});
 
 export const onboardingStep1Schema = z.object({
   product_types: z
@@ -27,13 +37,15 @@ export const onboardingStep5Schema = z.object({
   existing_infrastructure: z.array(z.string()),
 });
 
-export const onboardingCompleteSchema = onboardingStep1Schema
+export const onboardingCompleteSchema = onboardingOrgSchema
+  .merge(onboardingStep1Schema)
   .merge(onboardingStep2Schema)
   .merge(onboardingStep3Schema)
   .merge(onboardingStep4Schema)
   .merge(onboardingStep5Schema);
 
 export type OnboardingCompleteInput = z.infer<typeof onboardingCompleteSchema>;
+export type OnboardingOrgInput = z.infer<typeof onboardingOrgSchema>;
 export type OnboardingStep1Input = z.infer<typeof onboardingStep1Schema>;
 export type OnboardingStep2Input = z.infer<typeof onboardingStep2Schema>;
 export type OnboardingStep3Input = z.infer<typeof onboardingStep3Schema>;

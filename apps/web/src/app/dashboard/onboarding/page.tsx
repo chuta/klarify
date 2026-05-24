@@ -1,22 +1,20 @@
 import Link from 'next/link';
 import { OnboardingWizard } from '@/app/onboarding/_wizard';
 import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
+import { loadOnboardingWizardProps, requireDashboardSession } from '@/lib/dashboardSession';
 
 /**
- * /dashboard/onboarding — 5-step setup wizard rendered inside the dashboard
- * shell so the user has full sidebar navigation and is never trapped in an
- * isolated flow.
- *
- * Auth guard is handled by the parent dashboard layout.
- * The wizard is intentionally always accessible — it is idempotent (upserts
- * the profile) so users can revisit it to update their product type or stage.
- * The wizard submits to the Server Action at app/onboarding/actions.ts which
- * redirects to /dashboard on completion.
+ * /dashboard/onboarding — setup wizard inside the dashboard shell.
+ * Owners name their org on step 1; invited members skip that step.
  */
-export default function DashboardOnboardingPage(): JSX.Element {
+export default async function DashboardOnboardingPage(): Promise<JSX.Element> {
+  const { userId } = await requireDashboardSession();
+  const wizardProps = await loadOnboardingWizardProps(userId);
+
+  const stepCount = wizardProps.skipOrgStep ? 5 : 6;
+
   return (
     <DashboardPageShell>
-      {/* ── Page header ── */}
       <div className="mb-8">
         <div className="mb-1 flex items-center gap-2 text-xs text-[#CCCCCC]">
           <span>Setup</span>
@@ -27,15 +25,17 @@ export default function DashboardOnboardingPage(): JSX.Element {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-[#1A1A1A]">
-              Let&apos;s calculate your Readiness Score
+              {wizardProps.skipOrgStep
+                ? 'Complete your compliance profile'
+                : 'Claim your organisation & calculate your Readiness Score'}
             </h1>
             <p className="mt-1 text-sm text-[#555555]">
-              Answer 5 quick questions to get an instant compliance gap analysis calibrated to
-              Nigerian and African regulatory requirements.
+              {wizardProps.skipOrgStep
+                ? `Answer ${stepCount} quick questions to personalise your roadmap for ${wizardProps.invitedOrgName ?? 'your team'}.`
+                : `Name your organisation and answer ${stepCount - 1} questions about your product. Takes about 3 minutes.`}
             </p>
           </div>
 
-          {/* Skip link — allows navigation away without completing */}
           <Link
             href="/dashboard"
             className="mt-1 shrink-0 rounded-lg border border-[#CCCCCC] px-4 py-2 text-xs font-medium text-[#555555] transition hover:border-[#0B6E6E] hover:text-[#0B6E6E]"
@@ -44,7 +44,6 @@ export default function DashboardOnboardingPage(): JSX.Element {
           </Link>
         </div>
 
-        {/* Progress hint */}
         <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#E6F4F4] bg-[#E6F4F4] px-4 py-3">
           <svg
             className="h-4 w-4 shrink-0 text-[#0B6E6E]"
@@ -60,14 +59,14 @@ export default function DashboardOnboardingPage(): JSX.Element {
             />
           </svg>
           <p className="text-xs text-[#0B6E6E]">
-            Takes less than 3 minutes. Your answers seed your personalised compliance roadmap and
-            live Readiness Score. You can update them any time from your profile.
+            {wizardProps.skipOrgStep
+              ? 'Your team owner manages billing and org settings. You can update your product profile any time.'
+              : 'Completing setup makes you the organisation owner with full access to billing, team invites, and document exports.'}
           </p>
         </div>
       </div>
 
-      {/* ── Wizard ── */}
-      <OnboardingWizard />
+      <OnboardingWizard {...wizardProps} />
     </DashboardPageShell>
   );
 }

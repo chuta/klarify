@@ -131,8 +131,8 @@ export default async function ProfilePage({
             </form>
           </section>
 
-          {/* Edit organisation name — only shown to owners */}
-          {membership?.role === 'owner' && (
+          {/* Organisation — editable for owners, read-only for members */}
+          {membership && membership.role === 'owner' ? (
             <section className="rounded-2xl border border-[#CCCCCC] bg-white p-6 shadow-sm">
               <h2 className="mb-1 text-base font-semibold text-[#1A1A1A]">Organisation name</h2>
               <p className="mb-4 text-sm text-[#555555]">
@@ -168,8 +168,25 @@ export default async function ProfilePage({
                   Save
                 </button>
               </form>
+
+              <p className="mt-4 text-xs text-[#555555]">
+                <Link href="/dashboard/team" className="font-medium text-[#0B6E6E] hover:underline">
+                  Manage team members →
+                </Link>
+              </p>
             </section>
-          )}
+          ) : membership ? (
+            <section className="rounded-2xl border border-[#CCCCCC] bg-white p-6 shadow-sm">
+              <h2 className="mb-1 text-base font-semibold text-[#1A1A1A]">Organisation</h2>
+              <p className="mb-4 text-sm text-[#555555]">
+                You are a member of this organisation. Only the owner can change the organisation name.
+              </p>
+              <div className="rounded-lg border border-[#F5F5F5] bg-[#FAFAFA] px-4 py-3">
+                <p className="text-sm font-medium text-[#1A1A1A]">{membership.orgName}</p>
+                <p className="mt-1 text-xs capitalize text-[#555555]">Your role: {membership.role}</p>
+              </div>
+            </section>
+          ) : null}
 
           {/* Subscription */}
           <section className="rounded-2xl border border-[#CCCCCC] bg-white p-6 shadow-sm">

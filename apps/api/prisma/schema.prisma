@@ -51,6 +51,7 @@ model User {
   notificationPreference   NotificationPreference?
   couponsCreated           Coupon[]                @relation("CouponCreator")
   couponRedemptions        CouponRedemption[]
+  orgInvitesSent           OrgInvite[]             @relation("InviteSender")
 
   @@map("users")
 }
@@ -77,9 +78,29 @@ model Organisation {
   couponRedemptions      CouponRedemption[]
   subscriptions          Subscription[]
   productClassifications ProductClassification[]
+  orgInvites             OrgInvite[]
 
   @@index([ownerId])
   @@map("organisations")
+}
+
+model OrgInvite {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId      String    @map("org_id") @db.Uuid
+  email      String
+  role       String    @default("member")
+  tokenHash  String    @unique @map("token_hash")
+  invitedBy  String    @map("invited_by") @db.Uuid
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz()
+  acceptedAt DateTime? @map("accepted_at") @db.Timestamptz()
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz()
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  org     Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  inviter User         @relation("InviteSender", fields: [invitedBy], references: [id])
+
+  @@index([orgId])
+  @@map("org_invites")
 }
 
 model OrgMember {

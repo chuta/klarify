@@ -157,10 +157,11 @@ export default async function DashboardPage(): Promise<JSX.Element> {
             Calculate your Regulatory Readiness Score
           </h2>
           <p className="mb-6 text-sm text-[#555555]">
-            Answer 5 quick questions about your product and infrastructure. Takes less than 3 minutes.
+            Name your organisation and answer a few questions about your product and infrastructure.
+            Takes less than 3 minutes.
           </p>
           <Link
-            href="/onboarding"
+            href="/dashboard/onboarding"
             className="inline-block rounded-xl bg-[#0B6E6E] px-8 py-3 text-sm font-semibold text-white transition hover:bg-[#0D2B45]"
           >
             Start free assessment →

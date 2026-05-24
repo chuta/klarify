@@ -11,6 +11,7 @@ import {
 import { materialiseRoadmapIfEmpty } from '@/lib/roadmapService';
 import { sendOnboardingCompleteEmail } from '@klarify/email';
 import { prisma, withRls } from '@/lib/db';
+import { resolveOrgForOnboarding, TeamError } from '@/lib/teamService';
 import { authenticateRouteHandler, unauthenticated } from '@/lib/route-auth';
 
 function primaryRegulatorLabel(productTypes: string[]): string {
@@ -36,26 +37,12 @@ export async function POST(request: Request): Promise<NextResponse> {
   const body = parsed.data;
 
   try {
-    let orgId: string;
-    const existingMembership = await prisma.orgMember.findFirst({
-      where: { userId },
-      orderBy: { createdAt: 'asc' },
-      select: { orgId: true },
+    const resolved = await resolveOrgForOnboarding({
+      userId,
+      email: auth.email,
+      orgName: body.org_name,
     });
-
-    if (existingMembership !== null) {
-      orgId = existingMembership.orgId;
-    } else {
-      const email = auth.email;
-      const domain = email.includes('@') ? (email.split('@')[1] ?? email) : email;
-      const newOrg = await prisma.organisation.create({
-        data: { name: `${domain} (default)`, ownerId: userId, plan: 'free' },
-      });
-      await prisma.orgMember.create({
-        data: { orgId: newOrg.id, userId, role: 'owner' },
-      });
-      orgId = newOrg.id;
-    }
+    const orgId = resolved.orgId;
 
     const result = await withRls({ userId, orgId }, async (tx) => {
       await tx.userProfile.upsert({
@@ -143,6 +130,12 @@ export async function POST(request: Request): Promise<NextResponse> {
       },
     });
   } catch (err) {
+    if (err instanceof TeamError && err.code === 'VALIDATION_ERROR') {
+      return NextResponse.json(
+        { success: false, error: err.message, code: err.code },
+        { status: 422 },
+      );
+    }
     console.error('[onboarding/complete] error', err);
     return NextResponse.json(
       { success: false, error: 'Onboarding failed. Please try again.', code: 'ONBOARDING_ERROR' },

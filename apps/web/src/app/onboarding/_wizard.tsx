@@ -54,6 +54,7 @@ const INFRASTRUCTURE_OPTIONS = [
 // ── Wizard state ──────────────────────────────────────────────────────────────
 
 interface WizardState {
+  org_name: string;
   product_types: string[];
   target_markets: string[];
   stage: string;
@@ -63,6 +64,7 @@ interface WizardState {
 }
 
 const INITIAL_STATE: WizardState = {
+  org_name: '',
   product_types: [],
   target_markets: [],
   stage: '',
@@ -71,7 +73,7 @@ const INITIAL_STATE: WizardState = {
   existing_infrastructure: [],
 };
 
-const STEP_TITLES = [
+const BASE_STEP_TITLES = [
   'What are you building?',
   'Target markets',
   'Where are you now?',
@@ -79,7 +81,7 @@ const STEP_TITLES = [
   'What\'s already in place?',
 ];
 
-const STEP_SUBTITLES = [
+const BASE_STEP_SUBTITLES = [
   'Select all product types that apply to your project.',
   'Select all markets you are currently targeting or plan to target.',
   'Be honest — this helps us give you the most accurate roadmap.',
@@ -87,20 +89,44 @@ const STEP_SUBTITLES = [
   'Tell us what compliance infrastructure you already have. This seeds your initial Readiness Score.',
 ];
 
-// ── Wizard component ──────────────────────────────────────────────────────────
-
 export interface OnboardingWizardProps {
-  initialStep?: number;
+  /** Invited members already belong to an org — skip org naming step. */
+  skipOrgStep?: boolean;
+  /** Pre-fill org name for owners revisiting the wizard. */
+  defaultOrgName?: string;
+  /** Shown to invited members on their first content step. */
+  invitedOrgName?: string;
 }
 
-export function OnboardingWizard({ initialStep = 1 }: OnboardingWizardProps): JSX.Element {
-  const [step, setStep] = useState(initialStep);
-  const [state, setState] = useState<WizardState>(INITIAL_STATE);
+export function OnboardingWizard({
+  skipOrgStep = false,
+  defaultOrgName = '',
+  invitedOrgName,
+}: OnboardingWizardProps): JSX.Element {
+  const firstStep = skipOrgStep ? 2 : 1;
+  const totalSteps = skipOrgStep ? 5 : 6;
+
+  const stepTitles = skipOrgStep
+    ? BASE_STEP_TITLES
+    : ['Your organisation', ...BASE_STEP_TITLES];
+
+  const stepSubtitles = skipOrgStep
+    ? BASE_STEP_SUBTITLES
+    : [
+        'This name appears on generated documents, compliance exports, and your Regulatory Identity Card.',
+        ...BASE_STEP_SUBTITLES,
+      ];
+
+  const [step, setStep] = useState(firstStep);
+  const [state, setState] = useState<WizardState>({
+    ...INITIAL_STATE,
+    org_name: defaultOrgName,
+  });
   const [serverError, setServerError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
-  const totalSteps = 5;
-  const progress = ((step - 1) / (totalSteps - 1)) * 100;
+  const displayStep = skipOrgStep ? step - 1 : step;
+  const progress = totalSteps > 1 ? ((displayStep - 1) / (totalSteps - 1)) * 100 : 100;
 
   function toggleMulti(field: 'product_types' | 'target_markets' | 'existing_infrastructure', value: string): void {
     setState((prev) => {
@@ -114,29 +140,31 @@ export function OnboardingWizard({ initialStep = 1 }: OnboardingWizardProps): JS
 
   function canProceed(): boolean {
     switch (step) {
-      case 1: return state.product_types.length > 0;
-      case 2: return state.target_markets.length > 0;
-      case 3: return state.stage !== '';
-      case 4: return state.team_size >= 1;
-      case 5: return true; // infrastructure is optional
+      case 1: return state.org_name.trim().length >= 2;
+      case 2: return state.product_types.length > 0;
+      case 3: return state.target_markets.length > 0;
+      case 4: return state.stage !== '';
+      case 5: return state.team_size >= 1;
+      case 6: return true;
       default: return false;
     }
   }
 
   function handleNext(): void {
-    if (step < totalSteps) {
+    if (step < 6) {
       setStep((s) => s + 1);
       setServerError(null);
     }
   }
 
   function handleBack(): void {
-    if (step > 1) setStep((s) => s - 1);
+    if (step > firstStep) setStep((s) => s - 1);
   }
 
   function handleSubmit(): void {
     setServerError(null);
     const payload: OnboardingCompleteInput = {
+      ...(skipOrgStep ? {} : { org_name: state.org_name.trim() }),
       product_types: state.product_types as OnboardingCompleteInput['product_types'],
       target_markets: state.target_markets as OnboardingCompleteInput['target_markets'],
       stage: state.stage as OnboardingCompleteInput['stage'],
@@ -163,7 +191,7 @@ export function OnboardingWizard({ initialStep = 1 }: OnboardingWizardProps): JS
       {/* Progress bar */}
       <div className="mb-8">
         <div className="mb-2 flex items-center justify-between text-xs text-[#555555]">
-          <span>Step {step} of {totalSteps}</span>
+          <span>Step {displayStep} of {totalSteps}</span>
           <span>{Math.round(progress)}% complete</span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-[#F5F5F5]">
@@ -175,30 +203,61 @@ export function OnboardingWizard({ initialStep = 1 }: OnboardingWizardProps): JS
 
         {/* Step dots */}
         <div className="mt-3 flex justify-between">
-          {Array.from({ length: totalSteps }, (_, i) => (
+          {Array.from({ length: totalSteps }, (_, i) => {
+            const dotStep = i + 1;
+            return (
             <div
               key={i}
               className={[
                 'h-2 w-2 rounded-full transition-colors duration-300',
-                i + 1 < step  ? 'bg-[#0B6E6E]'   : '',
-                i + 1 === step ? 'bg-[#0B6E6E]'   : '',
-                i + 1 > step  ? 'bg-[#CCCCCC]'   : '',
+                dotStep < displayStep ? 'bg-[#0B6E6E]' : '',
+                dotStep === displayStep ? 'bg-[#0B6E6E]' : '',
+                dotStep > displayStep ? 'bg-[#CCCCCC]' : '',
               ].join(' ')}
             />
-          ))}
+            );
+          })}
         </div>
       </div>
 
       {/* Card */}
       <div className="rounded-2xl border border-[#CCCCCC] bg-white p-8 shadow-sm">
         <h2 className="mb-1 text-xl font-semibold text-[#1A1A1A]">
-          {STEP_TITLES[step - 1]}
+          {stepTitles[displayStep - 1]}
         </h2>
-        <p className="mb-6 text-sm text-[#555555]">{STEP_SUBTITLES[step - 1]}</p>
+        <p className="mb-6 text-sm text-[#555555]">{stepSubtitles[displayStep - 1]}</p>
 
-        {/* ── Step content ── */}
         {step === 1 && (
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="org_name" className="mb-2 block text-sm font-medium text-[#1A1A1A]">
+                Organisation / company name
+              </label>
+              <input
+                id="org_name"
+                type="text"
+                value={state.org_name}
+                onChange={(e) => setState((prev) => ({ ...prev, org_name: e.target.value }))}
+                placeholder="e.g. BlockEX Technologies Ltd"
+                maxLength={200}
+                className="w-full rounded-lg border border-[#CCCCCC] px-4 py-2.5 text-sm text-[#1A1A1A] focus:border-[#0B6E6E] focus:outline-none focus:ring-2 focus:ring-[#0B6E6E]/20"
+              />
+            </div>
+            <p className="rounded-xl border border-[#E6F4F4] bg-[#E6F4F4] px-4 py-3 text-xs text-[#0B6E6E]">
+              Completing setup makes you the organisation owner with full access to billing, team
+              invites, and document exports.
+            </p>
+          </div>
+        )}
+
+        {step === 2 && (
           <>
+            {invitedOrgName && (
+              <div className="mb-6 rounded-xl border border-[#D4A843]/30 bg-[#FDF6E3] px-4 py-3 text-sm text-[#555555]">
+                You are joining <strong className="text-[#1A1A1A]">{invitedOrgName}</strong>.
+                Complete this setup to personalise your compliance profile.
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {PRODUCT_TYPE_OPTIONS.map((opt) => (
                 <button
@@ -236,7 +295,7 @@ export function OnboardingWizard({ initialStep = 1 }: OnboardingWizardProps): JS
           </>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {MARKET_OPTIONS.map((opt) => (
               <button
@@ -257,7 +316,7 @@ export function OnboardingWizard({ initialStep = 1 }: OnboardingWizardProps): JS
           </div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <div className="space-y-2">
             {STAGE_OPTIONS.map((opt) => (
               <button
@@ -294,7 +353,7 @@ export function OnboardingWizard({ initialStep = 1 }: OnboardingWizardProps): JS
           </div>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <div className="space-y-6">
             <div>
               <label htmlFor="team_size" className="mb-2 block text-sm font-medium text-[#1A1A1A]">
@@ -343,7 +402,7 @@ export function OnboardingWizard({ initialStep = 1 }: OnboardingWizardProps): JS
           </div>
         )}
 
-        {step === 5 && (
+        {step === 6 && (
           <div className="space-y-2">
             {INFRASTRUCTURE_OPTIONS.map((opt) => {
               const checked = state.existing_infrastructure.includes(opt.key);
@@ -390,13 +449,13 @@ export function OnboardingWizard({ initialStep = 1 }: OnboardingWizardProps): JS
           <button
             type="button"
             onClick={handleBack}
-            disabled={step === 1}
+            disabled={step === firstStep}
             className="rounded-lg border border-[#CCCCCC] px-5 py-2.5 text-sm font-medium text-[#555555] transition hover:border-[#0B6E6E] hover:text-[#0B6E6E] disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Back
           </button>
 
-          {step < totalSteps ? (
+          {step < 6 ? (
             <button
               type="button"
               onClick={handleNext}

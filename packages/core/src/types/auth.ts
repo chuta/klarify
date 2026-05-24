@@ -17,6 +17,8 @@ export interface OrgMembershipSummary {
 export interface UserMeResponse {
   readonly user: AuthenticatedUser;
   readonly memberships: readonly OrgMembershipSummary[];
+  /** True when the user has completed the onboarding wizard (user_profiles row exists). */
+  readonly hasCompletedOnboarding: boolean;
 }
 
 // JWT payload shape we trust from Supabase (subset).

@@ -37,7 +37,7 @@ export interface SendEmailInput {
   from?: string;
   /** Tag the email for analytics in Resend dashboard. */
   tag?: string;
-  /** Idempotency key — Resend will dedupe identical sends within 60s. */
+  /** Idempotency key — Resend dedupes identical sends for 24h (see Resend SDK). */
   idempotencyKey?: string;
 }
 
@@ -74,17 +74,19 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     }
 
     const resend = getResend();
-    const response = await resend.emails.send({
-      from:    input.from ?? emailConfig.from,
-      to:      input.to,
-      subject: input.subject,
-      html,
-      text,
-      replyTo: input.replyTo ?? emailConfig.replyTo,
-      bcc:     input.bcc ?? emailConfig.bcc,
-      tags:    input.tag ? [{ name: 'category', value: input.tag }] : undefined,
-      ...(input.idempotencyKey ? { headers: { 'Idempotency-Key': input.idempotencyKey } } : {}),
-    });
+    const response = await resend.emails.send(
+      {
+        from:    input.from ?? emailConfig.from,
+        to:      input.to,
+        subject: input.subject,
+        html,
+        text,
+        replyTo: input.replyTo ?? emailConfig.replyTo,
+        bcc:     input.bcc ?? emailConfig.bcc,
+        tags:    input.tag ? [{ name: 'category', value: input.tag }] : undefined,
+      },
+      input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
+    );
 
     if (response.error) {
       console.error('[email] Resend error', response.error);

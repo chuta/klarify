@@ -4,3 +4,4 @@ export * from './billing.js';
 export * from './calendar.js';
 export * from './coupon.js';
 export * from './specialists.js';
+export * from './team.js';

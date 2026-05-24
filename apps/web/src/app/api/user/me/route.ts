@@ -15,6 +15,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       return tx.user.findUnique({
         where: { id: userId },
         include: {
+          profile: { select: { userId: true } },
           memberships: {
             include: { org: { select: { id: true, name: true, plan: true } } },
           },
@@ -39,6 +40,7 @@ export async function GET(request: Request): Promise<NextResponse> {
           role: m.role,
           plan: m.org.plan,
         })),
+        hasCompletedOnboarding: user.profile !== null,
       },
     });
   } catch (err) {
