@@ -190,8 +190,8 @@ onboardingRoutes.post(
         return { totalScore, dimensionScores };
       });
 
-      // Fire-and-forget "your Readiness Score is ready" email. Failures must
-      // not break the onboarding flow — the user is fully onboarded either way.
+      // Await delivery so the handler stays alive until Resend accepts the
+      // message. Onboarding still succeeds if email fails.
       const me = await prisma.user.findUnique({
         where:  { id: userId },
         select: { email: true, name: true },
@@ -201,17 +201,29 @@ onboardingRoutes.post(
           title: tpl.title,
           phase: tpl.phase,
         }));
-        void sendOnboardingCompleteEmail({
+        const emailResult = await sendOnboardingCompleteEmail({
           to:               me.email,
           name:             me.name ?? me.email,
           score:            result.totalScore,
           productTypes:     body.product_types,
           primaryRegulator: primaryRegulatorLabel(body.product_types),
           nextTasks,
-          idempotencyKey:   `onboarding-complete:${userId}:${orgId}`,
-        }).catch((err) => {
-          console.error('[onboarding] readiness-score email send failed', err);
+          idempotencyKey:   `onboarding-complete/${userId}/${orgId}`,
         });
+        if (!emailResult.success) {
+          console.error('[onboarding] readiness-score email failed', {
+            userId,
+            orgId,
+            to: me.email,
+            error: emailResult.error,
+          });
+        } else {
+          console.info('[onboarding] readiness-score email sent', {
+            userId,
+            orgId,
+            resendId: emailResult.id,
+          });
+        }
       }
 
       return c.json({

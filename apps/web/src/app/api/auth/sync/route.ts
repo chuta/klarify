@@ -36,13 +36,23 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
 
     if (isNewUser) {
-      void sendWelcomeEmail({
+      const emailResult = await sendWelcomeEmail({
         to: user.email,
         name: user.name ?? user.email,
-        idempotencyKey: `welcome:${user.id}`,
-      }).catch((err: unknown) => {
-        console.error('[auth/sync] welcome email failed', err);
+        idempotencyKey: `welcome/${user.id}`,
       });
+      if (!emailResult.success) {
+        console.error('[auth/sync] welcome email failed', {
+          userId: user.id,
+          to: user.email,
+          error: emailResult.error,
+        });
+      } else {
+        console.info('[auth/sync] welcome email sent', {
+          userId: user.id,
+          resendId: emailResult.id,
+        });
+      }
     }
 
     const profile = await prisma.userProfile.findUnique({

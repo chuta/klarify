@@ -107,17 +107,29 @@ export async function POST(request: Request): Promise<NextResponse> {
         title: tpl.title,
         phase: tpl.phase,
       }));
-      void sendOnboardingCompleteEmail({
+      const emailResult = await sendOnboardingCompleteEmail({
         to: me.email,
         name: me.name ?? me.email,
         score: result.totalScore,
         productTypes: body.product_types,
         primaryRegulator: primaryRegulatorLabel(body.product_types),
         nextTasks,
-        idempotencyKey: `onboarding-complete:${userId}:${orgId}`,
-      }).catch((err: unknown) => {
-        console.error('[onboarding] readiness-score email failed', err);
+        idempotencyKey: `onboarding-complete/${userId}/${orgId}`,
       });
+      if (!emailResult.success) {
+        console.error('[onboarding/complete] readiness-score email failed', {
+          userId,
+          orgId,
+          to: me.email,
+          error: emailResult.error,
+        });
+      } else {
+        console.info('[onboarding/complete] readiness-score email sent', {
+          userId,
+          orgId,
+          resendId: emailResult.id,
+        });
+      }
     }
 
     return NextResponse.json({

@@ -61,16 +61,26 @@ authRoutes.post('/sync', requireAuth, async (c) => {
       },
     });
 
-    // Fire-and-forget welcome email on first user creation.
-    // Failures must NOT break the auth flow — the user is signed in either way.
+    // Welcome email on first user creation — await so serverless runtimes
+    // (Netlify) do not terminate before Resend accepts the message.
     if (isNewUser) {
-      void sendWelcomeEmail({
-        to:              user.email,
-        name:            user.name ?? user.email,
-        idempotencyKey:  `welcome:${user.id}`,
-      }).catch((err) => {
-        console.error('[auth/sync] welcome email send failed', err);
+      const emailResult = await sendWelcomeEmail({
+        to: user.email,
+        name: user.name ?? user.email,
+        idempotencyKey: `welcome/${user.id}`,
       });
+      if (!emailResult.success) {
+        console.error('[auth/sync] welcome email failed', {
+          userId: user.id,
+          to: user.email,
+          error: emailResult.error,
+        });
+      } else {
+        console.info('[auth/sync] welcome email sent', {
+          userId: user.id,
+          resendId: emailResult.id,
+        });
+      }
     }
 
     // Check if user has completed onboarding (has a profile row).
