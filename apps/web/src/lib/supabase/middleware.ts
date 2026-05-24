@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
+import { isStaleRefreshTokenError } from '@/lib/supabase/auth-errors';
 
 /**
  * Refreshes the Supabase session on every request so tokens never go
@@ -45,7 +46,12 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   // function logs. The cookie name is `sb-<project-ref>-auth-token`, and
   // when the JWT exceeds ~4 KB it is chunked into `.0`, `.1`, …
   if (hasSupabaseAuthCookie(request)) {
-    await supabase.auth.getUser();
+    const { error } = await supabase.auth.getUser();
+    // Stale session cookies (signed out elsewhere, expired refresh token) trigger
+    // noisy SDK errors on every request until cleared.
+    if (error && isStaleRefreshTokenError(error)) {
+      await supabase.auth.signOut();
+    }
   }
 
   return response;

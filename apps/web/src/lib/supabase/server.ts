@@ -1,6 +1,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import type { User } from '@supabase/supabase-js';
+import { redirect } from 'next/navigation';
+import type { Session, User } from '@supabase/supabase-js';
+import { isStaleRefreshTokenError } from '@/lib/supabase/auth-errors';
 
 /**
  * True if any cookie in the current request looks like a Supabase
@@ -70,12 +72,41 @@ export async function getOptionalUser(): Promise<User | null> {
   if (!hasSupabaseAuthCookie()) return null;
   const supabase = createClient();
   const { data, error } = await supabase.auth.getUser();
-  // The cookie-presence check above eliminates the common no-session
-  // case. If we still get an error here, the cookie was stale / forged
-  // / revoked — treat as unauthenticated but log for visibility.
   if (error) {
-    console.warn('[supabase/getOptionalUser] auth check failed:', error.message);
+    if (isStaleRefreshTokenError(error)) {
+      await supabase.auth.signOut();
+    } else {
+      console.warn('[supabase/getOptionalUser] auth check failed:', error.message);
+    }
     return null;
   }
   return data.user ?? null;
+}
+
+/**
+ * Auth guard for protected RSC layouts. Clears stale cookies and redirects
+ * to /sign-in when the session is missing or invalid.
+ */
+export async function requireUser(): Promise<User> {
+  if (!hasSupabaseAuthCookie()) redirect('/sign-in');
+
+  const supabase = createClient();
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error && isStaleRefreshTokenError(error)) {
+    await supabase.auth.signOut();
+    redirect('/sign-in');
+  }
+
+  if (error || !data.user) redirect('/sign-in');
+  return data.user;
+}
+
+/** Session + user pair for dashboard pages that need an access token. */
+export async function requireSession(): Promise<{ user: User; session: Session }> {
+  const user = await requireUser();
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) redirect('/sign-in');
+  return { user, session };
 }

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { ReactNode } from 'react';
-import { createClient } from '@/lib/supabase/server';
+import { requireUser } from '@/lib/supabase/server';
 import { DASHBOARD_NAV } from './_nav';
 import { MobileNav } from './_mobile-nav';
 import { DashboardShellExtras } from '@/components/dashboard/DashboardShellExtras';
@@ -27,12 +27,7 @@ interface DashboardLayoutProps {
  * fresh data or to get the access token for API calls).
  */
 export default async function DashboardLayout({ children }: DashboardLayoutProps): Promise<JSX.Element> {
-  const supabase = createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    redirect('/sign-in');
-  }
+  const user = await requireUser();
 
   const email = user.email ?? '';
   const displayName = (user.user_metadata?.name as string | undefined) ?? email.split('@')[0] ?? '';

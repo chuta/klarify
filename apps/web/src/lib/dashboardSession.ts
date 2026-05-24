@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { requireSession } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
 import { prisma } from '@/lib/db';
 
@@ -30,16 +29,7 @@ export async function requireDashboardSession(): Promise<{
   accessToken: string;
   email: string;
 }> {
-  const supabase = createClient();
-  const [userRes, sessionRes] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.auth.getSession(),
-  ]);
-
-  const user = userRes.data.user;
-  const session = sessionRes.data.session;
-
-  if (userRes.error || !user || !session) redirect('/sign-in');
+  const { user, session } = await requireSession();
 
   return {
     userId: user.id,
