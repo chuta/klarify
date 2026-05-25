@@ -6,6 +6,7 @@ import { requireUser } from '@/lib/supabase/server';
 import { DASHBOARD_NAV } from './_nav';
 import { MobileNav } from './_mobile-nav';
 import { DashboardShellExtras } from '@/components/dashboard/DashboardShellExtras';
+import { SessionInactivityGuard } from '@/components/auth/SessionInactivityGuard';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -34,6 +35,7 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
 
   return (
     <div className="flex h-screen bg-[#FAFAFA] overflow-hidden">
+      <SessionInactivityGuard />
       {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-[#CCCCCC] bg-white">
         <div className="flex h-16 items-center border-b border-[#CCCCCC] px-5">
