@@ -6,6 +6,20 @@ interface Props {
   citation: Citation;
 }
 
+/** Map core/API citation shape to chat CitationBadge props. */
+export function coreCitationToBadge(cite: {
+  regulation: string;
+  section: string;
+  url?: string;
+}): Citation {
+  return {
+    raw: `[${cite.regulation}, ${cite.section}]`,
+    regulation: cite.regulation,
+    section: cite.section,
+    url: cite.url ?? null,
+  };
+}
+
 /**
  * Renders a single citation as a JetBrains-Mono badge. CLAUDE.md §7 calls for
  * the mono treatment so citations visually punch out from prose.

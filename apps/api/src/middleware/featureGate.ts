@@ -10,11 +10,94 @@
 
 import { createMiddleware } from 'hono/factory';
 import { PLAN_LIMITS, type Plan } from '@klarify/core';
+import type { JurisdictionCode } from '@klarify/core';
 import { prisma } from '../db.js';
 import { getRedis } from '../redis.js';
 import type { AuthVars } from './auth.js';
 
 export type FeatureKey = keyof typeof PLAN_LIMITS['free'];
+
+const ALLOWED_JURISDICTIONS = new Set<JurisdictionCode>(['NG', 'GH', 'KE', 'MU', 'ZA']);
+
+export interface JurisdictionAccessDenied {
+  readonly allowed: false;
+  readonly requiredPlan: Plan;
+  readonly error: string;
+}
+
+export interface JurisdictionAccessGranted {
+  readonly allowed: true;
+}
+
+export type JurisdictionAccessResult = JurisdictionAccessGranted | JurisdictionAccessDenied;
+
+/**
+ * Pure plan check for jurisdiction expansion (US-004).
+ * Compass: at most 2 unique jurisdictions (source + targets) in one analysis.
+ * Flagship: up to 4 target jurisdictions per request.
+ */
+export function checkJurisdictionExpansionAccess(
+  plan: Plan,
+  source: JurisdictionCode,
+  targets: readonly JurisdictionCode[],
+): JurisdictionAccessResult {
+  if (plan === 'free' || plan === 'navigator') {
+    return {
+      allowed: false,
+      requiredPlan: 'compass',
+      error:
+        'Jurisdiction expansion analysis requires the Compass plan or higher. Free and Navigator plans include Nigeria only.',
+    };
+  }
+
+  const all = [source, ...targets];
+  if (!all.every((j) => ALLOWED_JURISDICTIONS.has(j))) {
+    return {
+      allowed: false,
+      requiredPlan: 'compass',
+      error: 'One or more jurisdiction codes are not supported.',
+    };
+  }
+
+  if (targets.length === 0) {
+    return {
+      allowed: false,
+      requiredPlan: 'compass',
+      error: 'Select at least one target jurisdiction different from the source.',
+    };
+  }
+
+  if (targets.every((t) => t === source)) {
+    return {
+      allowed: false,
+      requiredPlan: 'compass',
+      error: 'Select at least one target jurisdiction different from the source.',
+    };
+  }
+
+  const unique = new Set(all);
+
+  if (plan === 'compass') {
+    if (unique.size > 2) {
+      return {
+        allowed: false,
+        requiredPlan: 'flagship',
+        error:
+          'Compass plan supports comparing Nigeria against one additional jurisdiction per analysis. Upgrade to Flagship for multi-market expansion.',
+      };
+    }
+  }
+
+  if (plan === 'flagship' && targets.length > 4) {
+    return {
+      allowed: false,
+      requiredPlan: 'flagship',
+      error: 'You can compare up to four target jurisdictions in a single analysis.',
+    };
+  }
+
+  return { allowed: true };
+}
 
 // 60-second TTL for the plan cache.
 const PLAN_CACHE_TTL = 60;
@@ -126,3 +209,6 @@ export function requireFeature(feature: FeatureKey) {
     return undefined;
   });
 }
+
+/** Compass+ gate for Scenario Simulator (US-005). */
+export const requireScenarioSimulator = requireFeature('scenario_simulator');

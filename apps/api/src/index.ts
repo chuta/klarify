@@ -47,6 +47,8 @@ import { documentGeneratorRoutes } from './routes/documents/generate.js';
 import { chatRoutes } from './routes/ai/chat.js';
 import { conversationRoutes } from './routes/ai/conversations.js';
 import { classifyRoutes } from './routes/ai/classify.js';
+import { scenarioRoutes } from './routes/ai/scenario.js';
+import { jurisdictionGapRoutes } from './routes/ai/jurisdictionGap.js';
 import { billingRoutes } from './routes/billing/index.js';
 import { billingWebhookRoutes } from './routes/billing/webhooks.js';
 import { notificationRoutes } from './routes/notifications.js';
@@ -129,6 +131,10 @@ app.route('/api/ai/conversations', conversationRoutes);
 
 // Product classification — Sprint 2 Opus-powered Regulatory Identity Card.
 app.route('/api/ai', classifyRoutes);
+
+// Sprint 6 — Scenario Simulator + Jurisdiction Expansion Adviser.
+app.route('/api/ai/scenario', scenarioRoutes);
+app.route('/api/ai/jurisdiction-gap', jurisdictionGapRoutes);
 
 // Unknown route → consistent JSON envelope (CLAUDE.md §15 API standards).
 // Without this, Hono returns plain-text "404 Not Found" which breaks clients

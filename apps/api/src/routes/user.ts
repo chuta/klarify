@@ -27,6 +27,7 @@ userRoutes.get('/me', requireAuth, async (c) => {
     const user = await tx.user.findUnique({
       where: { id: userId },
       include: {
+        profile: { select: { userId: true } },
         memberships: {
           include: { org: { select: { id: true, name: true, plan: true } } },
         },
@@ -58,6 +59,7 @@ userRoutes.get('/me', requireAuth, async (c) => {
         role: m.role as 'owner' | 'admin' | 'member' | 'viewer',
         plan: m.org.plan,
       })),
+      hasCompletedOnboarding: result.profile !== null,
     },
   };
   return c.json(body);

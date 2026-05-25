@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
 import { prisma } from '@/lib/db';
+import { hasCompassAccess, resolveUserPlan } from '@/lib/plan';
 import { ScoreGauge } from '@/components/ScoreGauge';
 import { ARIPRestrictionsWidget } from '@/components/dashboard/ARIPRestrictionsWidget';
 import {
@@ -100,12 +101,13 @@ export default async function DashboardPage(): Promise<JSX.Element> {
   // Parallelise all independent API fetches. With Supabase in eu-north-1
   // and Netlify functions likely in us-east-1, each call is a transatlantic
   // round-trip — running them serially roughly doubled the dashboard's TTFB.
-  const [scoreResult, aripResult, recentDocs, historyResult, followUpAlerts] = await Promise.all([
+  const [scoreResult, aripResult, recentDocs, historyResult, followUpAlerts, plan] = await Promise.all([
     apiFetch<ComplianceScoreData>('/api/compliance/score', accessToken),
     apiFetch<ARIPData>('/api/arip', accessToken),
     loadRecentDocs(user.id),
     apiFetch<ScoreHistoryData>('/api/compliance/score/history?days=30', accessToken),
     loadFollowUpAlerts(user.id),
+    resolveUserPlan(user.id),
   ]);
 
   const score: ComplianceScoreData | null = scoreResult.success ? scoreResult.data : null;
@@ -253,6 +255,22 @@ export default async function DashboardPage(): Promise<JSX.Element> {
               href="/dashboard/classify"
               accent="#D4A843"
             />
+            {hasCompassAccess(plan) && (
+              <QuickAction
+                title="Simulate a Regulatory Scenario"
+                description="Model Best, Likely, and Worst case outcomes before you launch, expand, or respond to a regulator."
+                href="/dashboard/scenario"
+                accent="#0B6E6E"
+              />
+            )}
+            {hasCompassAccess(plan) && (
+              <QuickAction
+                title="Plan Jurisdiction Expansion"
+                description="Compare your Nigeria compliance posture against Ghana, Kenya, Mauritius, or South Africa."
+                href="/dashboard/jurisdiction"
+                accent="#0D2B45"
+              />
+            )}
             <QuickAction
               title="ARIP Tracker"
               description="Track your 5-stage ARIP application, manage AIP conditions, and monitor your compliance calendar."

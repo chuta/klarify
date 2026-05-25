@@ -47,6 +47,8 @@ model User {
   uploadedDocs           UploadedDocument[]
   ownedRoadmapTasks        RoadmapTask[]
   productClassifications   ProductClassification[]
+  scenarioAnalyses         ScenarioAnalysis[]
+  jurisdictionGapAnalyses  JurisdictionGapAnalysis[]
   createdInteractions      RegulatorInteraction[]
   notificationPreference   NotificationPreference?
   emailDripLogs            EmailDripLog[]
@@ -79,6 +81,8 @@ model Organisation {
   couponRedemptions      CouponRedemption[]
   subscriptions          Subscription[]
   productClassifications ProductClassification[]
+  scenarioAnalyses       ScenarioAnalysis[]
+  jurisdictionGapAnalyses JurisdictionGapAnalysis[]
   orgInvites             OrgInvite[]
 
   @@index([ownerId])
@@ -621,6 +625,48 @@ model ProductClassification {
   @@index([orgId, createdAt(sort: Desc)])
   @@index([userId])
   @@map("product_classifications")
+}
+
+model ScenarioAnalysis {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId        String   @map("org_id") @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  scenarioText String   @map("scenario_text")
+  templateId   String?  @map("template_id")
+  parentId     String?  @map("parent_id") @db.Uuid
+  result       Json
+  modelUsed    String?  @map("model_used")
+  tokensUsed   Int?     @map("tokens_used")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  org    Organisation      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent ScenarioAnalysis? @relation("ScenarioIteration", fields: [parentId], references: [id], onDelete: SetNull)
+  children ScenarioAnalysis[] @relation("ScenarioIteration")
+
+  @@index([orgId, createdAt(sort: Desc)])
+  @@index([userId])
+  @@index([parentId])
+  @@map("scenario_analyses")
+}
+
+model JurisdictionGapAnalysis {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId               String   @map("org_id") @db.Uuid
+  userId              String   @map("user_id") @db.Uuid
+  sourceJurisdiction  String   @map("source_jurisdiction")
+  targetJurisdictions String[] @map("target_jurisdictions")
+  result              Json
+  modelUsed           String?  @map("model_used")
+  tokensUsed          Int?     @map("tokens_used")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, createdAt(sort: Desc)])
+  @@index([userId])
+  @@map("jurisdiction_gap_analyses")
 }
 
 // =============================================================================
