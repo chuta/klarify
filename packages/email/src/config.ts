@@ -30,6 +30,22 @@ function env(name: string, fallback?: string): string {
 /** Wordmark served from the public marketing site (Netlify), not the Fly API host. */
 export const DEFAULT_EMAIL_LOGO_URL = 'https://klarify.africa/klarify_logo.png';
 
+function isPublicEmailAssetUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:') return false;
+    const host = parsed.hostname.toLowerCase();
+    if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local')) {
+      return false;
+    }
+    // Static assets are on the Netlify web app, not the Fly API host.
+    if (host === 'api.klarify.africa') return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Resolve the logo URL at send/render time (not module load).
  *
@@ -39,7 +55,7 @@ export const DEFAULT_EMAIL_LOGO_URL = 'https://klarify.africa/klarify_logo.png';
  */
 export function getEmailLogoUrl(): string {
   const explicit = process.env.EMAIL_LOGO_URL?.trim();
-  if (explicit) return explicit;
+  if (explicit && isPublicEmailAssetUrl(explicit)) return explicit;
   return DEFAULT_EMAIL_LOGO_URL;
 }
 
