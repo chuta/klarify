@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { isNetlifyDeployHost } from '@/lib/env';
 import { updateSession } from '@/lib/supabase/middleware';
 
 const CANONICAL_HOST = 'klarify.africa';
@@ -15,7 +16,7 @@ export async function middleware(request: NextRequest) {
   const host = request.headers.get('host') ?? '';
 
   // Auth email links and bookmarks should never stay on the Netlify default URL.
-  if (process.env.NODE_ENV === 'production' && host.endsWith('.netlify.app')) {
+  if (process.env.NODE_ENV === 'production' && isNetlifyDeployHost(host)) {
     const url = request.nextUrl.clone();
     url.protocol = 'https:';
     url.host = CANONICAL_HOST;

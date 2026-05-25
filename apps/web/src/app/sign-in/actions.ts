@@ -5,35 +5,27 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
-import { getAppBaseUrl } from '@/lib/env';
+import { getCanonicalAppOrigin } from '@/lib/env';
 
 /**
- * Derives the request origin dynamically so `emailRedirectTo` is always
- * correct regardless of environment (localhost, preview deploy, production).
- *
- * Resolution order:
- *   1. `Origin` header (Server Actions reliably set this)
- *   2. Parsed `Referer` header
- *   3. `getAppBaseUrl()` — env-var validated + host-header fallback
- *
- * `getAppBaseUrl()` itself guards against the `"null"` and missing-env
- * cases that previously crashed Next.js with `TypeError: Invalid URL`.
+ * Canonical origin for Supabase `emailRedirectTo` — never a Netlify deploy URL.
  */
-function getRequestOrigin(): string {
+function getAuthRedirectOrigin(): string {
   const h = headers();
-  const origin = h.get('origin');
-  if (origin && origin !== 'null') return origin;
+  const host = h.get('x-forwarded-host') ?? h.get('host');
+  const proto =
+    h.get('x-forwarded-proto')
+    ?? (host?.startsWith('localhost') ? 'http' : 'https');
 
-  const referer = h.get('referer');
-  if (referer) {
+  if (host) {
     try {
-      return new URL(referer).origin;
+      return getCanonicalAppOrigin(new URL(`${proto}://${host}`));
     } catch {
-      // Malformed referer — fall through to validated env helper.
+      // Fall through to env / production default.
     }
   }
 
-  return getAppBaseUrl();
+  return getCanonicalAppOrigin();
 }
 
 // ── Magic link ──────────────────────────────────────────────────────────────
@@ -51,7 +43,7 @@ export async function signInWithMagicLink(formData: FormData): Promise<void> {
   }
 
   const supabase = createClient();
-  const origin   = getRequestOrigin();
+  const origin   = getAuthRedirectOrigin();
 
   const { error } = await supabase.auth.signInWithOtp({
     email: email.trim().toLowerCase(),

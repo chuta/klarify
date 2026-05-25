@@ -31,6 +31,9 @@ export function getAuthCallbackUrl(): string {
 
   if (typeof window !== 'undefined') {
     const { hostname, origin } = window.location;
+    if (hostname.endsWith('.netlify.app') || hostname.endsWith('.netlify.live')) {
+      return `${PRODUCTION_APP_ORIGIN}/auth/callback`;
+    }
     if (hostname === 'klarify.africa' || hostname === 'localhost' || hostname === '127.0.0.1') {
       return `${origin}/auth/callback`;
     }

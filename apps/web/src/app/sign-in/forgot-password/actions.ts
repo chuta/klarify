@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getAppBaseUrl } from '@/lib/env';
+import { getCanonicalAppOrigin } from '@/lib/env';
 
 /**
  * Server Action: send a password-reset email via Supabase Auth.
@@ -24,7 +24,7 @@ export async function requestPasswordReset(formData: FormData): Promise<void> {
   }
 
   const supabase = createClient();
-  const appUrl   = getAppBaseUrl();
+  const appUrl   = getCanonicalAppOrigin();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent('/auth/reset-password')}`,

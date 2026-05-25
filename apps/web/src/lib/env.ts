@@ -29,6 +29,25 @@ import { headers } from 'next/headers';
 
 const PROTOCOL_RE = /^https?:\/\//i;
 const POISON_VALUES = new Set(['', 'null', 'undefined', 'NULL', 'UNDEFINED']);
+const PRODUCTION_CANONICAL_ORIGIN = 'https://klarify.africa';
+
+/** Netlify deploy-preview / branch URLs — never use for auth redirects in production. */
+export function isNetlifyDeployHost(hostname: string): boolean {
+  return hostname.endsWith('.netlify.app') || hostname.endsWith('.netlify.live');
+}
+
+/** In production, map Netlify deploy hosts to the public custom domain. */
+function sanitiseAppOrigin(origin: string): string {
+  if (process.env.NODE_ENV !== 'production') return origin;
+  try {
+    if (isNetlifyDeployHost(new URL(origin).hostname)) {
+      return PRODUCTION_CANONICAL_ORIGIN;
+    }
+  } catch {
+    // Malformed origin — fall through unchanged.
+  }
+  return origin;
+}
 
 /** True if a candidate env value is a usable absolute http(s) URL. */
 function isUsableUrl(value: string | undefined | null): value is string {
@@ -58,19 +77,19 @@ function normalise(url: string): string {
  */
 export function getAppBaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (isUsableUrl(envUrl)) return normalise(envUrl);
+  if (isUsableUrl(envUrl)) return sanitiseAppOrigin(normalise(envUrl));
 
   // Try to derive from the live request headers. `headers()` throws if
   // called outside a request context (e.g. during a build-time prerender)
   // — guard with try/catch so callers don't need to.
   try {
     const h = headers();
-    const host  = h.get('host');
+    const host  = h.get('x-forwarded-host') ?? h.get('host');
     const proto =
       h.get('x-forwarded-proto') ??
       (host && host.startsWith('localhost') ? 'http' : 'https');
     if (host && !POISON_VALUES.has(host)) {
-      return `${proto}://${host}`;
+      return sanitiseAppOrigin(normalise(`${proto}://${host}`));
     }
   } catch {
     // Outside a request scope — fall through.
@@ -93,20 +112,49 @@ export function getAppBaseUrl(): string {
  */
 export function getCanonicalAppOrigin(requestUrl?: URL): string {
   const envUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (isUsableUrl(envUrl)) return normalise(envUrl);
+  if (isUsableUrl(envUrl)) return sanitiseAppOrigin(normalise(envUrl));
 
   if (requestUrl) {
     const host = requestUrl.hostname;
+    if (isNetlifyDeployHost(host) && process.env.NODE_ENV === 'production') {
+      return PRODUCTION_CANONICAL_ORIGIN;
+    }
     if (host === 'klarify.africa' || host === 'localhost' || host === '127.0.0.1') {
       return requestUrl.origin;
     }
   }
 
   if (process.env.NODE_ENV === 'production') {
-    return 'https://klarify.africa';
+    return PRODUCTION_CANONICAL_ORIGIN;
   }
 
-  return requestUrl?.origin ?? 'http://localhost:3000';
+  const fallback = requestUrl?.origin ?? 'http://localhost:3000';
+  return sanitiseAppOrigin(fallback);
+}
+
+/**
+ * Canonical origin for auth redirects from a Route Handler `NextRequest`.
+ * Prefer this over `new URL(path, request.url)` — Netlify can set
+ * `request.url` to a deploy-preview subdomain even when the user browses
+ * klarify.africa.
+ */
+export function getCanonicalAppOriginFromRequest(request: {
+  url: string;
+  headers: { get(name: string): string | null };
+}): string {
+  try {
+    const requestUrl = new URL(request.url);
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    if (forwardedHost && !POISON_VALUES.has(forwardedHost)) {
+      const proto =
+        request.headers.get('x-forwarded-proto')
+        ?? (forwardedHost.startsWith('localhost') ? 'http' : 'https');
+      return getCanonicalAppOrigin(new URL(`${proto}://${forwardedHost}`));
+    }
+    return getCanonicalAppOrigin(requestUrl);
+  } catch {
+    return getCanonicalAppOrigin();
+  }
 }
 
 /**
