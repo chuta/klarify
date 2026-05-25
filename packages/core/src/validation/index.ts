@@ -5,3 +5,5 @@ export * from './calendar.js';
 export * from './coupon.js';
 export * from './specialists.js';
 export * from './team.js';
+export * from './scenario.js';
+export * from './jurisdictionGap.js';
