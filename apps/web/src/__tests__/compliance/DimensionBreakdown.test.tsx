@@ -5,14 +5,7 @@
  * pure logic: score-to-colour mapping and the 8-dimension structure.
  */
 
-// ── Pure logic extracted from the component ──────────────────────────────────
-
-function scoreColor(score: number): string {
-  if (score <= 40) return '#C0392B';
-  if (score <= 70) return '#D4A843';
-  if (score <= 90) return '#1A7A4A';
-  return '#0B6E6E';
-}
+import { scoreColor } from '../../components/compliance/DimensionBreakdown';
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 

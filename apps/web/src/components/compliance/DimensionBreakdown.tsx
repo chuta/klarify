@@ -1,18 +1,20 @@
 'use client';
 
 // =============================================================================
-// DimensionBreakdown — expandable list of all 8 readiness score dimensions.
-// Sprint 4-C (US-006): shows per-dimension score with indicator drill-down.
+// DimensionBreakdown — compact 4×2 mini radial gauge grid + slide-over detail.
+// Sprint 4-C (US-006): per-dimension score with indicator drill-down.
 // CLAUDE.md §7: colours and §8: dimension weights.
 // =============================================================================
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useMemo, useState } from 'react';
+import { MiniRadialGauge } from './MiniRadialGauge';
+import { DimensionDetailSlideOver } from './DimensionDetailSlideOver';
+import type { DimensionDetail } from './DimensionDetailSlideOver';
 
 // Dimension configuration — labels, weights, and indicator explanations.
 // Weights match DIMENSION_WEIGHTS in packages/core/src/compliance/readinessScore.ts.
 // DO NOT change without product owner sign-off (CLAUDE.md §18).
-const DIMENSIONS = [
+const DIMENSIONS: readonly DimensionDetail[] = [
   {
     key: 'capital_licensing',
     label: 'Capital & Licensing',
@@ -141,7 +143,7 @@ const DIMENSIONS = [
   },
 ] as const;
 
-function scoreColor(score: number): string {
+export function scoreColor(score: number): string {
   if (score <= 40) return '#C0392B';
   if (score <= 70) return '#D4A843';
   if (score <= 90) return '#1A7A4A';
@@ -164,94 +166,70 @@ export interface DimensionBreakdownProps {
 }
 
 export function DimensionBreakdown({ dimensions }: DimensionBreakdownProps): JSX.Element {
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+
+  const sortedDimensions = useMemo(() => {
+    return [...DIMENSIONS].sort((a, b) => {
+      const scoreA = dimensions[a.key as keyof DimensionScore] ?? 0;
+      const scoreB = dimensions[b.key as keyof DimensionScore] ?? 0;
+      return scoreA - scoreB;
+    });
+  }, [dimensions]);
+
+  const selected = selectedKey
+    ? DIMENSIONS.find((d) => d.key === selectedKey) ?? null
+    : null;
+
+  const selectedScore = selected
+    ? (dimensions[selected.key as keyof DimensionScore] ?? 0)
+    : 0;
 
   return (
-    <div className="divide-y divide-[#F5F5F5]">
-      {DIMENSIONS.map((dim) => {
-        const score = dimensions[dim.key as keyof DimensionScore] ?? 0;
-        const color = scoreColor(score);
-        const isOpen = expanded === dim.key;
+    <>
+      <p className="mb-3 text-xs text-[#555555]">
+        Sorted by lowest score first. Tap a dimension for indicators and roadmap links.
+      </p>
 
-        return (
-          <div key={dim.key}>
-            {/* Row — click to expand */}
+      <div
+        className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3"
+        data-testid="dimension-gauge-grid"
+      >
+        {sortedDimensions.map((dim) => {
+          const score = dimensions[dim.key as keyof DimensionScore] ?? 0;
+          const isSelected = selectedKey === dim.key;
+
+          return (
             <button
+              key={dim.key}
               type="button"
-              onClick={() => setExpanded(isOpen ? null : dim.key)}
-              className="flex w-full items-center gap-4 py-3 text-left transition hover:bg-[#FAFAFA]"
+              onClick={() => setSelectedKey(dim.key)}
+              className={[
+                'flex flex-col items-center rounded-xl border px-2 py-3 text-center transition',
+                isSelected
+                  ? 'border-[#0B6E6E] bg-[#E6F4F4]'
+                  : 'border-transparent hover:border-[#E6F4F4] hover:bg-[#FAFAFA]',
+              ].join(' ')}
+              aria-label={`${dim.label}: ${score} out of 100. ${dim.weight} weight.`}
             >
-              {/* Dimension label + weight */}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-[#1A1A1A]">{dim.label}</span>
-                  <span className="rounded bg-[#F5F5F5] px-1.5 py-0.5 text-[10px] font-semibold text-[#CCCCCC]">
-                    {dim.weight}
-                  </span>
-                </div>
-
-                {/* Progress bar */}
-                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#F5F5F5]">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${score}%`, backgroundColor: color }}
-                  />
-                </div>
-              </div>
-
-              {/* Score number */}
-              <span className="shrink-0 text-sm font-bold" style={{ color }}>
-                {score}
-                <span className="text-xs font-normal text-[#CCCCCC]">/100</span>
+              <MiniRadialGauge score={score} size={56} />
+              <span className="mt-2 line-clamp-2 text-[11px] font-medium leading-tight text-[#1A1A1A]">
+                {dim.label}
               </span>
-
-              {/* Expand chevron */}
-              <svg
-                className={[
-                  'h-4 w-4 shrink-0 text-[#CCCCCC] transition-transform duration-200',
-                  isOpen ? 'rotate-180' : '',
-                ].join(' ')}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
+              <span className="mt-0.5 text-[10px] font-semibold text-[#CCCCCC]">
+                {dim.weight}
+              </span>
             </button>
+          );
+        })}
+      </div>
 
-            {/* Expandable drawer */}
-            {isOpen && (
-              <div className="pb-4 pl-0">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#555555]">
-                  This dimension covers:
-                </p>
-                <ul className="mb-3 space-y-1">
-                  {dim.indicators.map((ind) => (
-                    <li key={ind} className="flex items-start gap-2 text-xs text-[#555555]">
-                      <span
-                        className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: color }}
-                        aria-hidden="true"
-                      />
-                      {ind}
-                    </li>
-                  ))}
-                </ul>
-                <p className="mb-2 text-xs text-[#555555]">
-                  Complete related roadmap tasks to improve this score.
-                </p>
-                <Link
-                  href="/dashboard/roadmap"
-                  className="text-xs font-semibold text-[#0B6E6E] hover:underline"
-                >
-                  View roadmap →
-                </Link>
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
+      {selected && (
+        <DimensionDetailSlideOver
+          dimension={selected}
+          score={selectedScore}
+          onClose={() => setSelectedKey(null)}
+        />
+      )}
+    </>
   );
 }

@@ -212,9 +212,9 @@ export default async function DashboardPage(): Promise<JSX.Element> {
             </div>
           </div>
 
-          {/* Dimension Breakdown — interactive expandable list (Sprint 4-C) */}
-          <div className="mb-8 overflow-hidden rounded-2xl border border-[#CCCCCC] bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-base font-semibold text-[#1A1A1A]">Dimension Breakdown</h2>
+          {/* Dimension Breakdown — compact gauge grid + slide-over (Sprint 4-C) */}
+          <div className="mb-8 overflow-hidden rounded-2xl border border-[#CCCCCC] bg-white p-5 shadow-sm sm:p-6">
+            <h2 className="mb-1 text-base font-semibold text-[#1A1A1A]">Dimension Breakdown</h2>
             <DimensionBreakdown dimensions={score.dimensions} />
           </div>
 
