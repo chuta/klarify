@@ -1,6 +1,6 @@
 import { Img, Section, Text } from '@react-email/components';
 import { emailColors, emailFonts } from './tokens.js';
-import { emailConfig, COMPANY } from '../config.js';
+import { getEmailLogoUrl, COMPANY } from '../config.js';
 
 /**
  * Brand header rendered above every email body.
@@ -23,7 +23,7 @@ export function BrandHeader(): JSX.Element {
       }}
     >
       <Img
-        src={emailConfig.logoUrl}
+        src={getEmailLogoUrl()}
         alt="Klarify"
         width="140"
         height="47"

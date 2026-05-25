@@ -6,7 +6,13 @@ export {
   type SendEmailResult,
 } from './client.js';
 
-export { emailConfig, COMPANY, type EmailConfig } from './config.js';
+export {
+  emailConfig,
+  COMPANY,
+  DEFAULT_EMAIL_LOGO_URL,
+  getEmailLogoUrl,
+  type EmailConfig,
+} from './config.js';
 export { renderEmail, type RenderedEmail } from './render.js';
 
 // Components (mostly for advanced custom emails).

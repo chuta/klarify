@@ -76,8 +76,8 @@ await sendDocumentAnalysisCriticalEmail({
 | `RESEND_API_KEY`     | Yes       | `re_g6...`                       | Resend HTTP API key (sending access)     |
 | `EMAIL_FROM`         | Yes       | `Klarify <hello@klarify.africa>` | Default `From` header                    |
 | `EMAIL_REPLY_TO`     | No        | `hello@klarify.africa`           | Default `Reply-To` header                |
-| `EMAIL_LOGO_URL`     | No        | `https://…/klarify_logo.png`     | Override the brand logo URL              |
-| `NEXT_PUBLIC_APP_URL`| Yes       | `https://klarify.africa`         | Used to build CTA links + default logo   |
+| `EMAIL_LOGO_URL`     | No        | `https://klarify.africa/klarify_logo.png` | Wordmark URL (must be public HTTPS; never localhost or `api.klarify.africa`) |
+| `NEXT_PUBLIC_APP_URL`| Yes       | `https://klarify.africa`         | Used to build CTA links in emails        |
 | `EMAIL_BCC`          | No        | `ops@klarify.africa`             | Optional default BCC for ops oversight   |
 
 ### Local development (no email actually sent)

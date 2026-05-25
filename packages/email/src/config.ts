@@ -27,15 +27,29 @@ function env(name: string, fallback?: string): string {
   return '';
 }
 
+/** Wordmark served from the public marketing site (Netlify), not the Fly API host. */
+export const DEFAULT_EMAIL_LOGO_URL = 'https://klarify.africa/klarify_logo.png';
+
+/**
+ * Resolve the logo URL at send/render time (not module load).
+ *
+ * Email clients fetch this URL when the message is opened. It must be a
+ * publicly reachable HTTPS URL on the web app — never localhost, and never
+ * api.klarify.africa (static assets live on klarify.africa only).
+ */
+export function getEmailLogoUrl(): string {
+  const explicit = process.env.EMAIL_LOGO_URL?.trim();
+  if (explicit) return explicit;
+  return DEFAULT_EMAIL_LOGO_URL;
+}
+
 export const emailConfig: EmailConfig = {
   apiKey:  env('RESEND_API_KEY'),
   from:    env('EMAIL_FROM',     'Klarify <hello@klarify.africa>'),
   replyTo: env('EMAIL_REPLY_TO', 'hello@klarify.africa'),
-  // Hosted on the Next.js public folder, served by Netlify at the app URL.
-  logoUrl: env(
-    'EMAIL_LOGO_URL',
-    `${env('NEXT_PUBLIC_APP_URL', 'https://klarify.africa')}/klarify_logo.png`,
-  ),
+  get logoUrl(): string {
+    return getEmailLogoUrl();
+  },
   appUrl:  env('NEXT_PUBLIC_APP_URL', 'https://klarify.africa'),
   bcc:     env('EMAIL_BCC', '') || undefined,
 };
