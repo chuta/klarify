@@ -21,3 +21,9 @@ export {
   dripLaunchOfferExpirySubject,
   type DripLaunchOfferExpiryProps,
 } from './DripLaunchOfferExpiry.js';
+
+export {
+  DripAbandonedOnboarding,
+  dripAbandonedOnboardingSubject,
+  type DripAbandonedOnboardingProps,
+} from './DripAbandonedOnboarding.js';

@@ -29,7 +29,8 @@ Anchor: **`user.created_at`** (signup). Day offsets are calendar days at
 |-----|---------|----------|--------|----------------|
 | 0 | `welcome` | `Welcome.tsx` | ✅ Live | `POST /api/auth/sync` or signup |
 | 0–1 | `onboarding_complete` | `OnboardingComplete.tsx` | ✅ Live | `POST /api/onboarding/complete` |
-| 1 | `classify_reminder` | `DripClassifyReminder.tsx` | 🔲 Optional | Skip if `product_classifications` exists |
+| 1 | `classify_reminder` | `DripClassifyReminder.tsx` | 🔲 Optional | Skip if classified or onboarding incomplete |
+| 2+ | `abandoned_onboarding` | `DripAbandonedOnboarding.tsx` | ✅ Live | **≥2 days after signup**, onboarding incomplete; subject: *Your Readiness Score is waiting* |
 | 2 | `readiness_explained` | `DripReadinessScoreExplained.tsx` | ✅ Built | Skip if onboarding incomplete |
 | 4 | `post_letter_case_study` | `DripPostLetterCaseStudy.tsx` | ✅ Built | Skip if `plan !== 'free'` (optional) |
 | 6 | `plan_comparison` | `DripPlanComparison.tsx` | ✅ Built | Skip if `plan` is compass or flagship |
@@ -66,7 +67,7 @@ Preference type: `email_lifecycle` — opt-out via
 
 | Step ID | Template | Status | Trigger |
 |---------|----------|--------|---------|
-| `abandoned_onboarding` | `DripAbandonedOnboarding.tsx` | 🔲 Planned | Signed up, onboarding incomplete, +48h |
+| `abandoned_onboarding` | `DripAbandonedOnboarding.tsx` | ✅ Live | See §1 — cron at ≥2 days, onboarding incomplete |
 | `inactive_14d` | `DripReengagement.tsx` | 🔲 Planned | No login 14 days, free/navigator |
 
 ---

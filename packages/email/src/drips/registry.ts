@@ -10,6 +10,7 @@ export type DripSequenceId = 'onboarding_launch_v1';
 
 export type DripSkipCondition =
   | 'onboarding_incomplete'
+  | 'onboarding_complete'
   | 'has_classification'
   | 'has_paid_plan'
   | 'coupon_redeemed';
@@ -62,7 +63,14 @@ export const ONBOARDING_LAUNCH_DRIP: DripSequenceDefinition = {
       dayOffset:      1,
       templateExport: 'DripClassifyReminder',
       tag:            'drip_classify_reminder',
-      skipIf:         ['has_classification'],
+      skipIf:         ['has_classification', 'onboarding_incomplete'],
+    },
+    {
+      id:             'abandoned_onboarding',
+      dayOffset:      2,
+      templateExport: 'DripAbandonedOnboarding',
+      tag:            'drip_abandoned_onboarding',
+      skipIf:         ['onboarding_complete'],
     },
     {
       id:             'readiness_explained',
@@ -105,4 +113,17 @@ export function buildDripIdempotencyKey(
   userId: string,
 ): string {
   return `drip/${sequenceId}/${stepId}/${userId}`;
+}
+
+/**
+ * Steps that fire on or after `dayOffset` (not only on the exact day).
+ * Catches users who signed up before the cron existed or missed the exact window.
+ */
+export const DRIP_STEPS_MIN_DAY_OFFSET = new Set<string>(['abandoned_onboarding']);
+
+export function isDripStepDue(stepId: string, dayOffset: number, daysSinceSignup: number): boolean {
+  if (DRIP_STEPS_MIN_DAY_OFFSET.has(stepId)) {
+    return daysSinceSignup >= dayOffset;
+  }
+  return daysSinceSignup === dayOffset;
 }

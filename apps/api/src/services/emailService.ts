@@ -26,11 +26,13 @@ import {
   sendDripPostLetterCaseStudyEmail,
   sendDripPlanComparisonEmail,
   sendDripLaunchOfferExpiryEmail,
+  sendDripAbandonedOnboardingEmail,
   type SendEmailResult,
   type DripReadinessScoreExplainedProps,
   type DripPostLetterCaseStudyProps,
   type DripPlanComparisonProps,
   type DripLaunchOfferExpiryProps,
+  type DripAbandonedOnboardingProps,
 } from '@klarify/email';
 import { emailConfig } from '@klarify/email';
 
@@ -280,12 +282,14 @@ export async function sendWeeklyDigest(
 // =============================================================================
 
 export type LifecycleDripStepId =
+  | 'abandoned_onboarding'
   | 'readiness_explained'
   | 'post_letter_case_study'
   | 'plan_comparison'
   | 'launch_offer_expiry';
 
 type LifecycleDripProps =
+  | DripAbandonedOnboardingProps
   | DripReadinessScoreExplainedProps
   | DripPostLetterCaseStudyProps
   | DripPlanComparisonProps
@@ -309,6 +313,13 @@ export async function sendLifecycleDripEmail(
   let result: SendEmailResult;
 
   switch (input.stepId) {
+    case 'abandoned_onboarding':
+      result = await sendDripAbandonedOnboardingEmail({
+        to: input.to,
+        idempotencyKey: input.idempotencyKey,
+        ...(input.props as DripAbandonedOnboardingProps),
+      });
+      break;
     case 'readiness_explained':
       result = await sendDripReadinessScoreExplainedEmail({
         to: input.to,

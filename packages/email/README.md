@@ -35,6 +35,7 @@ src/
 │   ├── AdminCriticalEvent.tsx
 │   └── drips/                       # Lifecycle nurture (Day 2–9 launch sequence)
 │       ├── DripReadinessScoreExplained.tsx
+│       ├── DripAbandonedOnboarding.tsx
 │       ├── DripPostLetterCaseStudy.tsx
 │       ├── DripPlanComparison.tsx
 │       └── DripLaunchOfferExpiry.tsx
@@ -132,7 +133,7 @@ See **`DRIP_SEQUENCES.md`** for the full catalog (onboarding, launch event, book
 activation, re-engagement) and automation architecture.
 
 The **`onboarding_launch_v1`** sequence is defined in `src/drips/registry.ts`.
-Send helpers: `sendDripReadinessScoreExplainedEmail`, `sendDripPostLetterCaseStudyEmail`,
+Send helpers: `sendDripAbandonedOnboardingEmail`, `sendDripReadinessScoreExplainedEmail`, `sendDripPostLetterCaseStudyEmail`,
 `sendDripPlanComparisonEmail`, `sendDripLaunchOfferExpiryEmail`.
 
 Wire a daily cron in `apps/api` — Resend has no native multi-step drip engine.

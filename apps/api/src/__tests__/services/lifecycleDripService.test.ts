@@ -7,8 +7,10 @@ import {
   daysSinceSignup,
   getLaunchOfferConfig,
   shouldSkipStep,
+  isTeamOnlyMember,
   type UserDripContext,
 } from '../../services/lifecycleDripService.js';
+import { isDripStepDue } from '@klarify/email';
 import type { DripStepDefinition } from '@klarify/email';
 
 const BASE_CTX: UserDripContext = {
@@ -93,5 +95,42 @@ describe('shouldSkipStep', () => {
     expect(
       shouldSkipStep(planStep, { ...BASE_CTX, hasPaidPlan: true, currentPlan: 'compass' }),
     ).toBe(true);
+  });
+
+  it('skips abandoned onboarding when onboarding is complete', () => {
+    const abandonedStep: DripStepDefinition = {
+      id:             'abandoned_onboarding',
+      dayOffset:      2,
+      templateExport: 'DripAbandonedOnboarding',
+      tag:            'drip_abandoned_onboarding',
+      skipIf:         ['onboarding_complete'],
+    };
+    expect(shouldSkipStep(abandonedStep, BASE_CTX)).toBe(true);
+    expect(
+      shouldSkipStep(abandonedStep, { ...BASE_CTX, onboardingComplete: false }),
+    ).toBe(false);
+  });
+});
+
+describe('isTeamOnlyMember', () => {
+  it('returns true for invited members without owned orgs', () => {
+    expect(isTeamOnlyMember({ ownedOrgs: [], memberships: [{ orgId: 'x' }] })).toBe(true);
+  });
+
+  it('returns false for founders who have not created an org yet', () => {
+    expect(isTeamOnlyMember({ ownedOrgs: [], memberships: [] })).toBe(false);
+  });
+});
+
+describe('isDripStepDue', () => {
+  it('fires abandoned onboarding on day 2 and later', () => {
+    expect(isDripStepDue('abandoned_onboarding', 2, 1)).toBe(false);
+    expect(isDripStepDue('abandoned_onboarding', 2, 2)).toBe(true);
+    expect(isDripStepDue('abandoned_onboarding', 2, 10)).toBe(true);
+  });
+
+  it('fires exact-day steps only on that day', () => {
+    expect(isDripStepDue('readiness_explained', 2, 2)).toBe(true);
+    expect(isDripStepDue('readiness_explained', 2, 3)).toBe(false);
   });
 });

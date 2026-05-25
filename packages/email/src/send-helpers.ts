@@ -287,3 +287,15 @@ export async function sendDripLaunchOfferExpiryEmail(
     tag:      'drip_launch_offer_expiry',
   });
 }
+
+export async function sendDripAbandonedOnboardingEmail(
+  args: BaseSend & T.DripAbandonedOnboardingProps,
+): Promise<SendEmailResult> {
+  const { to, replyTo, idempotencyKey, ...props } = args;
+  return sendEmail({
+    to, replyTo, idempotencyKey,
+    subject:  T.dripAbandonedOnboardingSubject(),
+    template: createElement(T.DripAbandonedOnboarding, props),
+    tag:      'drip_abandoned_onboarding',
+  });
+}

@@ -7,6 +7,7 @@
 
 import {
   buildDripIdempotencyKey,
+  isDripStepDue,
   ONBOARDING_LAUNCH_DRIP,
   type DripSkipCondition,
   type DripStepDefinition,
@@ -22,6 +23,7 @@ const PAID_PLANS = new Set(['navigator', 'compass', 'flagship']);
 
 /** Steps handled by the daily cron (event-driven steps excluded). */
 export const CRON_DRIP_STEP_IDS = new Set<string>([
+  'abandoned_onboarding',
   'readiness_explained',
   'post_letter_case_study',
   'plan_comparison',
@@ -98,6 +100,8 @@ function evaluateSkipCondition(
   switch (condition) {
     case 'onboarding_incomplete':
       return !ctx.onboardingComplete;
+    case 'onboarding_complete':
+      return ctx.onboardingComplete;
     case 'has_classification':
       return ctx.hasClassification;
     case 'has_paid_plan':
@@ -107,6 +111,14 @@ function evaluateSkipCondition(
     default:
       return false;
   }
+}
+
+/** Team members who joined via invite — not founder onboarding cohort. */
+export function isTeamOnlyMember(user: {
+  ownedOrgs: unknown[];
+  memberships: unknown[];
+}): boolean {
+  return user.ownedOrgs.length === 0 && user.memberships.length > 0;
 }
 
 function isLifecycleDripsEnabled(): boolean {
@@ -128,28 +140,29 @@ async function buildUserContext(user: {
     productClassifications: Array<{ id: string }>;
     readinessScores: Array<{ totalScore: number }>;
   }>;
+  memberships: Array<{ orgId: string }>;
   couponRedemptions: Array<{ id: string; coupon: { code: string } }>;
 }): Promise<UserDripContext | null> {
-  // Nurture drips target org owners (founders), not invited team members.
-  if (user.ownedOrgs.length === 0) return null;
+  if (isTeamOnlyMember(user)) return null;
 
-  const org = user.ownedOrgs[0]!;
+  const org = user.ownedOrgs[0];
   const launchCouponCode = process.env.LAUNCH_COUPON_CODE?.trim() || 'LAUNCH20';
 
   const hasPaidOnOrg =
-    PAID_PLANS.has(org.plan) ||
-    org.subscriptions.some(
-      (s) => s.status === 'active' && PAID_PLANS.has(s.plan),
-    );
+    org != null &&
+    (PAID_PLANS.has(org.plan) ||
+      org.subscriptions.some(
+        (s) => s.status === 'active' && PAID_PLANS.has(s.plan),
+      ));
 
   const hasPaidPlan = hasPaidOnOrg || PAID_PLANS.has(user.plan);
 
   const hasClassification =
     user.profile?.lastClassifiedAt != null ||
-    org.productClassifications.length > 0;
+    (org?.productClassifications.length ?? 0) > 0;
 
   const onboardingComplete =
-    user.profile?.stage != null && org.readinessScores.length > 0;
+    user.profile?.stage != null && (org?.readinessScores.length ?? 0) > 0;
 
   const hasLaunchCouponRedemption = user.couponRedemptions.some(
     (r) => r.coupon.code.toLowerCase() === launchCouponCode.toLowerCase(),
@@ -164,8 +177,8 @@ async function buildUserContext(user: {
     hasClassification,
     hasPaidPlan,
     hasLaunchCouponRedemption,
-    score:                       org.readinessScores[0]?.totalScore ?? null,
-    currentPlan:                 hasPaidPlan ? org.plan : user.plan,
+    score:                       org?.readinessScores[0]?.totalScore ?? null,
+    currentPlan:                 hasPaidPlan && org ? org.plan : user.plan,
   };
 }
 
@@ -181,6 +194,18 @@ async function dispatchStep(
   );
 
   switch (stepId as LifecycleDripStepId) {
+    case 'abandoned_onboarding':
+      return sendLifecycleDripEmail({
+        stepId: 'abandoned_onboarding',
+        userId: ctx.userId,
+        to:     ctx.email,
+        idempotencyKey,
+        props: {
+          name:            ctx.name,
+          unsubscribeUrl,
+        },
+      });
+
     case 'readiness_explained':
       return sendLifecycleDripEmail({
         stepId: 'readiness_explained',
@@ -289,10 +314,17 @@ export async function runLifecycleDrips(
 
   const users = await prisma.user.findMany({
     where: {
-      ownedOrgs: { some: {} },
+      // Founders (no org yet, or org owners) — exclude team-only members.
+      NOT: {
+        AND: [
+          { ownedOrgs: { none: {} } },
+          { memberships: { some: {} } },
+        ],
+      },
     },
     include: {
       profile: true,
+      memberships: { select: { orgId: true } },
       ownedOrgs: {
         include: {
           subscriptions: {
@@ -329,7 +361,7 @@ export async function runLifecycleDrips(
     const sentStepIds = new Set(user.emailDripLogs.map((l) => l.stepId));
 
     for (const step of cronSteps) {
-      if (step.dayOffset !== days) continue;
+      if (!isDripStepDue(step.id, step.dayOffset, days)) continue;
       if (sentStepIds.has(step.id)) {
         result.skipped += 1;
         continue;
