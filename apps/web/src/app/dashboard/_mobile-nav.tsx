@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { DASHBOARD_NAV } from './_nav';
+import type { NavSection } from './_nav';
 
 interface MobileNavProps {
   email: string;
   displayName: string;
+  navSections: NavSection[];
 }
 
 /**
@@ -27,7 +28,7 @@ interface MobileNavProps {
  * Receives `email` and `displayName` from the server layout so it can
  * render the user section without a second auth round-trip.
  */
-export function MobileNav({ email, displayName }: MobileNavProps): JSX.Element {
+export function MobileNav({ email, displayName, navSections }: MobileNavProps): JSX.Element {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -109,7 +110,7 @@ export function MobileNav({ email, displayName }: MobileNavProps): JSX.Element {
 
         {/* Nav sections */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          {DASHBOARD_NAV.map((section, i) => (
+          {navSections.map((section, i) => (
             <div key={section.title} className={i > 0 ? 'mt-6' : ''}>
               <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-[#CCCCCC]">
                 {section.title}

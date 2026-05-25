@@ -3,7 +3,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { requireUser } from '@/lib/supabase/server';
-import { DASHBOARD_NAV } from './_nav';
+import { userHasCompletedOnboarding } from '@/lib/teamService';
+import { getDashboardNav } from './_nav';
 import { MobileNav } from './_mobile-nav';
 import { DashboardShellExtras } from '@/components/dashboard/DashboardShellExtras';
 import { SessionInactivityGuard } from '@/components/auth/SessionInactivityGuard';
@@ -32,6 +33,8 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
 
   const email = user.email ?? '';
   const displayName = (user.user_metadata?.name as string | undefined) ?? email.split('@')[0] ?? '';
+  const hasCompletedOnboarding = await userHasCompletedOnboarding(user.id);
+  const navSections = getDashboardNav(hasCompletedOnboarding);
 
   return (
     <div className="flex h-screen bg-[#FAFAFA] overflow-hidden">
@@ -52,7 +55,7 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          {DASHBOARD_NAV.map((section, i) => (
+          {navSections.map((section, i) => (
             <div key={section.title} className={i > 0 ? 'mt-6' : ''}>
               <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-[#CCCCCC]">
                 {section.title}
@@ -100,7 +103,7 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
         {/* Mobile top bar */}
         <header className="flex h-14 items-center justify-between border-b border-[#CCCCCC] bg-white px-4 md:hidden">
           <div className="flex items-center gap-2">
-            <MobileNav email={email} displayName={displayName} />
+            <MobileNav email={email} displayName={displayName} navSections={navSections} />
             <Link href="/dashboard">
               <Image
                 src="/klarify_logo.png"

@@ -58,6 +58,20 @@ export const DASHBOARD_NAV: NavSection[] = [
   },
 ];
 
+const SETUP_SECTION_TITLE = 'Setup';
+
+/**
+ * Returns sidebar nav sections for the current user.
+ * Hides the Setup / "Get Started" block once onboarding is complete so it
+ * does not duplicate the Dashboard link (/dashboard/onboarding redirects there).
+ */
+export function getDashboardNav(hasCompletedOnboarding: boolean): NavSection[] {
+  if (hasCompletedOnboarding) {
+    return DASHBOARD_NAV.filter((section) => section.title !== SETUP_SECTION_TITLE);
+  }
+  return DASHBOARD_NAV;
+}
+
 /* ── Inline SVG icon set ─────────────────────────────────────────────── */
 
 function SetupIcon(): JSX.Element {
