@@ -56,6 +56,34 @@ export const PRODUCT_TOUR_STOPS: ProductTourStop[] = [
     ],
   },
   {
+    id: 'scenario-simulator',
+    title: 'Scenario Simulator',
+    engine: 'FounderCounsel',
+    planLabel: 'Compass+',
+    imageFile: 'Scenario Simulator.png',
+    description:
+      'Stress-test a regulatory decision before you make it. Describe a planned launch, expansion, or enforcement scenario and get a structured Best, Likely, and Worst case analysis — each with probability, regulatory basis, business impact, and mitigation steps.',
+    highlights: [
+      'Eight pre-built scenario templates (ARIP, DAX, CBN on-ramp, and more)',
+      'Three-column outcome cards with citation chips',
+      'Iterate with “what if” follow-ups that chain to your prior analysis',
+    ],
+  },
+  {
+    id: 'jurisdiction-expansion',
+    title: 'Jurisdiction Expansion',
+    engine: 'FounderCounsel',
+    planLabel: 'Compass+ (1 target) · Flagship (up to 4)',
+    imageFile: 'Jurisdiction Expansion.png',
+    description:
+      'Compare your current Nigeria compliance posture against Ghana, Kenya, Mauritius, or South Africa before you expand. Klarify maps seven dimensions — licensing, AML, KYC, capital, reporting, and more — with green, amber, and red gap status.',
+    highlights: [
+      '7-dimension gap table per target market with expandable guidance',
+      'Regulator contacts pulled from the platform — not hardcoded in the UI',
+      'Downloadable Word report for board, investor, or counsel review',
+    ],
+  },
+  {
     id: 'letter-analyser',
     title: 'Regulatory Letter Analyser',
     engine: 'FounderCounsel',
