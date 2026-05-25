@@ -105,3 +105,6 @@ export {
   specialistRequestSubject,
   type SpecialistRequestProps,
 } from './SpecialistRequest.js';
+
+// Lifecycle drip templates (onboarding / launch nurture)
+export * from './drips/index.js';

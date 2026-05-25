@@ -235,3 +235,55 @@ export async function sendSpecialistRequestEmail(
     tag: 'specialist_request',
   });
 }
+
+// =============================================================================
+// Lifecycle drip send helpers (onboarding_launch_v1)
+// =============================================================================
+
+export async function sendDripReadinessScoreExplainedEmail(
+  args: BaseSend & T.DripReadinessScoreExplainedProps,
+): Promise<SendEmailResult> {
+  const { to, replyTo, idempotencyKey, ...props } = args;
+  return sendEmail({
+    to, replyTo, idempotencyKey,
+    subject:  T.dripReadinessScoreExplainedSubject(),
+    template: createElement(T.DripReadinessScoreExplained, props),
+    tag:      'drip_readiness_explained',
+  });
+}
+
+export async function sendDripPostLetterCaseStudyEmail(
+  args: BaseSend & T.DripPostLetterCaseStudyProps,
+): Promise<SendEmailResult> {
+  const { to, replyTo, idempotencyKey, ...props } = args;
+  return sendEmail({
+    to, replyTo, idempotencyKey,
+    subject:  T.dripPostLetterCaseStudySubject(),
+    template: createElement(T.DripPostLetterCaseStudy, props),
+    tag:      'drip_post_letter_case_study',
+  });
+}
+
+export async function sendDripPlanComparisonEmail(
+  args: BaseSend & T.DripPlanComparisonProps,
+): Promise<SendEmailResult> {
+  const { to, replyTo, idempotencyKey, ...props } = args;
+  return sendEmail({
+    to, replyTo, idempotencyKey,
+    subject:  T.dripPlanComparisonSubject(),
+    template: createElement(T.DripPlanComparison, props),
+    tag:      'drip_plan_comparison',
+  });
+}
+
+export async function sendDripLaunchOfferExpiryEmail(
+  args: BaseSend & T.DripLaunchOfferExpiryProps,
+): Promise<SendEmailResult> {
+  const { to, replyTo, idempotencyKey, ...props } = args;
+  return sendEmail({
+    to, replyTo, idempotencyKey,
+    subject:  T.dripLaunchOfferExpirySubject(props),
+    template: createElement(T.DripLaunchOfferExpiry, props),
+    tag:      'drip_launch_offer_expiry',
+  });
+}

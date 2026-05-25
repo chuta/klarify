@@ -17,3 +17,6 @@ export * from './templates/index.js';
 
 // Typed send helpers — preferred entry point for callers.
 export * from './send-helpers.js';
+
+// Lifecycle drip sequence definitions (for API cron workers).
+export * from './drips/registry.js';

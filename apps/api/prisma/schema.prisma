@@ -49,6 +49,7 @@ model User {
   productClassifications   ProductClassification[]
   createdInteractions      RegulatorInteraction[]
   notificationPreference   NotificationPreference?
+  emailDripLogs            EmailDripLog[]
   couponsCreated           Coupon[]                @relation("CouponCreator")
   couponRedemptions        CouponRedemption[]
   orgInvitesSent           OrgInvite[]             @relation("InviteSender")
@@ -633,9 +634,25 @@ model NotificationPreference {
   emailDocumentAnalysis  Boolean  @default(true) @map("email_document_analysis")
   emailAripAlerts        Boolean  @default(true) @map("email_arip_alerts")
   emailBilling           Boolean  @default(true) @map("email_billing")
+  emailLifecycle         Boolean  @default(true) @map("email_lifecycle")
   updatedAt              DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_preferences")
+}
+
+model EmailDripLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  sequenceId String   @map("sequence_id")
+  stepId     String   @map("step_id")
+  sentAt     DateTime @default(now()) @map("sent_at") @db.Timestamptz()
+  resendId   String?  @map("resend_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sequenceId, stepId], map: "email_drip_log_user_id_sequence_id_step_id_key")
+  @@index([userId, sentAt(sort: Desc)])
+  @@map("email_drip_log")
 }

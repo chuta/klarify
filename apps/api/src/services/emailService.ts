@@ -22,7 +22,15 @@ import {
   sendDeadlineReminderEmail,
   sendWeeklyDigestEmail,
   sendAripGrowthAlertEmail,
+  sendDripReadinessScoreExplainedEmail,
+  sendDripPostLetterCaseStudyEmail,
+  sendDripPlanComparisonEmail,
+  sendDripLaunchOfferExpiryEmail,
   type SendEmailResult,
+  type DripReadinessScoreExplainedProps,
+  type DripPostLetterCaseStudyProps,
+  type DripPlanComparisonProps,
+  type DripLaunchOfferExpiryProps,
 } from '@klarify/email';
 import { emailConfig } from '@klarify/email';
 
@@ -93,7 +101,8 @@ export type NotificationType =
   | 'email_weekly_digest'
   | 'email_document_analysis'
   | 'email_arip_alerts'
-  | 'email_billing';
+  | 'email_billing'
+  | 'email_lifecycle';
 
 const NOTIFICATION_TYPES: readonly NotificationType[] = [
   'email_deadline_alerts',
@@ -101,6 +110,7 @@ const NOTIFICATION_TYPES: readonly NotificationType[] = [
   'email_document_analysis',
   'email_arip_alerts',
   'email_billing',
+  'email_lifecycle',
 ];
 
 function isNotificationType(s: string): s is NotificationType {
@@ -129,6 +139,7 @@ async function isOptedIn(userId: string, type: NotificationType): Promise<boolea
       email_document_analysis: 'emailDocumentAnalysis',
       email_arip_alerts:       'emailAripAlerts',
       email_billing:           'emailBilling',
+      email_lifecycle:         'emailLifecycle',
     };
     const field = fieldMap[type];
     return prefs[field] as boolean;
@@ -265,10 +276,88 @@ export async function sendWeeklyDigest(
 }
 
 // =============================================================================
+// Lifecycle drip emails (onboarding_launch_v1)
+// =============================================================================
+
+export type LifecycleDripStepId =
+  | 'readiness_explained'
+  | 'post_letter_case_study'
+  | 'plan_comparison'
+  | 'launch_offer_expiry';
+
+type LifecycleDripProps =
+  | DripReadinessScoreExplainedProps
+  | DripPostLetterCaseStudyProps
+  | DripPlanComparisonProps
+  | DripLaunchOfferExpiryProps;
+
+export interface LifecycleDripSendInput {
+  stepId: LifecycleDripStepId;
+  userId: string;
+  to: string;
+  idempotencyKey: string;
+  props: LifecycleDripProps;
+}
+
+export async function sendLifecycleDripEmail(
+  input: LifecycleDripSendInput,
+): Promise<{ sent: boolean; resendId?: string }> {
+  if (!(await isOptedIn(input.userId, 'email_lifecycle'))) {
+    return { sent: false };
+  }
+
+  let result: SendEmailResult;
+
+  switch (input.stepId) {
+    case 'readiness_explained':
+      result = await sendDripReadinessScoreExplainedEmail({
+        to: input.to,
+        idempotencyKey: input.idempotencyKey,
+        ...(input.props as DripReadinessScoreExplainedProps),
+      });
+      break;
+    case 'post_letter_case_study':
+      result = await sendDripPostLetterCaseStudyEmail({
+        to: input.to,
+        idempotencyKey: input.idempotencyKey,
+        ...(input.props as DripPostLetterCaseStudyProps),
+      });
+      break;
+    case 'plan_comparison':
+      result = await sendDripPlanComparisonEmail({
+        to: input.to,
+        idempotencyKey: input.idempotencyKey,
+        ...(input.props as DripPlanComparisonProps),
+      });
+      break;
+    case 'launch_offer_expiry':
+      result = await sendDripLaunchOfferExpiryEmail({
+        to: input.to,
+        idempotencyKey: input.idempotencyKey,
+        ...(input.props as DripLaunchOfferExpiryProps),
+      });
+      break;
+    default:
+      return { sent: false };
+  }
+
+  if (!result.success) {
+    console.error('[emailService] lifecycle drip send failed', {
+      stepId: input.stepId,
+      userId: input.userId,
+      error:  result.error,
+    });
+    return { sent: false };
+  }
+
+  return { sent: true, resendId: result.id };
+}
+
+// =============================================================================
 // Helpers
 // =============================================================================
 
-function buildUnsubscribeUrl(userId: string, type: NotificationType): string {
+export function buildUnsubscribeUrl(userId: string, type: NotificationType): string {
   const token = buildUnsubscribeToken(userId, type);
   const base = emailConfig.appUrl.replace(/\/+$/, '');
   return `${base}/api/notifications/unsubscribe?token=${encodeURIComponent(token)}&type=${type}`;

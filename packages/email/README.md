@@ -32,7 +32,12 @@ src/
 │   ├── PlanChanged.tsx
 │   ├── RegulatorFollowUp.tsx
 │   ├── AripStageAdvanced.tsx
-│   └── AdminCriticalEvent.tsx
+│   ├── AdminCriticalEvent.tsx
+│   └── drips/                       # Lifecycle nurture (Day 2–9 launch sequence)
+│       ├── DripReadinessScoreExplained.tsx
+│       ├── DripPostLetterCaseStudy.tsx
+│       ├── DripPlanComparison.tsx
+│       └── DripLaunchOfferExpiry.tsx
 └── supabase/                        # 5 Supabase Dashboard HTML templates
     ├── confirm-signup.html
     ├── magic-link.html
@@ -120,6 +125,17 @@ Production sends use `notifyDocumentAnalysisComplete()` in `apps/api` (see
   `EmailLayout`.
 - All templates render inside `EmailLayout` — never construct a top-level
   `<Html>` in a template directly.
+
+## Lifecycle drips
+
+See **`DRIP_SEQUENCES.md`** for the full catalog (onboarding, launch event, book
+activation, re-engagement) and automation architecture.
+
+The **`onboarding_launch_v1`** sequence is defined in `src/drips/registry.ts`.
+Send helpers: `sendDripReadinessScoreExplainedEmail`, `sendDripPostLetterCaseStudyEmail`,
+`sendDripPlanComparisonEmail`, `sendDripLaunchOfferExpiryEmail`.
+
+Wire a daily cron in `apps/api` — Resend has no native multi-step drip engine.
 
 ## Adding a new template
 

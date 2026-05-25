@@ -53,6 +53,7 @@ const mockPrefsOptedIn = {
   emailDocumentAnalysis: true,
   emailAripAlerts:       true,
   emailBilling:          true,
+  emailLifecycle:        true,
   updatedAt:             new Date(),
 };
 
@@ -75,13 +76,14 @@ describe('buildUnsubscribeToken + verifyUnsubscribeToken', () => {
     expect(result!.type).toBe('email_deadline_alerts');
   });
 
-  it('round-trips all five notification types', () => {
+  it('round-trips all notification types', () => {
     const types: NotificationType[] = [
       'email_deadline_alerts',
       'email_weekly_digest',
       'email_document_analysis',
       'email_arip_alerts',
       'email_billing',
+      'email_lifecycle',
     ];
     for (const type of types) {
       const token = buildUnsubscribeToken(MOCK_USER_ID, type);

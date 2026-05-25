@@ -41,6 +41,7 @@ notificationRoutes.get('/preferences', requireAuth, async (c) => {
       emailWeeklyDigest:     prefs.emailWeeklyDigest,
       emailDocumentAnalysis: prefs.emailDocumentAnalysis,
       emailAripAlerts:       prefs.emailAripAlerts,
+      emailLifecycle:        prefs.emailLifecycle,
       emailBilling:          prefs.emailBilling,
       updatedAt:             prefs.updatedAt.toISOString(),
     },
@@ -56,6 +57,7 @@ const prefsUpdateSchema = z.object({
   emailWeeklyDigest:     z.boolean().optional(),
   emailDocumentAnalysis: z.boolean().optional(),
   emailAripAlerts:       z.boolean().optional(),
+  emailLifecycle:        z.boolean().optional(),
   // emailBilling is intentionally excluded — always true, not user-controllable.
 });
 
@@ -80,6 +82,7 @@ notificationRoutes.patch(
         emailWeeklyDigest:     prefs.emailWeeklyDigest,
         emailDocumentAnalysis: prefs.emailDocumentAnalysis,
         emailAripAlerts:       prefs.emailAripAlerts,
+        emailLifecycle:        prefs.emailLifecycle,
         emailBilling:          prefs.emailBilling,
         updatedAt:             prefs.updatedAt.toISOString(),
       },
@@ -99,6 +102,7 @@ const PREF_LABELS: Record<NotificationType, string> = {
   email_document_analysis: 'document analysis notifications',
   email_arip_alerts:       'ARIP growth alerts',
   email_billing:           'billing notifications',
+  email_lifecycle:         'onboarding tips and launch offers',
 };
 
 notificationRoutes.get('/unsubscribe', async (c) => {

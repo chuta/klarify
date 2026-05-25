@@ -8,6 +8,7 @@ const prefsUpdateSchema = z.object({
   emailWeeklyDigest: z.boolean().optional(),
   emailDocumentAnalysis: z.boolean().optional(),
   emailAripAlerts: z.boolean().optional(),
+  emailLifecycle: z.boolean().optional(),
 });
 
 function serializePrefs(prefs: {
@@ -15,6 +16,7 @@ function serializePrefs(prefs: {
   emailWeeklyDigest: boolean;
   emailDocumentAnalysis: boolean;
   emailAripAlerts: boolean;
+  emailLifecycle: boolean;
   emailBilling: boolean;
   updatedAt: Date;
 }) {
@@ -23,6 +25,7 @@ function serializePrefs(prefs: {
     emailWeeklyDigest: prefs.emailWeeklyDigest,
     emailDocumentAnalysis: prefs.emailDocumentAnalysis,
     emailAripAlerts: prefs.emailAripAlerts,
+    emailLifecycle: prefs.emailLifecycle,
     emailBilling: prefs.emailBilling,
     updatedAt: prefs.updatedAt.toISOString(),
   };

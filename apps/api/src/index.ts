@@ -51,6 +51,7 @@ import { billingRoutes } from './routes/billing/index.js';
 import { billingWebhookRoutes } from './routes/billing/webhooks.js';
 import { notificationRoutes } from './routes/notifications.js';
 import { scheduleJobs } from './jobs/deadlineAlerts.js';
+import { scheduleLifecycleDrips } from './jobs/lifecycleDrips.js';
 
 const app = new Hono();
 
@@ -153,6 +154,7 @@ app.onError((err, c) => {
 
 // Start background cron jobs — deadline alerts + weekly digest (Sprint 5-D2).
 scheduleJobs();
+scheduleLifecycleDrips();
 
 // Bind explicitly to 0.0.0.0 — Fly.io and most container platforms route to
 // `0.0.0.0:$PORT`. Defaulting to `localhost` would silently 502 in production.

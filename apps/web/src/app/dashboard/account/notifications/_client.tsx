@@ -11,6 +11,7 @@ interface NotificationPrefs {
   emailWeeklyDigest:     boolean;
   emailDocumentAnalysis: boolean;
   emailAripAlerts:       boolean;
+  emailLifecycle:        boolean;
   emailBilling:          boolean;
   updatedAt:             string;
 }
@@ -41,6 +42,11 @@ const PREF_CONFIG: PrefConfig[] = [
     key:         'emailAripAlerts',
     label:       'ARIP growth alerts',
     description: 'Warning emails when your organisation approaches or breaches the ARIP customer growth cap (Section 29d, ARIP Framework).',
+  },
+  {
+    key:         'emailLifecycle',
+    label:       'Onboarding tips & launch offers',
+    description: 'Helpful emails during your first 9 days — Readiness Score guide, product tips, plan comparison, and launch pricing reminders.',
   },
   {
     key:         'emailWeeklyDigest',
@@ -124,7 +130,7 @@ export function NotificationsClient({ accessToken }: NotificationsClientProps): 
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
-        {[...Array(5)].map((_, i) => (
+        {[...Array(6)].map((_, i) => (
           <div key={i} className="bg-white border border-[#E5E7EB] rounded-xl p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
