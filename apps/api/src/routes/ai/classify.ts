@@ -39,6 +39,7 @@ import { retrieveRelevantChunks } from '@klarify/ai/rag';
 import { assembleContext } from '@klarify/ai/rag';
 import type { JurisdictionCode } from '@klarify/ai/rag';
 import { classifyAnthropicError } from '@klarify/ai/chat';
+import { productTypeZodEnum } from '@klarify/core';
 import { prisma } from '../../db.js';
 import { requireAuth } from '../../middleware/auth.js';
 import { rateLimitAI, type RateLimitVars } from '../../middleware/rateLimitAI.js';
@@ -71,7 +72,7 @@ const CitationSchema = z.object({
 });
 
 const ClassificationResultSchema = z.object({
-  primary_category: z.enum(['DAX', 'DAOP', 'DAC', 'DAI', 'PAYMENT', 'HYBRID']),
+  primary_category: productTypeZodEnum,
   secondary_categories: z.array(z.string()).default([]),
   primary_regulator: z.enum(['SEC_NIGERIA', 'CBN', 'BOTH']),
   secondary_regulators: z.array(z.string()).default([]),
@@ -158,7 +159,7 @@ classifyRoutes.post(
 
     // ----- Retrieve relevant corpus chunks (VASP categorisation focus) -----
     const retrievalQuery =
-      'VASP classification DAX DAOP DAC DAI securities payment digital asset definition ' +
+      'VASP classification DAX DAOP DAC DAI AVASP DAPO RATOP securities payment digital asset definition ' +
       body.description.slice(0, 600);
 
     const jurisdictions = (ctx.targetMarkets.length > 0

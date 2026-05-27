@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import type { ProductType } from '@klarify/core';
+import { PRODUCT_TYPE_META } from '@klarify/core';
 
 // Locally typed to avoid a runtime dep on apps/api from apps/web. Mirrors
 // ClassificationResult in apps/api/src/routes/ai/classify.ts.
 export interface ClassificationResult {
-  primary_category: 'DAX' | 'DAOP' | 'DAC' | 'DAI' | 'PAYMENT' | 'HYBRID';
+  primary_category: ProductType;
   secondary_categories: string[];
   primary_regulator: 'SEC_NIGERIA' | 'CBN' | 'BOTH';
   secondary_regulators: string[];
@@ -22,41 +24,31 @@ export interface ClassificationResult {
 }
 
 // CLAUDE.md §7 — branded category palette.
-const CATEGORY_STYLES: Record<
-  ClassificationResult['primary_category'],
-  { label: string; pill: string; full: string }
-> = {
-  DAX: {
-    label: 'Digital Asset Exchange',
-    pill: 'bg-[#0D2B45] text-white',
-    full: 'Facilitates secondary market trading between buyers and sellers.',
-  },
-  DAOP: {
-    label: 'Digital Asset Offering Platform',
-    pill: 'bg-[#0B6E6E] text-white',
-    full: 'Facilitates primary issuance of digital assets to investors.',
-  },
-  DAC: {
-    label: 'Digital Asset Custodian',
-    pill: 'bg-[#D4A843] text-[#1A1A1A]',
-    full: 'Holds and safeguards digital assets on behalf of clients.',
-  },
-  DAI: {
-    label: 'Digital Asset Intermediary',
-    pill: 'bg-[#1A7A4A] text-white',
-    full: 'Brokers, advisors, or agents facilitating transactions.',
-  },
-  PAYMENT: {
-    label: 'Payment Product',
-    pill: 'bg-[#1A7A4A] text-white',
-    full: 'Involves naira on/off-ramps or payment system infrastructure.',
-  },
-  HYBRID: {
-    label: 'Hybrid Product',
-    pill: 'bg-gradient-to-r from-[#0B6E6E] via-[#0D2B45] to-[#D4A843] text-white',
-    full: 'Spans multiple regulatory categories and requires multiple registrations.',
-  },
+const CATEGORY_PILLS: Record<ProductType, string> = {
+  DAX: 'bg-[#0D2B45] text-white',
+  DAOP: 'bg-[#0B6E6E] text-white',
+  DAC: 'bg-[#D4A843] text-[#1A1A1A]',
+  DAI: 'bg-[#1A7A4A] text-white',
+  AVASP: 'bg-[#555555] text-white',
+  DAPO: 'bg-[#0B6E6E]/80 text-white',
+  RATOP: 'bg-[#0D2B45]/90 text-white',
+  PAYMENT: 'bg-[#1A7A4A] text-white',
+  HYBRID:
+    'bg-gradient-to-r from-[#0B6E6E] via-[#0D2B45] to-[#D4A843] text-white',
 };
+
+function categoryStyle(category: ProductType): {
+  label: string;
+  pill: string;
+  full: string;
+} {
+  const meta = PRODUCT_TYPE_META[category];
+  return {
+    label: meta.label,
+    pill: CATEGORY_PILLS[category],
+    full: meta.desc,
+  };
+}
 
 const RISK_STYLES: Record<
   ClassificationResult['risk_if_unlicensed'],
@@ -111,7 +103,7 @@ export function RegulatoryIdentityCard({
 }: Props): JSX.Element {
   const [reasoningOpen, setReasoningOpen] = useState(false);
 
-  const catStyle = CATEGORY_STYLES[result.primary_category];
+  const catStyle = categoryStyle(result.primary_category);
   const riskStyle = RISK_STYLES[result.risk_if_unlicensed];
 
   const primaryRegulatorName =

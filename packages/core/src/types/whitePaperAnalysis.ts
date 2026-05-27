@@ -1,10 +1,13 @@
 // US-008B — White Paper Analyzer result types.
+import {
+  WHITE_PAPER_LICENCE_CATEGORIES,
+  type WhitePaperLicenceCategory,
+} from './vaspCategories.js';
+
+export { WHITE_PAPER_LICENCE_CATEGORIES, type WhitePaperLicenceCategory };
 
 export const WHITE_PAPER_SOURCE_JURISDICTIONS = ['GH', 'KE', 'MU', 'ZA', 'OTHER'] as const;
 export type WhitePaperSourceJurisdiction = (typeof WHITE_PAPER_SOURCE_JURISDICTIONS)[number];
-
-export const WHITE_PAPER_LICENCE_CATEGORIES = ['DAX', 'DAOP', 'DAC', 'DAI', 'HYBRID'] as const;
-export type WhitePaperLicenceCategory = (typeof WHITE_PAPER_LICENCE_CATEGORIES)[number];
 
 export const WHITE_PAPER_SECTION_IDS = [
   'executive_summary',

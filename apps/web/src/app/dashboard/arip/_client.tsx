@@ -535,7 +535,7 @@ export function ARIPTrackerV2Client({
               <div className="space-y-2 text-sm text-[#1A1A1A]">
                 <p className="font-semibold">Pre-screening preparation checklist:</p>
                 <ul className="list-inside list-disc space-y-1 pl-2 text-[#555555]">
-                  <li>Product classified (DAX, DAOP, DAC, or DAI)</li>
+                  <li>Product classified under SEC Nigeria VASP category</li>
                   <li>Legal opinion on classification obtained</li>
                   <li>Company registered with CAC (CAMA 2020)</li>
                   <li>NFIU goAML registration completed (MLPPA 2022)</li>

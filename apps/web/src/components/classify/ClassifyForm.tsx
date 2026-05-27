@@ -12,7 +12,7 @@ const MIN_DESCRIPTION = 50;
 const LOADING_LINES = [
   'Reading your description…',
   'Looking up SEC Nigeria, CBN, and NFIU frameworks…',
-  'Mapping your product against the DAX/DAOP/DAC/PAYMENT taxonomy…',
+  'Mapping your product against SEC Nigeria VASP categories (DAX, DAOP, AVASP, RATOP…)…',
   'Drafting your Regulatory Identity Card…',
 ];
 

@@ -10,6 +10,7 @@ import {
   indicatorsToDimensionScores,
   calculateReadinessScore,
   PHASE_1_TEMPLATES,
+  productTypesRequireSec,
 } from '@klarify/core';
 import { sendOnboardingCompleteEmail } from '@klarify/email';
 import { prisma, withRls } from '../db.js';
@@ -23,11 +24,10 @@ import { ensureFreeTier } from '../services/billing.js';
  * a label here, not a full regulatory verdict.
  */
 function primaryRegulatorLabel(productTypes: string[]): string {
-  const has = (code: string): boolean => productTypes.includes(code);
-  if (has('DAX') || has('DAOP') || has('DAC') || has('DAI')) {
+  if (productTypesRequireSec(productTypes)) {
     return 'SEC Nigeria';
   }
-  if (has('PAYMENT') || has('STABLECOIN')) {
+  if (productTypes.includes('PAYMENT') || productTypes.includes('STABLECOIN')) {
     return 'Central Bank of Nigeria';
   }
   return 'To be determined — classify your product to find out';

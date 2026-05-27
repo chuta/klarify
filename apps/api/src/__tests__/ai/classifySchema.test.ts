@@ -17,6 +17,7 @@
 // =============================================================================
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
+import { productTypeZodEnum } from '@klarify/core';
 
 // Re-declare the schema locally — must stay in sync with apps/api/src/routes/ai/classify.ts.
 const RequiredLicenceSchema = z.object({
@@ -33,7 +34,7 @@ const CitationSchema = z.object({
 });
 
 const ClassificationResultSchema = z.object({
-  primary_category: z.enum(['DAX', 'DAOP', 'DAC', 'DAI', 'PAYMENT', 'HYBRID']),
+  primary_category: productTypeZodEnum,
   secondary_categories: z.array(z.string()).default([]),
   primary_regulator: z.enum(['SEC_NIGERIA', 'CBN', 'BOTH']),
   secondary_regulators: z.array(z.string()).default([]),
@@ -193,6 +194,34 @@ describe('ClassificationResultSchema — Sprint 2 fixtures', () => {
     });
     expect(result.primary_category).toBe('DAOP');
     expect(result.reasoning.toLowerCase()).toMatch(/not certain|still developing|likely/);
+  });
+
+  it('(e) tokenised Lagos real estate → RATOP, SEC primary, CRITICAL', () => {
+    const result = ClassificationResultSchema.parse({
+      primary_category: 'RATOP',
+      secondary_categories: ['DAOP'],
+      primary_regulator: 'SEC_NIGERIA',
+      secondary_regulators: [],
+      required_licences: [
+        {
+          name: 'RATOP Registration',
+          regulator: 'SEC_NIGERIA',
+          urgency: 'CRITICAL',
+        },
+      ],
+      risk_if_unlicensed: 'CRITICAL',
+      dual_licence_required: false,
+      reasoning:
+        'Fractionalised real estate with rental income is real-world asset tokenization under SEC Circular 26-1 VASP categories.',
+      citations: [
+        {
+          regulation: 'SEC Circular No. 26-1',
+          section: 'Section F — RATOP',
+          relevance: 'Real-world Assets Tokenization and Offering Platform category.',
+        },
+      ],
+    });
+    expect(result.primary_category).toBe('RATOP');
   });
 
   it('rejects unknown primary_category', () => {

@@ -26,7 +26,7 @@ export const NIGERIAN_REGULATORS: readonly RegulatorRecord[] = [
     email: 'info@sec.gov.ng',
     phone: '+234 09-462-3600',
     address: 'SEC Tower, Plot 272 Samuel Adesujo Ademulegun Street, Abuja',
-    jurisdiction_tags: ['DAX', 'DAOP', 'DAC', 'DAI', 'SECURITIES', 'ARIP'],
+    jurisdiction_tags: ['DAX', 'DAOP', 'DAC', 'DAI', 'AVASP', 'DAPO', 'RATOP', 'SECURITIES', 'ARIP'],
   },
   {
     code: 'CBN',

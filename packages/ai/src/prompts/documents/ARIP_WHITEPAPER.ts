@@ -1,5 +1,6 @@
 import type { DocumentTemplate } from './types.js';
 import { STANDARD_OUTPUT_INSTRUCTIONS } from './types.js';
+import { VASP_LICENCE_TYPES } from '@klarify/core';
 
 /**
  * ARIP White Paper Outline template.
@@ -36,7 +37,7 @@ export const ARIP_WHITEPAPER_TEMPLATE: DocumentTemplate = {
       type: 'select',
       required: true,
       helpText: 'SEC Nigeria VASP category being applied for.',
-      options: ['DAX', 'DAOP', 'DAC', 'DAI', 'HYBRID'],
+      options: [...VASP_LICENCE_TYPES, 'HYBRID'],
     },
     {
       key: 'product_summary',

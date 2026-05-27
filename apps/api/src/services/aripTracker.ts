@@ -521,7 +521,7 @@ function buildChecklist(
     // ── Stage 1: Pre-Screening ────────────────────────────────────────────────
     {
       id: 'product_classified',
-      label: 'Product classified (DAX / DAOP / DAC / DAI)',
+      label: 'Product classified under SEC Nigeria VASP category',
       stage: 'pre_screening',
       completed: false,
       blocking: true,

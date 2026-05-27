@@ -7,6 +7,7 @@ import {
   indicatorsToDimensionScores,
   calculateReadinessScore,
   PHASE_1_TEMPLATES,
+  productTypesRequireSec,
 } from '@klarify/core';
 import { materialiseRoadmapIfEmpty } from '@/lib/roadmapService';
 import { sendOnboardingCompleteEmail } from '@klarify/email';
@@ -15,9 +16,10 @@ import { resolveOrgForOnboarding, TeamError } from '@/lib/teamService';
 import { authenticateRouteHandler, unauthenticated } from '@/lib/route-auth';
 
 function primaryRegulatorLabel(productTypes: string[]): string {
-  const has = (code: string): boolean => productTypes.includes(code);
-  if (has('DAX') || has('DAOP') || has('DAC') || has('DAI')) return 'SEC Nigeria';
-  if (has('PAYMENT') || has('STABLECOIN')) return 'Central Bank of Nigeria';
+  if (productTypesRequireSec(productTypes)) return 'SEC Nigeria';
+  if (productTypes.includes('PAYMENT') || productTypes.includes('STABLECOIN')) {
+    return 'Central Bank of Nigeria';
+  }
   return 'To be determined — classify your product to find out';
 }
 

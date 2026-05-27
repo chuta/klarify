@@ -1,6 +1,24 @@
-// Domain enums — mirror CHECK constraints in apps/api/db/migrations/001_init.sql.
+// Domain enums — mirror CHECK constraints in apps/api/db/migrations/.
 
-export type ProductType = 'DAX' | 'DAOP' | 'DAC' | 'DAI' | 'PAYMENT' | 'HYBRID';
+export type {
+  AripLicenceType,
+  ProductType,
+  VaspLicenceType,
+  WhitePaperLicenceCategory,
+} from './vaspCategories.js';
+
+export {
+  ARIP_LICENCE_TYPES,
+  PRODUCT_TYPE_META,
+  PRODUCT_TYPES,
+  VASP_LICENCE_TYPES,
+  WHITE_PAPER_LICENCE_CATEGORIES,
+  isProductType,
+  isVaspLicenceType,
+  productTypeZodEnum,
+  productTypesRequireSec,
+  vaspLicenceTypeZodEnum,
+} from './vaspCategories.js';
 
 export type TargetMarket = 'NG' | 'GH' | 'KE' | 'ZA' | 'MU';
 
@@ -33,8 +51,6 @@ export type AripStage =
   | 'aip'
   | 'aip_operations'
   | 'full_registration';
-
-export type AripLicenceType = 'DAX' | 'DAOP' | 'DAC' | 'DAI';
 
 export type InteractionType = 'call' | 'email' | 'meeting' | 'submission' | 'letter';
 

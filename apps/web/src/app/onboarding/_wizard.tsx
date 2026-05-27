@@ -4,17 +4,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { submitOnboarding } from './actions';
 import type { OnboardingCompleteInput } from '@klarify/core';
+import { PRODUCT_TYPE_META, PRODUCT_TYPES } from '@klarify/core';
 
-// ── Step data definitions ──────────────────────────────────────────────────────
-
-const PRODUCT_TYPE_OPTIONS = [
-  { value: 'DAX',     label: 'Digital Asset Exchange',       desc: 'Secondary market trading platform' },
-  { value: 'DAOP',    label: 'Offering Platform',            desc: 'Primary token issuance to investors' },
-  { value: 'DAC',     label: 'Digital Asset Custodian',      desc: 'Holds/safeguards assets for clients' },
-  { value: 'DAI',     label: 'Digital Asset Intermediary',   desc: 'Broker, advisor, or agent role' },
-  { value: 'PAYMENT', label: 'Payment Product',              desc: 'Naira on/off-ramps, stablecoin rails' },
-  { value: 'HYBRID',  label: 'Hybrid',                       desc: 'Spans two or more categories above' },
-] as const;
+const PRODUCT_TYPE_OPTIONS = PRODUCT_TYPES.map((value) => ({
+  value,
+  label: PRODUCT_TYPE_META[value].label,
+  desc: PRODUCT_TYPE_META[value].desc,
+}));
 
 const MARKET_OPTIONS = [
   { value: 'NG', label: 'Nigeria', flag: '🇳🇬' },

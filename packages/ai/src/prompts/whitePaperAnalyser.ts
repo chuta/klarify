@@ -20,7 +20,7 @@ Use this exact schema:
 {
   "analysed_at": "ISO-8601 datetime",
   "source_jurisdiction": "GH|KE|MU|ZA|OTHER",
-  "licence_category_sought": "DAX|DAOP|DAC|DAI|HYBRID",
+  "licence_category_sought": "DAX|DAOP|DAC|DAI|AVASP|DAPO|RATOP|HYBRID",
   "existing_source_licence": "string or null",
   "sections_adequate_count": 0-14,
   "sections_total": 14,
@@ -72,7 +72,7 @@ Use this exact schema:
   },
   "generator_prefill": {
     "product_name": "optional",
-    "licence_category": "DAX|DAOP|DAC|DAI|HYBRID",
+    "licence_category": "DAX|DAOP|DAC|DAI|AVASP|DAPO|RATOP|HYBRID",
     "product_summary": "optional extracted summary",
     "token_or_asset_details": "optional",
     "target_users": "optional",

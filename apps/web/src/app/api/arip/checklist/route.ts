@@ -14,7 +14,7 @@ interface ChecklistItem {
 
 const CHECKLIST_TEMPLATES: Omit<ChecklistItem, 'completed'>[] = [
   // Stage 1 — Pre-Screening
-  { id: 'product_classified', label: 'Product classified (DAX, DAOP, DAC, or DAI)', stage: 'pre_screening', required: true, regulatoryBasis: 'ISA 2025, SEC Digital Asset Rules 2024' },
+  { id: 'product_classified', label: 'Product classified under SEC Nigeria VASP category', stage: 'pre_screening', required: true, regulatoryBasis: 'ISA 2025, SEC Digital Asset Rules 2024' },
   { id: 'legal_opinion', label: 'Legal opinion obtained on product classification', stage: 'pre_screening', required: true },
   { id: 'sec_contact_logged', label: 'SEC Innovation Office contact logged in CRM', stage: 'pre_screening', required: false },
   { id: 'cac_registered', label: 'Company registered with CAC', stage: 'pre_screening', required: true, regulatoryBasis: 'CAMA 2020' },

@@ -190,7 +190,7 @@ org_members (org_id, user_id, role)
 -- Onboarding and profile
 user_profiles (
   user_id,
-  product_types[],       -- DAX, DAOP, DAC, DAI, payment, hybrid
+  product_types[],       -- DAX, DAOP, DAC, DAI, AVASP, DAPO, RATOP, PAYMENT, HYBRID
   target_markets[],      -- NG, GH, KE, ZA, MU
   stage,                 -- idea, building, launched, arip, licensed
   team_size,
@@ -404,7 +404,18 @@ on behalf of clients (controls private keys). Requires SEC Nigeria
 DAC registration. Note: a DAX that also holds client assets needs BOTH.
 
 DAI (Digital Asset Intermediary): Brokers, advisors, agents who
-facilitate transactions without operating exchange or custody.
+facilitate transactions without operating an exchange or custody.
+
+AVASP (Ancillary Virtual Asset Service Provider): Supporting VASP
+services (compliance tech, analytics, node infra) without operating
+exchange, custody, or issuance platforms. SEC Nigeria AVASP registration.
+
+DAPO (Digital Assets Platform Operator): Platform operator or token
+issuer without full DAOP-scale primary offering infrastructure.
+
+RATOP (Real-world Assets Tokenization and Offering Platform): Tokenizes
+real-world assets and offers them to investors. Use when RWA tokenization
+is the core product.
 
 PAYMENT PRODUCT: Involves naira on/off-ramps, stablecoin payment
 rails, or payment system infrastructure. Requires CBN engagement
@@ -416,12 +427,14 @@ CRITICAL RULES:
 - A "utility token" that carries economic return rights IS a security.
 - Flag if the product spans multiple categories (requires multiple
   registrations).
+- For minimum capital, cite SEC Circular No. 26-1 (Jan 2026) from RAG
+  context — do not use superseded pre-2026 figures.
 - Always state the consequence of operating without the required
   registration.
 
 Output as structured JSON:
 {
-  "primary_category": "DAX|DAOP|DAC|DAI|PAYMENT|HYBRID",
+  "primary_category": "DAX|DAOP|DAC|DAI|AVASP|DAPO|RATOP|PAYMENT|HYBRID",
   "secondary_categories": [],
   "primary_regulator": "SEC_NIGERIA|CBN|BOTH",
   "secondary_regulators": [],

@@ -1,5 +1,8 @@
 // Zod schemas for the onboarding wizard — CLAUDE.md §5 (user_profiles table).
 import { z } from 'zod';
+import { PRODUCT_TYPES } from '../types/vaspCategories.js';
+
+const productTypeSchema = z.enum(PRODUCT_TYPES);
 
 /** Step 0 — organisation name (owners creating a new org). Optional for invited members. */
 export const onboardingOrgSchema = z.object({
@@ -13,7 +16,7 @@ export const onboardingOrgSchema = z.object({
 
 export const onboardingStep1Schema = z.object({
   product_types: z
-    .array(z.enum(['DAX', 'DAOP', 'DAC', 'DAI', 'PAYMENT', 'HYBRID']))
+    .array(productTypeSchema)
     .min(1, 'Select at least one product type'),
 });
 

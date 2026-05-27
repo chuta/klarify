@@ -86,7 +86,7 @@ function FeaturesGrid(): JSX.Element {
       badge: 'FounderCounsel',
       badgeColour: '#0B6E6E',
       title: 'Product Classification Engine',
-      body: 'Describe your product. We classify it as DAX, DAOP, DAC, DAI, or Payment, and tell you exactly which regulators you need to engage.',
+      body: 'Describe your product. We classify it under SEC Nigeria VASP categories — DAX, DAOP, RATOP, AVASP, and more — and tell you which regulators you need to engage.',
     },
     {
       icon: '📄',
