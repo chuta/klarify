@@ -40,4 +40,10 @@ describe('Scenario API contract', () => {
     const raw = '```json\n' + JSON.stringify(validResult) + '\n```';
     expect(extractJsonObject(raw)).toEqual(validResult);
   });
+
+  it('extractJsonObject repairs truncated JSON objects', () => {
+    const truncated = '{"scenario_summary":"Launch without ARIP.","outcomes":{"likely_case":{"label":"likely_case"';
+    const parsed = extractJsonObject(truncated) as { scenario_summary?: string };
+    expect(parsed.scenario_summary).toBe('Launch without ARIP.');
+  });
 });

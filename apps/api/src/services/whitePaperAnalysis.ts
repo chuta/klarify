@@ -101,20 +101,31 @@ Return the JSON gap report and draft outline as specified.`;
   const client = getAnthropicClient();
 
   let rawResponse: string;
+  let stopReason: string | null = null;
   try {
-    const stream = await client.messages.create({
+    const response = await client.messages.create({
       model,
-      max_tokens: 6000,
+      max_tokens: 16_000,
       temperature: 0,
       system: `${KLARIFY_BASE_SYSTEM_PROMPT}\n\n${KLARIFY_WHITE_PAPER_ANALYSER_PROMPT}\n\n${ragContext.text}\n\nAnalysis metadata:\n${metadataBlock}`,
       messages: [{ role: 'user', content: userMessage }],
     });
-    const textBlock = stream.content.find((b) => b.type === 'text');
+    stopReason = response.stop_reason;
+    const textBlock = response.content.find((b) => b.type === 'text');
     rawResponse = textBlock && textBlock.type === 'text' ? textBlock.text : '';
   } catch (err) {
     const classified = classifyAnthropicError(err);
     await markError(analysisId, classified.message);
     throw new WhitePaperAnalysisError(classified.message, 'UPSTREAM_FAILURE');
+  }
+
+  if (!rawResponse.trim()) {
+    await markError(analysisId, 'Klarify received an empty analysis response. Please try again.');
+    throw new WhitePaperAnalysisError('Empty model response.', 'PARSE_FAILED');
+  }
+
+  if (stopReason === 'max_tokens') {
+    console.warn('[whitePaperAnalysis] response truncated at max_tokens for %s', analysisId);
   }
 
   let result: WhitePaperAnalysisResult;
@@ -128,11 +139,19 @@ Return the JSON gap report and draft outline as specified.`;
     });
     result = enforceExitPlanCriticalGap(coerced);
   } catch (err) {
-    console.error('[whitePaperAnalysis] parse failed', err, rawResponse.slice(0, 500));
-    await markError(
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error(
+      '[whitePaperAnalysis] parse failed for %s (stop=%s): %s\npreview: %s',
       analysisId,
-      'Klarify could not interpret the white paper analysis. Please try again.',
+      stopReason,
+      detail,
+      rawResponse.slice(0, 500),
     );
+    const userFacingError =
+      stopReason === 'max_tokens'
+        ? 'The analysis was too large to complete in one pass. Try again with a shorter document, or paste the core sections only.'
+        : 'Klarify could not interpret the white paper analysis. Please try again.';
+    await markError(analysisId, userFacingError);
     throw new WhitePaperAnalysisError('Parse failed.', 'PARSE_FAILED');
   }
 

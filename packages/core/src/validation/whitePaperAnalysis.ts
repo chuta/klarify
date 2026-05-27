@@ -1,11 +1,137 @@
 import { z } from 'zod';
-import type { WhitePaperAnalysisResult } from '../types/whitePaperAnalysis.js';
+import type {
+  WhitePaperAnalysisResult,
+  WhitePaperCitation,
+  WhitePaperSectionAssessment,
+  WhitePaperSectionId,
+  WhitePaperSectionStatus,
+} from '../types/whitePaperAnalysis.js';
 import {
   WHITE_PAPER_DISCLAIMER,
   WHITE_PAPER_LICENCE_CATEGORIES,
   WHITE_PAPER_SECTION_IDS,
+  WHITE_PAPER_SECTION_NAMES,
   WHITE_PAPER_SOURCE_JURISDICTIONS,
 } from '../types/whitePaperAnalysis.js';
+
+function isValidUrl(value: string): boolean {
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function normalizeCitationUrl(value: unknown): string | undefined {
+  if (typeof value !== 'string' || value.trim().length === 0) return undefined;
+  return isValidUrl(value) ? value : undefined;
+}
+
+function normalizeCitations(raw: unknown): WhitePaperCitation[] {
+  if (!Array.isArray(raw)) return [];
+  const out: WhitePaperCitation[] = [];
+  for (const item of raw) {
+    if (typeof item !== 'object' || item === null) continue;
+    const rec = item as Record<string, unknown>;
+    const regulation = typeof rec.regulation === 'string' ? rec.regulation.trim() : '';
+    const section = typeof rec.section === 'string' ? rec.section.trim() : '';
+    if (!regulation || !section) continue;
+    const url = normalizeCitationUrl(rec.url);
+    out.push(url ? { regulation, section, url } : { regulation, section });
+  }
+  return out;
+}
+
+function normalizeSectionStatus(value: unknown): WhitePaperSectionStatus {
+  if (value === 'adequate' || value === 'partial' || value === 'missing' || value === 'not_applicable') {
+    return value;
+  }
+  return 'partial';
+}
+
+function normalizeSectionId(value: unknown): WhitePaperSectionId | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  return (WHITE_PAPER_SECTION_IDS as readonly string[]).includes(normalized)
+    ? (normalized as WhitePaperSectionId)
+    : null;
+}
+
+function normalizeSectionAssessments(raw: unknown): WhitePaperSectionAssessment[] {
+  const byId = new Map<WhitePaperSectionId, WhitePaperSectionAssessment>();
+  if (Array.isArray(raw)) {
+    for (const item of raw) {
+      if (typeof item !== 'object' || item === null) continue;
+      const rec = item as Record<string, unknown>;
+      const sectionId = normalizeSectionId(rec.section_id);
+      if (!sectionId || byId.has(sectionId)) continue;
+      byId.set(sectionId, {
+        section_id: sectionId,
+        section_name:
+          typeof rec.section_name === 'string' && rec.section_name.trim().length > 0
+            ? rec.section_name.trim()
+            : WHITE_PAPER_SECTION_NAMES[sectionId],
+        status: normalizeSectionStatus(rec.status),
+        found_in_upload: Boolean(rec.found_in_upload),
+        gap_summary: typeof rec.gap_summary === 'string' ? rec.gap_summary : '',
+        remediation: typeof rec.remediation === 'string' ? rec.remediation : '',
+        citations: normalizeCitations(rec.citations),
+      });
+    }
+  }
+  return WHITE_PAPER_SECTION_IDS.map((sectionId) => {
+    const existing = byId.get(sectionId);
+    if (existing) return existing;
+    return {
+      section_id: sectionId,
+      section_name: WHITE_PAPER_SECTION_NAMES[sectionId],
+      status: 'missing',
+      found_in_upload: false,
+      gap_summary: 'This section was not present in the model output.',
+      remediation: 'Review this section against SEC Nigeria ARIP white paper requirements.',
+      citations: [],
+    };
+  });
+}
+
+function normalizeOutlineSections(raw: unknown): WhitePaperAnalysisResult['draft_outline']['sections'] {
+  const sections: WhitePaperAnalysisResult['draft_outline']['sections'] = [];
+  if (Array.isArray(raw)) {
+    for (const item of raw) {
+      if (typeof item !== 'object' || item === null) continue;
+      const rec = item as Record<string, unknown>;
+      const title = typeof rec.title === 'string' && rec.title.trim().length > 0 ? rec.title.trim() : null;
+      if (!title) continue;
+      const number =
+        typeof rec.number === 'number' && Number.isInteger(rec.number)
+          ? rec.number
+          : sections.length + 1;
+      sections.push({
+        number: Math.min(14, Math.max(1, number)),
+        title,
+        guidance:
+          typeof rec.guidance === 'string' && rec.guidance.trim().length > 0
+            ? rec.guidance.trim()
+            : 'Complete this section per SEC Nigeria ARIP requirements.',
+        suggested_content: typeof rec.suggested_content === 'string' ? rec.suggested_content : '',
+        regulatory_basis: typeof rec.regulatory_basis === 'string' ? rec.regulatory_basis : '',
+      });
+    }
+  }
+  while (sections.length < 14) {
+    const index = sections.length;
+    const sectionId = WHITE_PAPER_SECTION_IDS[index]!;
+    sections.push({
+      number: index + 1,
+      title: WHITE_PAPER_SECTION_NAMES[sectionId],
+      guidance: 'Complete this section per SEC Nigeria ARIP requirements.',
+      suggested_content: '',
+      regulatory_basis: 'ARIP Framework (June 2024)',
+    });
+  }
+  return sections.slice(0, 14);
+}
 
 const CitationSchema = z.object({
   regulation: z.string().min(1),
@@ -109,16 +235,131 @@ export function parseWhitePaperAnalysisResult(raw: unknown): WhitePaperAnalysisR
 export function coerceWhitePaperAnalysisResult(raw: unknown): WhitePaperAnalysisResult {
   const obj =
     typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
-  const withDefaults: Record<string, unknown> = { ...obj };
-  if (typeof withDefaults.disclaimer !== 'string' || withDefaults.disclaimer.length === 0) {
-    withDefaults.disclaimer = WHITE_PAPER_DISCLAIMER;
-  }
-  if (typeof withDefaults.analysed_at !== 'string' || withDefaults.analysed_at.length < 10) {
-    withDefaults.analysed_at = new Date().toISOString();
-  }
-  if (withDefaults.sections_total !== 14) {
-    withDefaults.sections_total = 14;
-  }
+
+  const sectionAssessments = normalizeSectionAssessments(obj.section_assessments);
+  const adequateCount = sectionAssessments.filter((s) => s.status === 'adequate').length;
+  const applicableCount = sectionAssessments.filter((s) => s.status !== 'not_applicable').length;
+  const computedCompleteness =
+    applicableCount > 0 ? Math.round((adequateCount / applicableCount) * 100) : 0;
+
+  const licenceCategory =
+    typeof obj.licence_category_sought === 'string' &&
+    (WHITE_PAPER_LICENCE_CATEGORIES as readonly string[]).includes(obj.licence_category_sought)
+      ? obj.licence_category_sought
+      : 'HYBRID';
+
+  const generatorPrefillRaw =
+    typeof obj.generator_prefill === 'object' && obj.generator_prefill !== null
+      ? (obj.generator_prefill as Record<string, unknown>)
+      : {};
+
+  const criticalGapsRaw = Array.isArray(obj.critical_gaps) ? obj.critical_gaps : [];
+  const criticalGaps = criticalGapsRaw
+    .map((gap, index) => {
+      if (typeof gap !== 'object' || gap === null) return null;
+      const rec = gap as Record<string, unknown>;
+      const sectionId = normalizeSectionId(rec.section_id);
+      const title = typeof rec.title === 'string' ? rec.title.trim() : '';
+      const gapDescription = typeof rec.gap_description === 'string' ? rec.gap_description.trim() : '';
+      const remediation = typeof rec.remediation === 'string' ? rec.remediation.trim() : '';
+      if (!sectionId || !title || !gapDescription || !remediation) return null;
+      return {
+        rank: typeof rec.rank === 'number' ? rec.rank : index + 1,
+        section_id: sectionId,
+        title,
+        gap_description: gapDescription,
+        remediation,
+        citations: normalizeCitations(rec.citations),
+      };
+    })
+    .filter((gap): gap is NonNullable<typeof gap> => gap !== null)
+    .slice(0, 5)
+    .map((gap, index) => ({ ...gap, rank: index + 1 }));
+
+  const notesRaw =
+    typeof obj.source_jurisdiction_notes === 'object' && obj.source_jurisdiction_notes !== null
+      ? (obj.source_jurisdiction_notes as Record<string, unknown>)
+      : {};
+
+  const tokenFlagsRaw = Array.isArray(obj.token_classification_flags)
+    ? obj.token_classification_flags
+    : [];
+  const tokenFlags = tokenFlagsRaw
+    .map((flag) => {
+      if (typeof flag !== 'object' || flag === null) return null;
+      const rec = flag as Record<string, unknown>;
+      const message = typeof rec.message === 'string' ? rec.message.trim() : '';
+      if (!message) return null;
+      const severity =
+        rec.severity === 'info' || rec.severity === 'amber' || rec.severity === 'critical'
+          ? rec.severity
+          : 'info';
+      return {
+        severity,
+        message,
+        citations: normalizeCitations(rec.citations),
+      };
+    })
+    .filter((flag): flag is NonNullable<typeof flag> => flag !== null);
+
+  const draftOutlineRaw =
+    typeof obj.draft_outline === 'object' && obj.draft_outline !== null
+      ? (obj.draft_outline as Record<string, unknown>)
+      : {};
+
+  const withDefaults: Record<string, unknown> = {
+    ...obj,
+    disclaimer:
+      typeof obj.disclaimer === 'string' && obj.disclaimer.length > 0
+        ? obj.disclaimer
+        : WHITE_PAPER_DISCLAIMER,
+    analysed_at:
+      typeof obj.analysed_at === 'string' && obj.analysed_at.length >= 10
+        ? obj.analysed_at
+        : new Date().toISOString(),
+    sections_total: 14,
+    sections_adequate_count:
+      typeof obj.sections_adequate_count === 'number'
+        ? Math.min(14, Math.max(0, Math.round(obj.sections_adequate_count)))
+        : adequateCount,
+    completeness_pct:
+      typeof obj.completeness_pct === 'number'
+        ? Math.min(100, Math.max(0, Math.round(obj.completeness_pct)))
+        : computedCompleteness,
+    executive_summary:
+      typeof obj.executive_summary === 'string' && obj.executive_summary.trim().length > 0
+        ? obj.executive_summary.trim()
+        : 'White paper gap analysis completed. Review section assessments for details.',
+    section_assessments: sectionAssessments,
+    critical_gaps: criticalGaps,
+    source_jurisdiction_notes: {
+      retainable_content: Array.isArray(notesRaw.retainable_content)
+        ? notesRaw.retainable_content.filter((v): v is string => typeof v === 'string')
+        : [],
+      must_rewrite: Array.isArray(notesRaw.must_rewrite)
+        ? notesRaw.must_rewrite.filter((v): v is string => typeof v === 'string')
+        : [],
+      comparative_notes:
+        typeof notesRaw.comparative_notes === 'string' ? notesRaw.comparative_notes : '',
+    },
+    token_classification_flags: tokenFlags,
+    draft_outline: {
+      sections: normalizeOutlineSections(draftOutlineRaw.sections),
+    },
+    generator_prefill: {
+      ...generatorPrefillRaw,
+      licence_category:
+        typeof generatorPrefillRaw.licence_category === 'string' &&
+        generatorPrefillRaw.licence_category.trim().length > 0
+          ? generatorPrefillRaw.licence_category.trim()
+          : licenceCategory,
+    },
+    licence_category_sought: licenceCategory,
+    existing_source_licence:
+      typeof obj.existing_source_licence === 'string' ? obj.existing_source_licence : null,
+    low_structure_confidence: Boolean(obj.low_structure_confidence),
+  };
+
   return WhitePaperAnalysisResultSchema.parse(withDefaults);
 }
 

@@ -132,7 +132,7 @@ export function DocumentLibraryClient({
         </h1>
         <p className="mt-1 text-sm text-[#555]">
           Generate audit-ready compliance documents grounded in Nigerian
-          regulation — or analyse an existing white paper for SEC Nigeria ARIP
+          regulation, or analyse an existing white paper for SEC Nigeria ARIP
           readiness.
         </p>
       </header>
