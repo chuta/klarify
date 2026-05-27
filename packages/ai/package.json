@@ -23,7 +23,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "ingest": "tsx scripts/ingest.ts",
-    "test:rag": "tsx scripts/test-rag.ts"
+    "test:rag": "tsx scripts/test-rag.ts",
+    "verify:corpus": "tsx scripts/verify-corpus.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",

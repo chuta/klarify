@@ -853,9 +853,10 @@ Examples: `NG_ISA_2025.pdf`, `GH_VASP_ACT_2025.pdf`, `FATF_REC15_2019.pdf`, `INT
 | ✅ | `NG_NDPA_2023.pdf` | Nigeria Data Protection Act 2023 |
 | ✅ | `NG_NTAA_2025.pdf` | Nigeria Tax Administration Act 2025 |
 | ✅ | `NG_STARTUP_ACT_2022.pdf` | Nigeria Startup Act 2022 |
-| ✅ | `NG_SEC_DAR_2022.pdf` | SEC Digital Asset Rules 2022 (original) |
+| ⏳ | `NG_SEC_DAR_2022.pdf` | SEC Digital Asset Rules 2022 (original) — **re-source required**; poisoned copy removed May 2026 |
 | ✅ | `NG_SEC_DAR_2023.pdf` | SEC Digital Asset Rules 2023 |
 | ✅ | `NG_SEC_DAR_2024.pdf` | SEC Digital Asset Rules 2024 (latest enacted) |
+| ✅ | `NG_SEC_MCR_CIRCULAR_2026.pdf` | SEC Circular No. 26-1 — Revised Minimum Capital Requirements (Jan 2026) |
 | ✅ | `NG_CBN_VASP_2023.pdf` | CBN Guidelines on Operation of Bank Accounts for VASPs 2023 (binding under BOFIA) |
 | ✅ | `NG_NFIU_VASP_2024.pdf` | NFIU AML/CFT Compliance Framework for VASPs (Dec 2024) |
 | ✅ | `NG_EFCC_2024.pdf` | Economic and Financial Crimes Commission Act / EFCC AML Guidance 2024 |

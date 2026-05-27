@@ -50,6 +50,7 @@ const NAME_MAP: Record<string, string> = {
   'NG/NTAA': 'Nigeria Tax Administration Act 2025',
   'NG/STARTUP_ACT': 'Nigeria Startup Act 2022',
   'NG/SEC_DAR': 'SEC Digital Asset Rules',
+  'NG/SEC_MCR_CIRCULAR': 'SEC Circular No. 26-1 — Minimum Capital Requirements',
   'NG/CBN_VASP': 'CBN Guidelines on VASP Bank Accounts 2023',
   'NG/NFIU_VASP': 'NFIU AML/CFT Compliance Framework for VASPs 2024',
   'NG/EFCC': 'EFCC AML Guidance 2024',
