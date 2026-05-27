@@ -15,13 +15,11 @@ export interface RegulatorAripContacts {
 }
 
 export interface RegulatorAripFees {
-  dax_application?: number;
-  daop_application?: number;
-  dac_application?: number;
-  dai_application?: number;
-  currency?: string;
-  note?: string;
-  [key: string]: number | string | undefined;
+  /** Flat ARIP processing fee (SEC DAR 2024 §VIII). */
+  arip_processing_fee_ngn: number;
+  currency: string;
+  citation: string;
+  note: string;
 }
 
 export interface Regulator {

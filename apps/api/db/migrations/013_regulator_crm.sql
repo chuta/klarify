@@ -45,7 +45,7 @@ INSERT INTO public.regulators (
   'SEC Tower, Plot 272 Samuel Adesujo Ademulegun Street, Abuja',
   ARRAY['DAX','DAOP','DAC','DAI','SECURITIES','ARIP'],
   '{"digital_assets_unit": "Digital Assets and Fintech Unit", "arip_email": "arip@sec.gov.ng", "pre_screening_email": "prescreening@sec.gov.ng", "innovation_office_hours": "Tue & Thu, 10am–2pm WAT"}'::jsonb,
-  '{"dax_application": 100000, "daop_application": 100000, "dac_application": 50000, "dai_application": 50000, "currency": "NGN", "note": "Fees are non-refundable. Pay via REVOP portal only."}'::jsonb
+  '{"arip_processing_fee_ngn": 2000000, "currency": "NGN", "citation": "SEC Digital Asset Rules 2024, Section VIII, Rule 20(a)", "note": "ARIP non-refundable processing fee. Pay via REVOP only after receiving Stage 2 eligibility notification."}'::jsonb
 ),
 (
   'CBN',

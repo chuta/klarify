@@ -41,7 +41,7 @@ const DIMENSIONS: readonly DimensionDetail[] = [
       'Registered solicitor/adviser engaged',
       'NFIU registration evidenced',
       'Other regulator no-objection obtained (if applicable)',
-      'ARIP processing fee budgeted (₦2M non-refundable)',
+      'ARIP processing fee budgeted (₦2M non-refundable — SEC DAR 2024 §VIII)',
       'Operational plan drafted',
       'Risk management framework included in operational plan',
       'Exit plan included in operational plan',

@@ -14,6 +14,10 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import {
+  ARIP_PROCESSING_FEE,
+  formatAripProcessingFeeNgn,
+} from '@klarify/core/regulators';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -383,14 +387,19 @@ export function ARIPTrackerClient({ arip: initialArip, accessToken }: Props): JS
               </div>
             </div>
 
-            {/* Processing fee */}
+            {/* ARIP processing fee — SEC DAR 2024 §VIII(20)(a) */}
             <div className="mb-6 rounded-xl border border-[#CCCCCC] bg-white p-5">
               <h4 className="mb-1 text-sm font-semibold text-[#1A1A1A]">
-                Processing Fee — Non-Refundable
+                ARIP Processing Fee — Non-Refundable
               </h4>
+              <p className="mb-1 text-sm font-medium text-[#1A1A1A]">
+                {formatAripProcessingFeeNgn()}
+              </p>
+              <p className="mb-3 font-mono text-xs text-[#0B6E6E]">
+                {ARIP_PROCESSING_FEE.regulatoryBasis}
+              </p>
               <p className="mb-4 text-xs text-[#555555]">
-                Fee is non-refundable. Only pay after receiving eligibility notification
-                from Stage 2. Pay via REVOP.
+                {ARIP_PROCESSING_FEE.revopNote}
               </p>
               <div className="divide-y divide-[#F5F5F5]">
                 <FieldRow label="">

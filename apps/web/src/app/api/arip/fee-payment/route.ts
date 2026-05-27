@@ -7,8 +7,8 @@ import { authenticateRouteHandler, unauthenticated } from '@/lib/route-auth';
  *
  * Records the ARIP processing fee payment details.
  *
- * Regulatory source: ARIP Framework, SEC Nigeria, June 2024.
- * Fee is non-refundable. Pay via REVOP portal only after Stage 2 eligibility notification.
+ * Regulatory source: SEC Digital Asset Rules 2024, Section VIII, Rule 20(a).
+ * Flat non-refundable fee of NGN 2,000,000. Pay via REVOP after Stage 2 eligibility.
  */
 export async function PUT(request: Request): Promise<NextResponse> {
   const auth = await authenticateRouteHandler(request);

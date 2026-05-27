@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { aripProcessingFeeHelpText, VASP_MCR_CITATION, VASP_MCR_NOTE } from '@klarify/core/regulators';
 import { prisma, resolveOrgId, withRls } from '@/lib/db';
 import { authenticateRouteHandler, unauthenticated } from '@/lib/route-auth';
 
@@ -23,7 +24,7 @@ const CHECKLIST_TEMPLATES: Omit<ChecklistItem, 'completed'>[] = [
   // Stage 2 — Initial Assessment
   { id: 'sec_form_submitted', label: 'Initial Assessment Form submitted on SEC ePortal', stage: 'initial_assessment', required: true, regulatoryBasis: 'ARIP Framework, Section 12' },
   { id: 'solicitor_engaged', label: 'Qualified Nigerian solicitor formally engaged', stage: 'initial_assessment', required: true, regulatoryBasis: 'ARIP Framework, Section 16', note: 'Application MUST be filed through a solicitor or adviser' },
-  { id: 'application_fee_paid', label: 'Application fee paid via REVOP', stage: 'initial_assessment', required: true, note: 'NGN 100,000 (DAX/DAOP) or NGN 50,000 (DAC/DAI)' },
+  { id: 'application_fee_paid', label: 'ARIP processing fee paid via REVOP', stage: 'initial_assessment', required: true, regulatoryBasis: 'SEC Digital Asset Rules 2024, Section VIII, Rule 20(a)', note: aripProcessingFeeHelpText() },
   { id: 'sec_reference_received', label: 'SEC reference number received', stage: 'initial_assessment', required: false },
 
   // Stage 3 — Eligibility
@@ -34,7 +35,7 @@ const CHECKLIST_TEMPLATES: Omit<ChecklistItem, 'completed'>[] = [
   { id: 'operational_plan', label: 'ARIP Operational Plan prepared (including exit plan)', stage: 'eligibility', required: true, regulatoryBasis: 'ARIP Framework, Section 15b' },
   { id: 'sworn_undertaking', label: 'Sworn Undertaking — fitness and propriety for all officers', stage: 'eligibility', required: true, regulatoryBasis: 'ARIP Framework, Section 15a' },
   { id: 'entity_rules', label: 'Entity Rules & Governance document prepared', stage: 'eligibility', required: false, regulatoryBasis: 'ARIP Framework, Section 15c' },
-  { id: 'min_capital', label: 'Minimum capital requirements met and evidenced', stage: 'eligibility', required: true },
+  { id: 'min_capital', label: 'Minimum capital requirements met and evidenced', stage: 'eligibility', required: true, regulatoryBasis: VASP_MCR_CITATION, note: VASP_MCR_NOTE },
   { id: 'it_audit', label: 'IT security audit completed', stage: 'eligibility', required: false },
 
   // Stage 4 — AIP Active

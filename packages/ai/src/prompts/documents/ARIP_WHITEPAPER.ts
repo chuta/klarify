@@ -188,7 +188,8 @@ Required document structure:
       the ARIP Framework, this application MUST be filed through a
       registered solicitor or adviser. The issuer will engage retained
       counsel before filing.
-      Processing fee: NGN 2,000,000 non-refundable, payable via REVOP
+      Processing fee: NGN 2,000,000 non-refundable (SEC Digital Asset Rules 2024,
+      Section VIII, Rule 20(a)), payable via REVOP
       after receiving the Stage 2 eligibility notification.
       Contacts: innovation@sec.gov.ng / fintech@sec.gov.ng. Innovation
       Office hours: Tuesdays and Thursdays, 10:00–14:00 only.

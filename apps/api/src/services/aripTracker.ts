@@ -14,6 +14,7 @@
 // =============================================================================
 
 import type { Prisma, AripApplication } from '@prisma/client';
+import { aripProcessingFeeHelpText } from '@klarify/core/regulators';
 import { prisma } from '../db.js';
 import { recalculateScore } from './scoreRecalculation.js';
 import { sendARIPGrowthAlert } from './emailService.js';
@@ -583,12 +584,11 @@ function buildChecklist(
     },
     {
       id: 'application_fee_paid',
-      label: 'Application processing fee paid via REVOP (non-refundable)',
+      label: 'ARIP processing fee paid via REVOP (non-refundable)',
       stage: 'eligibility',
       completed: app?.applicationFeePaid ?? false,
       blocking: true,
-      helpText:
-        'DAX/DAOP: NGN 2,000,000 | DAC/DAI: NGN 1,000,000. Pay via REVOP only — no cash accepted.',
+      helpText: aripProcessingFeeHelpText(),
     },
     {
       id: 'aml_policy',

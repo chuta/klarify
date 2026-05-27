@@ -18,6 +18,10 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import {
+  ARIP_PROCESSING_FEE,
+  formatAripProcessingFeeNgn,
+} from '@klarify/core/regulators';
 import type { ARIPFullData } from './page';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -553,15 +557,19 @@ export function ARIPTrackerV2Client({
                 Expected timeline: 30–60 days.
               </p>
 
-              {/* Application fee */}
+              {/* ARIP processing fee — SEC DAR 2024 §VIII(20)(a) */}
               <div className="mb-4 rounded-xl border border-[#CCCCCC] bg-white p-4">
-                <h4 className="mb-2 text-sm font-semibold text-[#1A1A1A]">Processing Fee</h4>
-                <p className="mb-1 text-xs text-[#555555]">
-                  <strong>DAX/DAOP:</strong> NGN 100,000 &nbsp;|&nbsp;
-                  <strong>DAC/DAI:</strong> NGN 50,000
+                <h4 className="mb-2 text-sm font-semibold text-[#1A1A1A]">
+                  ARIP Processing Fee
+                </h4>
+                <p className="mb-1 text-sm font-medium text-[#1A1A1A]">
+                  {formatAripProcessingFeeNgn()} — non-refundable
+                </p>
+                <p className="mb-2 font-mono text-xs text-[#0B6E6E]">
+                  {ARIP_PROCESSING_FEE.regulatoryBasis}
                 </p>
                 <p className="mb-3 text-xs text-amber-700">
-                  ⚠️ Non-refundable. Pay via REVOP only after receiving Stage 2 eligibility notification.
+                  ⚠️ {ARIP_PROCESSING_FEE.revopNote}
                 </p>
                 {arip.application_fee_paid ? (
                   <p className="text-sm font-semibold text-green-700">
