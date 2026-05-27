@@ -11,11 +11,16 @@
  * rendered as props. No useEffect data fetching — keeps the first paint
  * crisp and avoids hydration mismatches.
  */
-import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { getPublicApiBaseUrl } from '@/lib/publicEnv';
 import { DocumentTemplateCard } from '@/components/documents/DocumentTemplateCard';
+import {
+  WhitePaperUploader,
+  type RecentWhitePaper,
+} from '@/components/documents/WhitePaperUploader';
 import {
   CATEGORY_DETAILS,
   CATEGORY_ORDER,
@@ -47,6 +52,10 @@ interface Props {
   plan: Plan;
   monthlyLimit: number | null;
   monthlyUsed: number;
+  recentWhitePapers: RecentWhitePaper[];
+  hasWhitePaperAnalyzer: boolean;
+  initialTab?: 'templates' | 'analyzer';
+  apiBaseUrl: string;
 }
 
 export function DocumentLibraryClient({
@@ -55,7 +64,15 @@ export function DocumentLibraryClient({
   plan,
   monthlyLimit,
   monthlyUsed,
+  recentWhitePapers,
+  hasWhitePaperAnalyzer,
+  initialTab = 'templates',
+  apiBaseUrl,
 }: Props): JSX.Element {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const pageTab: 'templates' | 'analyzer' =
+    tabParam === 'analyzer' || initialTab === 'analyzer' ? 'analyzer' : 'templates';
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategoryKey>('ALL');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -115,11 +132,75 @@ export function DocumentLibraryClient({
         </h1>
         <p className="mt-1 text-sm text-[#555]">
           Generate audit-ready compliance documents grounded in Nigerian
-          regulation. Edit, download as Word, and version your drafts.
+          regulation — or analyse an existing white paper for SEC Nigeria ARIP
+          readiness.
         </p>
       </header>
 
-      {/* Monthly quota chip — shown for navigator users only */}
+      <div role="tablist" className="mb-6 inline-flex rounded-lg bg-[#F5F5F5] p-1">
+        <Link
+          href="/dashboard/compliance/documents"
+          role="tab"
+          className={[
+            'rounded-md px-4 py-2 text-sm font-medium transition',
+            pageTab === 'templates'
+              ? 'bg-white text-[#0B6E6E] shadow-sm'
+              : 'text-[#555] hover:text-[#1A1A1A]',
+          ].join(' ')}
+        >
+          Templates
+        </Link>
+        <Link
+          href="/dashboard/compliance/documents?tab=analyzer"
+          role="tab"
+          className={[
+            'rounded-md px-4 py-2 text-sm font-medium transition',
+            pageTab === 'analyzer'
+              ? 'bg-white text-[#0B6E6E] shadow-sm'
+              : 'text-[#555] hover:text-[#1A1A1A]',
+          ].join(' ')}
+        >
+          White Paper Analyzer
+        </Link>
+      </div>
+
+      {pageTab === 'analyzer' ? (
+        <>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-[#1A1A1A]">White Paper Analyzer</h2>
+            <p className="mt-1 text-sm text-[#555]">
+              Upload or paste your existing white paper. Klarify will assess it against SEC
+              Nigeria ARIP requirements, highlight gaps, and draft a Nigeria-compliant outline
+              — typically in under 60 seconds.
+            </p>
+          </div>
+          {!hasWhitePaperAnalyzer ? (
+            <div className="rounded-lg border border-[#0B6E6E] bg-[#E6F4F4] p-6">
+              <p className="font-semibold text-[#0D2B45]">Available on Compass plan</p>
+              <p className="mt-1 text-sm text-[#555]">
+                Analyse an existing white paper against SEC Nigeria ARIP requirements and get a
+                gap report plus Nigeria-compliant outline.
+              </p>
+              <Link
+                href="/dashboard/billing?plan=compass"
+                className="mt-4 inline-block rounded-md bg-[#0B6E6E] px-4 py-2 text-sm font-semibold text-white"
+              >
+                Upgrade to Compass →
+              </Link>
+            </div>
+          ) : (
+            <WhitePaperUploader apiBaseUrl={apiBaseUrl} recentAnalyses={recentWhitePapers} />
+          )}
+          <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+            <p className="text-xs text-amber-800">
+              Gap reports and outlines are first drafts for solicitor review. Klarify provides
+              regulatory information, not legal advice. Under Section 16 of the ARIP Framework,
+              applications MUST be filed through a registered solicitor or adviser.
+            </p>
+          </div>
+        </>
+      ) : (
+        <>
       {monthlyLimit !== null && plan !== 'free' ? (
         <div
           className={`mb-4 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${
@@ -291,6 +372,8 @@ export function DocumentLibraryClient({
           practitioner before adopting for production use.
         </p>
       </div>
+        </>
+      )}
     </div>
   );
 }

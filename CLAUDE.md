@@ -1201,6 +1201,17 @@ Phase E — 4 ARIP Document Templates (US-008 Sprint 5 additions):
 Phase F — Final verification:
 - S5-E2 🔍 VERIFY: Full Sprint 5 checkpoint; update CLAUDE.md §17 to Beta sprint; begin 20-user closed beta
 
+**Approved backlog (post–Sprint 5):**
+
+- **US-008B · White Paper Analyzer** ✅ SPEC APPROVED (27 May 2026) — **IMPLEMENTED**
+  - Spec: `Klarify_US-008B_White_Paper_Analyzer.md`
+  - Compass+ gate (`white_paper_analyzer` in PLAN_LIMITS); sub-tab under Document Generator (`?tab=analyzer`)
+  - Upload/paste → 14-section gap report + ARIP outline draft + `.docx` export + ARIP_WHITEPAPER generator handoff
+  - Migration: `apps/api/db/migrations/020_white_paper_analyses.sql`
+  - API: `/api/documents/whitepaper/*`
+  - UI: `/dashboard/compliance/documents/analyzer/[id]`
+  - 🔍 VERIFY: manual QA with GH exchange white paper fixture before production
+
 *Update this section at the start of every new sprint.*
 
 ---

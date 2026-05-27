@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { prisma, resolveOrgId } from '@/lib/db';
 import {
@@ -7,21 +8,20 @@ import {
   type TemplateId,
 } from '@klarify/ai/prompts/documents';
 import { PLAN_LIMITS, type Plan } from '@klarify/core';
+import { getPublicApiBaseUrl } from '@/lib/env';
 import { DocumentLibraryClient } from './_client';
+
+interface PageProps {
+  searchParams: { tab?: string };
+}
 
 /**
  * /dashboard/compliance/documents — Document Generator library (Sprint 4 S4-B2).
- *
- * Server component:
- *   1. Gates on auth.
- *   2. Loads the user's plan + monthly generation count.
- *   3. Loads the current generated docs for the org (1 row per template_type).
- *   4. Renders the library shell with all 9 template cards + the generated list.
- *
- * The page is server-rendered for a fast first paint — the only client work
- * is the category sidebar filter (state lives in the client child).
+ * US-008B — White Paper Analyzer sub-tab (?tab=analyzer).
  */
-export default async function DocumentLibraryPage(): Promise<JSX.Element> {
+export default async function DocumentLibraryPage({
+  searchParams,
+}: PageProps): Promise<JSX.Element> {
   const supabase = createClient();
   const {
     data: { user },
@@ -44,29 +44,38 @@ export default async function DocumentLibraryPage(): Promise<JSX.Element> {
     : 0;
 
   const generated = orgId ? await loadCurrentDocs(orgId, user.id) : [];
+  const recentWhitePapers = orgId ? await loadRecentWhitePapers(orgId) : [];
+  const hasWhitePaperAnalyzer = PLAN_LIMITS[plan].white_paper_analyzer;
+  const initialTab = searchParams.tab === 'analyzer' ? 'analyzer' : 'templates';
 
   return (
-    <DocumentLibraryClient
-      templates={listTemplates().map((t) => ({
-        templateId: t.templateId,
-        documentName: t.documentName,
-        regulatoryBasis: t.regulatoryBasis,
-        category: t.category,
-        requiredPlan: t.requiredPlan,
-      }))}
-      generated={generated.map((g) => ({
-        id: g.id,
-        templateType: g.templateType,
-        documentName: DOCUMENT_TEMPLATES[g.templateType as TemplateId]?.documentName ?? g.title,
-        regulatoryBasis: g.regulatoryBasis,
-        version: g.version,
-        createdAt: g.createdAt.toISOString(),
-        updatedAt: g.updatedAt.toISOString(),
-      }))}
-      plan={plan}
-      monthlyLimit={Number.isFinite(limit) ? limit : null}
-      monthlyUsed={generatedThisMonth}
-    />
+    <Suspense fallback={<div className="p-6 text-sm text-[#555]">Loading documents…</div>}>
+      <DocumentLibraryClient
+        templates={listTemplates().map((t) => ({
+          templateId: t.templateId,
+          documentName: t.documentName,
+          regulatoryBasis: t.regulatoryBasis,
+          category: t.category,
+          requiredPlan: t.requiredPlan,
+        }))}
+        generated={generated.map((g) => ({
+          id: g.id,
+          templateType: g.templateType,
+          documentName: DOCUMENT_TEMPLATES[g.templateType as TemplateId]?.documentName ?? g.title,
+          regulatoryBasis: g.regulatoryBasis,
+          version: g.version,
+          createdAt: g.createdAt.toISOString(),
+          updatedAt: g.updatedAt.toISOString(),
+        }))}
+        plan={plan}
+        monthlyLimit={Number.isFinite(limit) ? limit : null}
+        monthlyUsed={generatedThisMonth}
+        recentWhitePapers={recentWhitePapers}
+        hasWhitePaperAnalyzer={hasWhitePaperAnalyzer}
+        initialTab={initialTab}
+        apiBaseUrl={getPublicApiBaseUrl()}
+      />
+    </Suspense>
   );
 }
 
@@ -109,6 +118,33 @@ interface CurrentDocRow {
   version: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+async function loadRecentWhitePapers(orgId: string) {
+  return prisma.whitePaperAnalysis.findMany({
+    where: { orgId, deletedAt: null },
+    orderBy: { uploadedAt: 'desc' },
+    take: 10,
+    select: {
+      id: true,
+      originalFilename: true,
+      status: true,
+      completenessPct: true,
+      uploadedAt: true,
+      sourceJurisdiction: true,
+      licenceCategorySought: true,
+    },
+  }).then((rows) =>
+    rows.map((r) => ({
+      id: r.id,
+      originalFilename: r.originalFilename,
+      status: r.status,
+      completenessPct: r.completenessPct,
+      uploadedAt: r.uploadedAt.toISOString(),
+      sourceJurisdiction: r.sourceJurisdiction,
+      licenceCategorySought: r.licenceCategorySought,
+    })),
+  );
 }
 
 async function loadCurrentDocs(orgId: string, _userId: string): Promise<CurrentDocRow[]> {

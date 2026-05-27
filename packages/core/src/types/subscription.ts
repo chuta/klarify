@@ -16,6 +16,8 @@ export interface PlanLimits {
   readonly human_escalation: boolean | 'priority';
   readonly compliance_export: false | 'pdf' | 'full';
   readonly api_access: boolean;
+  /** US-008B — White Paper Analyzer (Compass+). Approved 27 May 2026. */
+  readonly white_paper_analyzer: boolean;
 }
 
 export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
@@ -31,6 +33,7 @@ export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
     human_escalation: false,
     compliance_export: false,
     api_access: false,
+    white_paper_analyzer: false,
   },
   navigator: {
     ai_queries_monthly: 50,
@@ -44,6 +47,7 @@ export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
     human_escalation: false,
     compliance_export: false,
     api_access: false,
+    white_paper_analyzer: false,
   },
   compass: {
     ai_queries_monthly: Infinity,
@@ -57,6 +61,7 @@ export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
     human_escalation: true,
     compliance_export: 'pdf',
     api_access: false,
+    white_paper_analyzer: true,
   },
   flagship: {
     ai_queries_monthly: Infinity,
@@ -70,6 +75,7 @@ export const PLAN_LIMITS: Readonly<Record<Plan, PlanLimits>> = {
     human_escalation: 'priority',
     compliance_export: 'full',
     api_access: true,
+    white_paper_analyzer: true,
   },
 };
 

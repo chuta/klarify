@@ -49,6 +49,7 @@ model User {
   productClassifications   ProductClassification[]
   scenarioAnalyses         ScenarioAnalysis[]
   jurisdictionGapAnalyses  JurisdictionGapAnalysis[]
+  whitePaperAnalyses       WhitePaperAnalysis[]
   createdInteractions      RegulatorInteraction[]
   notificationPreference   NotificationPreference?
   emailDripLogs            EmailDripLog[]
@@ -83,6 +84,7 @@ model Organisation {
   productClassifications ProductClassification[]
   scenarioAnalyses       ScenarioAnalysis[]
   jurisdictionGapAnalyses JurisdictionGapAnalysis[]
+  whitePaperAnalyses      WhitePaperAnalysis[]
   orgInvites             OrgInvite[]
 
   @@index([ownerId])
@@ -285,6 +287,38 @@ model UploadedDocument {
   @@index([orgId])
   @@index([orgId, uploadedAt(sort: Desc)])
   @@map("uploaded_documents")
+}
+
+model WhitePaperAnalysis {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId                 String    @map("org_id") @db.Uuid
+  userId                String    @map("user_id") @db.Uuid
+  sourceJurisdiction    String    @map("source_jurisdiction")
+  licenceCategorySought String  @map("licence_category_sought")
+  existingSourceLicence String?   @map("existing_source_licence")
+  originalFilename      String?   @map("original_filename")
+  fileType              String?   @map("file_type")
+  fileSize              Int?      @map("file_size")
+  s3Key                 String?   @map("s3_key")
+  extractedText         String    @map("extracted_text")
+  ocrMethod             String?   @map("ocr_method")
+  status                String    @default("pending")
+  errorMessage          String?   @map("error_message")
+  result                Json?
+  completenessPct       Int?      @map("completeness_pct")
+  sectionsAdequate      Int?      @map("sections_adequate")
+  uploadedAt            DateTime  @default(now()) @map("uploaded_at") @db.Timestamptz()
+  ocrCompletedAt        DateTime? @map("ocr_completed_at") @db.Timestamptz()
+  analysedAt            DateTime? @map("analysed_at") @db.Timestamptz()
+  deletedAt             DateTime? @map("deleted_at") @db.Timestamptz()
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id])
+
+  @@index([orgId, uploadedAt(sort: Desc)])
+  @@map("white_paper_analyses")
 }
 
 // =============================================================================

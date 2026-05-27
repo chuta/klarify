@@ -84,6 +84,16 @@ describe('PLAN_LIMITS feature gate logic', () => {
     expect(PLAN_LIMITS.compass.arip_tracker).toBe(true);
   });
 
+  it('free/navigator: white_paper_analyzer is false', () => {
+    expect(PLAN_LIMITS.free.white_paper_analyzer).toBe(false);
+    expect(PLAN_LIMITS.navigator.white_paper_analyzer).toBe(false);
+  });
+
+  it('compass/flagship: white_paper_analyzer is true', () => {
+    expect(PLAN_LIMITS.compass.white_paper_analyzer).toBe(true);
+    expect(PLAN_LIMITS.flagship.white_paper_analyzer).toBe(true);
+  });
+
   it('flagship plan: arip_tracker is true', () => {
     expect(PLAN_LIMITS.flagship.arip_tracker).toBe(true);
   });

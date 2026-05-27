@@ -11,7 +11,7 @@ import { SponsoredIndividualForm } from '@/components/documents/SponsoredIndivid
 
 interface PageProps {
   params: { templateId: string };
-  searchParams: { from?: string; taskId?: string };
+  searchParams: { from?: string; taskId?: string; fromAnalysis?: string; prefill?: string };
 }
 
 /**
@@ -55,10 +55,19 @@ export default async function GenerateDocumentPage({
       })
     : null;
 
-  // Merge pre-fill: existing formData → org defaults → server-side today fallback.
   const initialValues: Record<string, unknown> = { ...prefill };
   if (existing?.formData) {
     Object.assign(initialValues, existing.formData as Record<string, unknown>);
+  }
+  if (searchParams.prefill) {
+    try {
+      const analysisPrefill = JSON.parse(
+        decodeURIComponent(searchParams.prefill),
+      ) as Record<string, unknown>;
+      Object.assign(initialValues, analysisPrefill);
+    } catch {
+      // ignore malformed prefill param
+    }
   }
 
   // Deep-link context for "Mark roadmap task complete" CTA.

@@ -44,6 +44,7 @@ import { authRoutes } from './routes/auth.js';
 import { regulatorRoutes } from './routes/regulators.js';
 import { documentRoutes } from './routes/documents.js';
 import { documentGeneratorRoutes } from './routes/documents/generate.js';
+import { whitePaperRoutes } from './routes/documents/whitepaper.js';
 import { chatRoutes } from './routes/ai/chat.js';
 import { conversationRoutes } from './routes/ai/conversations.js';
 import { classifyRoutes } from './routes/ai/classify.js';
@@ -115,6 +116,7 @@ app.route('/api/auth', authRoutes);
 // analyser owns /api/documents/:id and would otherwise greedily catch literal
 // prefixes like /api/documents/generated.
 app.route('/api/documents', documentGeneratorRoutes);
+app.route('/api/documents/whitepaper', whitePaperRoutes);
 app.route('/api/documents', documentRoutes);
 
 // Billing — Sprint 5: Korapay subscriptions.
