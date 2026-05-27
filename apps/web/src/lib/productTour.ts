@@ -48,7 +48,7 @@ export const PRODUCT_TOUR_STOPS: ProductTourStop[] = [
     planLabel: 'Free (10 queries/mo)',
     imageFile: 'Founder Counsel.png',
     description:
-      'Ask any regulatory question and get streaming answers in plain English, grounded in the official corpus with citations to specific sections — not generic chatbot advice.',
+      'Ask any regulatory question and get streaming answers in plain English, grounded in the official corpus with citations to specific sections, not generic chatbot advice.',
     highlights: [
       'Conversation history with citation chips',
       'Personalised to your product type and target markets',
@@ -62,7 +62,7 @@ export const PRODUCT_TOUR_STOPS: ProductTourStop[] = [
     planLabel: 'Compass+',
     imageFile: 'Scenario Simulator.png',
     description:
-      'Stress-test a regulatory decision before you make it. Describe a planned launch, expansion, or enforcement scenario and get a structured Best, Likely, and Worst case analysis — each with probability, regulatory basis, business impact, and mitigation steps.',
+      'Stress-test a regulatory decision before you make it. Describe a planned launch, expansion, or enforcement scenario and get a structured Best, Likely, and Worst case analysis, each with probability, regulatory basis, business impact, and mitigation steps.',
     highlights: [
       'Eight pre-built scenario templates (ARIP, DAX, CBN on-ramp, and more)',
       'Three-column outcome cards with citation chips',
@@ -76,10 +76,10 @@ export const PRODUCT_TOUR_STOPS: ProductTourStop[] = [
     planLabel: 'Compass+ (1 target) · Flagship (up to 4)',
     imageFile: 'Jurisdiction Expansion.png',
     description:
-      'Compare your current Nigeria compliance posture against Ghana, Kenya, Mauritius, or South Africa before you expand. Klarify maps seven dimensions — licensing, AML, KYC, capital, reporting, and more — with green, amber, and red gap status.',
+      'Compare your current Nigeria compliance posture against Ghana, Kenya, Mauritius, or South Africa before you expand. Klarify maps seven dimensions, licensing, AML, KYC, capital, reporting, and more, with green, amber, and red gap status.',
     highlights: [
       '7-dimension gap table per target market with expandable guidance',
-      'Regulator contacts pulled from the platform — not hardcoded in the UI',
+      'Regulator contacts pulled from the platform, not hardcoded in the UI',
       'Downloadable Word report for board, investor, or counsel review',
     ],
   },
@@ -118,7 +118,7 @@ export const PRODUCT_TOUR_STOPS: ProductTourStop[] = [
     planLabel: 'Navigator (3/mo) · Compass+ unlimited',
     imageFile: 'Compliance Document Generator.png',
     description:
-      'Generate regulator-ready AML policies, BWRA, KYC tiering frameworks, ARIP white papers, and more — pre-filled from your org profile and grounded in the regulatory corpus.',
+      'Generate regulator-ready AML policies, BWRA, KYC tiering frameworks, ARIP white papers, and more, pre-filled from your org profile and grounded in the regulatory corpus.',
     highlights: [
       '13 templates including four ARIP Framework documents',
       'Version history with .docx and PDF download',
@@ -132,7 +132,7 @@ export const PRODUCT_TOUR_STOPS: ProductTourStop[] = [
     planLabel: 'Compass+',
     imageFile: 'ARIP Application Tracker.png',
     description:
-      'Track your SEC Nigeria ARIP application through all five stages of the June 2024 Framework — from Initial Assessment to Transition to Registration.',
+      'Track your SEC Nigeria ARIP application through all five stages of the June 2024 Framework, from Initial Assessment to Transition to Registration.',
     highlights: [
       'Solicitor-required blocker on Formal Application',
       'Customer growth cap tracker with breach alerts',
@@ -160,7 +160,7 @@ export const PRODUCT_TOUR_STOPS: ProductTourStop[] = [
     planLabel: 'Compass+',
     imageFile: 'Vetted Specialist Network.png',
     description:
-      'When a question needs a qualified human — enforcement situations, criminal liability, complex cross-border structures — request a warm introduction to a vetted regulatory specialist.',
+      'When a question needs a qualified human, enforcement situations, criminal liability, complex cross-border structures, request a warm introduction to a vetted regulatory specialist.',
     highlights: [
       'Structured intro request with urgency level',
       'Routed to Klarify specialist network',

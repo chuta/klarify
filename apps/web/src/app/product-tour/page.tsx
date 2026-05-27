@@ -43,8 +43,8 @@ function PageHeader(): JSX.Element {
           <span className="text-[#D4A843]">Klarify</span>
         </h1>
         <p className="mx-auto mb-8 max-w-2xl text-lg text-white/70">
-          A guided walkthrough of the dashboard — Readiness Score, AI advisory, compliance
-          roadmap, document generator, ARIP tracker, and more. No account required.
+          A guided walkthrough of the dashboard.  See Readiness Score, AI advisory, compliance
+          roadmap, document generator, ARIP tracker, and more.
         </p>
         <Link
           href="/sign-up"
