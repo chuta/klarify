@@ -16,8 +16,10 @@
  *   - AIP: max 50 customers, max NGN 2m/txn, max NGN 5m AUM/customer (Section 29)
  */
 
+import { LightBulbIcon } from '@heroicons/react/24/outline';
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import { StatusLine, StatusIcon } from '@/components/icons';
 import {
   ARIP_PROCESSING_FEE,
   formatAripProcessingFeeNgn,
@@ -341,8 +343,8 @@ export function ARIPTrackerV2Client({
   if (!arip) {
     return (
       <div className="rounded-2xl border-2 border-dashed border-[#0B6E6E] bg-[#E6F4F4] p-12 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl">
-          📋
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white">
+          <StatusIcon variant="clipboard" className="h-8 w-8 text-[#0B6E6E]" />
         </div>
         <h2 className="mb-2 text-xl font-semibold text-[#0B6E6E]">Start your ARIP journey</h2>
         <p className="mx-auto mb-6 max-w-md text-sm text-[#555555]">
@@ -459,9 +461,9 @@ export function ARIPTrackerV2Client({
           {/* ── SOLICITOR BLOCKER — shows when pre_screening and solicitor not engaged ── */}
           {arip.current_stage === 'pre_screening' && !arip.solicitor_engaged && (
             <div className="rounded-xl border-2 border-red-400 bg-red-50 p-5">
-              <p className="mb-1 text-sm font-bold text-red-700">
-                ⛔ SOLICITOR REQUIRED BEFORE STAGE 2
-              </p>
+              <StatusLine variant="danger" className="mb-1 text-sm font-bold text-red-700">
+                SOLICITOR REQUIRED BEFORE STAGE 2
+              </StatusLine>
               <p className="mb-4 text-sm text-red-700">
                 You cannot advance to Initial Assessment without formally engaging a qualified
                 Nigerian solicitor or adviser. This is a regulatory requirement under Section 16
@@ -518,10 +520,10 @@ export function ARIPTrackerV2Client({
           {/* ── Solicitor confirmed state ── */}
           {arip.solicitor_engaged && arip.solicitor_name && (
             <div className="rounded-xl border border-green-200 bg-green-50 px-5 py-3">
-              <p className="text-sm font-semibold text-green-700">
-                ✅ Solicitor engaged: {arip.solicitor_name}
+              <StatusLine variant="success" className="text-sm font-semibold text-green-700">
+                Solicitor engaged: {arip.solicitor_name}
                 {arip.solicitor_firm && ` (${arip.solicitor_firm})`}
-              </p>
+              </StatusLine>
             </div>
           )}
 
@@ -532,9 +534,12 @@ export function ARIPTrackerV2Client({
                 The first step is contacting the SEC Innovation Office to schedule a pre-screening
                 meeting. This is informal — no formal application yet. Do not pay any fees at this stage.
               </p>
-              <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-                💡 Contact the Innovation Office by email first. Meetings are held Tuesdays and
-                Thursdays 10am–2pm.
+              <div className="mb-4 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+                <LightBulbIcon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                <span>
+                  Contact the Innovation Office by email first. Meetings are held Tuesdays and
+                  Thursdays 10am–2pm.
+                </span>
               </div>
               <div className="space-y-2 text-sm text-[#1A1A1A]">
                 <p className="font-semibold">Pre-screening preparation checklist:</p>
@@ -568,13 +573,13 @@ export function ARIPTrackerV2Client({
                 <p className="mb-2 font-mono text-xs text-[#0B6E6E]">
                   {ARIP_PROCESSING_FEE.regulatoryBasis}
                 </p>
-                <p className="mb-3 text-xs text-amber-700">
-                  ⚠️ {ARIP_PROCESSING_FEE.revopNote}
-                </p>
+                <StatusLine variant="warning" className="mb-3 text-xs text-amber-700">
+                  {ARIP_PROCESSING_FEE.revopNote}
+                </StatusLine>
                 {arip.application_fee_paid ? (
-                  <p className="text-sm font-semibold text-green-700">
-                    ✅ Fee paid: NGN {(arip.application_fee_amount_ngn ?? 0).toLocaleString()}
-                  </p>
+                  <StatusLine variant="success" className="text-sm font-semibold text-green-700">
+                    Fee paid: NGN {(arip.application_fee_amount_ngn ?? 0).toLocaleString()}
+                  </StatusLine>
                 ) : (
                   <a
                     href="https://revop.gov.ng/payments/generate-bill?org=0220009001000"
@@ -623,10 +628,10 @@ export function ARIPTrackerV2Client({
                   Minimum 25% of required shareholder fund, from a NAICOM-approved insurer.
                 </p>
                 {arip.fidelity_bond_in_place ? (
-                  <p className="text-sm font-semibold text-green-700">
-                    ✅ Bond in place
+                  <StatusLine variant="success" className="text-sm font-semibold text-green-700">
+                    Bond in place
                     {arip.fidelity_bond_expiry && ` — expires ${arip.fidelity_bond_expiry}`}
-                  </p>
+                  </StatusLine>
                 ) : (
                   <FidelityBondForm accessToken={accessToken} onSaved={() => {
                     setArip((prev) => prev ? { ...prev, fidelity_bond_in_place: true } : prev);
@@ -679,10 +684,17 @@ export function ARIPTrackerV2Client({
                       year: 'numeric',
                     })}
                     {arip.aip_days_remaining !== null && (
-                      <span className="ml-2 font-normal">
-                        ({arip.aip_days_remaining < 0
-                          ? '⛔ EXPIRED'
-                          : `${arip.aip_days_remaining} days remaining`})
+                      <span className="ml-2 inline-flex items-center gap-1 font-normal">
+                        (
+                        {arip.aip_days_remaining < 0 ? (
+                          <>
+                            <StatusIcon variant="danger" className="h-3.5 w-3.5" />
+                            EXPIRED
+                          </>
+                        ) : (
+                          `${arip.aip_days_remaining} days remaining`
+                        )}
+                        )
                       </span>
                     )}
                   </p>
@@ -730,7 +742,9 @@ export function ARIPTrackerV2Client({
                     </button>
                   </div>
                   {growthResult?.warnings.map((w, i) => (
-                    <p key={i} className="mt-2 text-xs font-semibold text-red-600">⛔ {w}</p>
+                    <StatusLine key={i} variant="danger" className="mt-2 text-xs font-semibold text-red-600">
+                      {w}
+                    </StatusLine>
                   ))}
                 </div>
               </div>
@@ -761,9 +775,9 @@ export function ARIPTrackerV2Client({
           {activeStage === 'full_registration' && (
             <StagePanelShell title="Stage 5: Full Registration">
               <div className="mb-4 rounded-lg border border-green-300 bg-green-50 px-5 py-4">
-                <p className="text-base font-bold text-green-700">
-                  🎉 Congratulations on completing the ARIP journey!
-                </p>
+                <StatusLine variant="celebration" className="text-base font-bold text-green-700">
+                  Congratulations on completing the ARIP journey!
+                </StatusLine>
                 <p className="mt-1 text-sm text-green-600">
                   You are now a fully registered digital asset operator in Nigeria under ISA 2025.
                 </p>

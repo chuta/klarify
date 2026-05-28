@@ -12,7 +12,7 @@ import {
   SpecialistRequestModal,
   type SpecialistRequestDefaults,
 } from '@/components/specialists/SpecialistRequestModal';
-import { ChatBubbleLeftRightIcon, MenuIcon, Plus } from '@/components/icons';
+import { ChatBubbleLeftRightIcon, Lock, MenuIcon, Plus } from '@/components/icons';
 
 const STARTER_QUESTIONS: string[] = [
   'What licences does my product need in Nigeria?',
@@ -297,7 +297,7 @@ function QueryLimitUpgradePrompt({
     <div className="rounded-xl border border-[#0B6E6E] bg-[#E6F4F4] p-4">
       <div className="mb-3 flex items-start gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0B6E6E] text-white">
-          🔒
+          <Lock className="h-4 w-4 text-white" aria-hidden />
         </div>
         <div>
           <p className="text-sm font-semibold text-[#0D2B45]">

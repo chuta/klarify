@@ -6,6 +6,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { InteractionType, RegulatorInteraction } from '@klarify/core';
 import { CloseIcon, Download } from '@/components/icons';
+import {
+  InteractionTypeIcon,
+} from '@/components/regulators/InteractionTypeIcon';
+import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 
 interface InteractionHistoryProps {
   regulatorCode: string;
@@ -15,13 +19,13 @@ interface InteractionHistoryProps {
 
 const TYPE_STYLES: Record<
   InteractionType,
-  { label: string; emoji: string; bg: string; color: string }
+  { label: string; bg: string; color: string }
 > = {
-  call:       { label: 'Call',       emoji: '📞', bg: '#EFF6FF', color: '#1D4ED8' },
-  email:      { label: 'Email',      emoji: '📧', bg: '#ECFDF5', color: '#059669' },
-  meeting:    { label: 'Meeting',    emoji: '🤝', bg: '#F5F3FF', color: '#7C3AED' },
-  submission: { label: 'Submission', emoji: '📋', bg: '#FFFBEB', color: '#D97706' },
-  letter:     { label: 'Letter',     emoji: '📄', bg: '#E8EEF4', color: '#0D2B45' },
+  call:       { label: 'Call',       bg: '#EFF6FF', color: '#1D4ED8' },
+  email:      { label: 'Email',      bg: '#ECFDF5', color: '#059669' },
+  meeting:    { label: 'Meeting',    bg: '#F5F3FF', color: '#7C3AED' },
+  submission: { label: 'Submission', bg: '#FFFBEB', color: '#D97706' },
+  letter:     { label: 'Letter',     bg: '#E8EEF4', color: '#0D2B45' },
 };
 
 const ALL_FILTER = 'all';
@@ -101,12 +105,11 @@ export function InteractionHistory({
     }
   }, []);
 
-  const filterButtons: { value: FilterType; label: string; emoji: string }[] = [
-    { value: ALL_FILTER, label: 'All', emoji: '📂' },
+  const filterButtons: { value: FilterType; label: string }[] = [
+    { value: ALL_FILTER, label: 'All' },
     ...Object.entries(TYPE_STYLES).map(([k, v]) => ({
       value: k as FilterType,
       label: v.label,
-      emoji: v.emoji,
     })),
   ];
 
@@ -153,17 +156,20 @@ export function InteractionHistory({
 
         {/* Filter bar */}
         <div className="flex gap-1 overflow-x-auto border-b border-[#F5F5F5] px-4 py-2.5">
-          {filterButtons.map(({ value, label, emoji }) => (
+          {filterButtons.map(({ value, label }) => (
             <button
               key={value}
               onClick={() => setFilter(value)}
-              className={`flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+              className={`flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
                 filter === value
                   ? 'bg-[#0B6E6E] text-white'
                   : 'bg-[#F5F5F5] text-[#555555] hover:bg-[#E6F4F4]'
               }`}
             >
-              <span>{emoji}</span>
+              <InteractionTypeIcon
+                type={value === ALL_FILTER ? 'all' : value}
+                className="h-3.5 w-3.5"
+              />
               <span>{label}</span>
             </button>
           ))}
@@ -177,7 +183,7 @@ export function InteractionHistory({
             </div>
           ) : interactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <span className="mb-3 text-4xl">📋</span>
+              <ClipboardDocumentListIcon className="mb-3 h-10 w-10 text-[#CCCCCC]" aria-hidden />
               <p className="text-sm font-medium text-[#1A1A1A]">No interactions logged yet</p>
               <p className="mt-1 text-xs text-[#555555]">
                 Log a call, email, or meeting to start building your regulatory engagement record.
@@ -195,10 +201,14 @@ export function InteractionHistory({
                     <div className="flex items-start gap-3">
                       {/* Type badge */}
                       <span
-                        className="mt-0.5 shrink-0 rounded-lg px-2 py-1 text-xs font-semibold"
+                        className="mt-0.5 flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold"
                         style={{ backgroundColor: typeStyle.bg, color: typeStyle.color }}
                       >
-                        {typeStyle.emoji} {typeStyle.label}
+                        <InteractionTypeIcon
+                          type={i.interactionType as InteractionType}
+                          className="h-3.5 w-3.5"
+                        />
+                        {typeStyle.label}
                       </span>
 
                       <div className="min-w-0 flex-1">

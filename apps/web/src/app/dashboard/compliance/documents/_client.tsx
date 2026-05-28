@@ -26,6 +26,7 @@ import {
   CATEGORY_ORDER,
   type TemplateCategoryKey,
 } from '@/components/documents/categories';
+import { CategoryIcon } from '@/components/documents/CategoryIcon';
 import type { Plan } from '@klarify/core';
 
 export interface TemplateMeta {
@@ -262,7 +263,7 @@ export function DocumentLibraryClient({
                   }`}
                 >
                   <span className="inline-flex items-center gap-2">
-                    <span aria-hidden="true">{meta.icon}</span>
+                    <CategoryIcon category={cat} className="h-4 w-4 shrink-0" />
                     <span>{meta.label}</span>
                   </span>
                   <span className="text-xs text-[#999]">{count}</span>

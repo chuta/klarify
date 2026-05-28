@@ -114,6 +114,10 @@ export const Eye = createIcon(EyeIcon);
 export const EyeSlash = createIcon(EyeSlashIcon);
 
 // ── Dashboard nav (re-export raw heroicons for custom navIcon() usage) ────────
+export { FeatureIconBox } from './FeatureIconBox.js';
+export type { FeatureIconTone, FeatureIconBoxProps } from './FeatureIconBox.js';
+export { StatusLine, StatusIcon } from './StatusIcon.js';
+export type { StatusIconVariant, StatusLineProps } from './StatusIcon.js';
 export {
   RocketLaunchIcon,
   HomeIcon,

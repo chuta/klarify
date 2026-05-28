@@ -1,9 +1,23 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import {
+  AdjustmentsHorizontalIcon,
+  BuildingLibraryIcon,
+  ChartBarIcon,
+  ClipboardDocumentCheckIcon,
+  DocumentTextIcon,
+  FolderIcon,
+  MagnifyingGlassIcon,
+  MapIcon,
+  ScaleIcon,
+  UserGroupIcon,
+} from '@heroicons/react/24/outline';
 import { getOptionalUser } from '@/lib/supabase/server';
 import { Navbar } from '@/components/marketing/Navbar';
 import { Footer } from '@/components/marketing/Footer';
+import { FeatureIconBox } from '@/components/icons';
+import type { HeroIcon } from '@/components/icons';
 
 export const metadata: Metadata = {
   title: 'Features — Klarify',
@@ -73,65 +87,81 @@ function PageHeader(): JSX.Element {
 /* ─────────────────────────────────────────────────────────── */
 
 function FeaturesGrid(): JSX.Element {
-  const features = [
+  const features: {
+    Icon: HeroIcon;
+    tone: 'teal' | 'gold';
+    badge: string;
+    badgeColour: string;
+    title: string;
+    body: string;
+  }[] = [
     {
-      icon: '⚖️',
+      Icon: ScaleIcon,
+      tone: 'teal',
       badge: 'FounderCounsel',
       badgeColour: '#0B6E6E',
       title: 'Regulatory Q&A with Citations',
       body: 'Ask anything. Get answers grounded in Nigerian and African law with exact section references, not generic advice.',
     },
     {
-      icon: '🔍',
+      Icon: MagnifyingGlassIcon,
+      tone: 'teal',
       badge: 'FounderCounsel',
       badgeColour: '#0B6E6E',
       title: 'Product Classification Engine',
       body: 'Describe your product. We classify it under SEC Nigeria VASP categories — DAX, DAOP, RATOP, AVASP, and more — and tell you which regulators you need to engage.',
     },
     {
-      icon: '📄',
+      Icon: DocumentTextIcon,
+      tone: 'teal',
       badge: 'FounderCounsel',
       badgeColour: '#0B6E6E',
       title: 'Regulatory Letter Analyser',
       body: 'Upload a letter from SEC Nigeria, CBN, or NFIU. Get a plain-English summary, urgency rating, 72-hour action plan, and a draft response.',
     },
     {
-      icon: '📊',
+      Icon: ChartBarIcon,
+      tone: 'gold',
       badge: 'ComplianceOS',
       badgeColour: '#D4A843',
       title: 'Live Readiness Score',
       body: 'A 0–100 gauge across 8 compliance dimensions that updates in real time as you complete tasks, upload documents, and tick off indicators.',
     },
     {
-      icon: '🗺️',
+      Icon: MapIcon,
+      tone: 'gold',
       badge: 'ComplianceOS',
       badgeColour: '#D4A843',
       title: 'Smart Compliance Roadmap',
       body: 'A personalised, phase-locked Kanban board. Complete Phase 1 to unlock Phase 2. Each task links to the specific regulatory requirement it satisfies.',
     },
     {
-      icon: '📁',
+      Icon: FolderIcon,
+      tone: 'gold',
       badge: 'ComplianceOS',
       badgeColour: '#D4A843',
       title: 'Document Generator',
       body: 'Generate 13 regulatory documents in minutes: BWRA, AML/CFT Policy, KYC Tiers Framework, ARIP Operational Plan, Sworn Undertakings, Entity Rules, and more.',
     },
     {
-      icon: '📋',
+      Icon: ClipboardDocumentCheckIcon,
+      tone: 'gold',
       badge: 'ComplianceOS',
       badgeColour: '#D4A843',
       title: 'ARIP Process Tracker',
       body: 'Navigate the 5-stage ARIP process with stage-by-stage checklists, the 10% customer growth cap monitor, AIP restrictions tracker, and solicitor engagement workflows.',
     },
     {
-      icon: '🤝',
+      Icon: UserGroupIcon,
+      tone: 'teal',
       badge: 'FounderCounsel',
       badgeColour: '#0B6E6E',
       title: 'Regulator Relationship Intelligence',
       body: 'Go beyond knowing the rules — learn how to work with regulators. Meeting prep, jurisdiction-specific etiquette, communication templates, escalation protocols, and institutional maturity scoring.',
     },
     {
-      icon: '🏦',
+      Icon: BuildingLibraryIcon,
+      tone: 'gold',
       badge: 'ComplianceOS',
       badgeColour: '#D4A843',
       title: 'Banking & Partner Readiness',
@@ -143,13 +173,13 @@ function FeaturesGrid(): JSX.Element {
     <section className="bg-[#FAFAFA] px-6 py-20">
       <div className="mx-auto max-w-5xl">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map(({ icon, badge, badgeColour, title, body }) => (
+          {features.map(({ Icon, tone, badge, badgeColour, title, body }) => (
             <div
               key={title}
               className="rounded-2xl border border-[#CCCCCC] bg-white p-6 shadow-sm transition hover:shadow-md"
             >
               <div className="mb-4 flex items-center justify-between">
-                <span className="text-3xl">{icon}</span>
+                <FeatureIconBox icon={Icon} tone={tone} />
                 <span
                   className="rounded-full px-2 py-0.5 text-xs font-semibold text-white"
                   style={{ backgroundColor: badgeColour }}
@@ -325,24 +355,24 @@ function RegulatorRelationshipCard(): JSX.Element {
 /* ─────────────────────────────────────────────────────────── */
 
 function BankingReadinessCard(): JSX.Element {
-  const pillars = [
+  const pillars: { Icon: HeroIcon; title: string; body: string }[] = [
     {
-      icon: '🏦',
+      Icon: BuildingLibraryIcon,
       title: 'Banking Readiness Score',
       body: 'Assess your profile against the risk criteria Nigerian and international correspondent banks apply to fintech and digital asset companies before opening accounts.',
     },
     {
-      icon: '📋',
+      Icon: ClipboardDocumentCheckIcon,
       title: 'Institutional Due Diligence Pack',
       body: 'Auto-generate the documentation package that banks, payment processors, and institutional partners request, KYC, UBO register, AML policy, source-of-funds narrative.',
     },
     {
-      icon: '🎯',
+      Icon: AdjustmentsHorizontalIcon,
       title: 'Risk Profile Optimisation',
       body: 'Identify the exact flags that cause banks to decline or terminate accounts, and fix them before your application, not after rejection.',
     },
     {
-      icon: '🔍',
+      Icon: MagnifyingGlassIcon,
       title: 'Operational Transparency Systems',
       body: 'Transaction monitoring documentation, audit trail architecture, and reporting infrastructure that gives partners confidence your controls are real.',
     },
@@ -379,12 +409,14 @@ function BankingReadinessCard(): JSX.Element {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {pillars.map(({ icon, title, body }) => (
+              {pillars.map(({ Icon, title, body }) => (
                 <div
                   key={title}
                   className="rounded-xl border border-[#D4A843]/20 bg-white p-5 shadow-sm"
                 >
-                  <div className="mb-3 text-2xl">{icon}</div>
+                  <div className="mb-3">
+                    <FeatureIconBox icon={Icon} tone="gold" />
+                  </div>
                   <h4 className="mb-2 text-sm font-semibold text-[#1A1A1A]">{title}</h4>
                   <p className="text-xs text-[#555555]">{body}</p>
                 </div>

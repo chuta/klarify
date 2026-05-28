@@ -5,7 +5,13 @@
 
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
+import {
+  ComputerDesktopIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+} from '@heroicons/react/24/outline';
 import type { Regulator } from '@klarify/core';
+import { ExternalLink, Lock } from '@/components/icons';
 import { InteractionModal } from '@/components/regulators/InteractionModal';
 import { InteractionHistory } from '@/components/regulators/InteractionHistory';
 import { getRegulatorLogoPath } from '@/lib/regulatorLogos';
@@ -18,16 +24,16 @@ interface RegulatorHubClientProps {
 }
 
 // Presentational constants — not regulatory data (CLAUDE.md §16 Rule 2).
-const REGULATOR_ACCENT: Record<string, { color: string; bg: string; icon: string; initials: string }> = {
-  SEC_NIGERIA: { color: '#0B6E6E', bg: '#E6F4F4', icon: '🏛️', initials: 'SEC' },
-  CBN:         { color: '#0D2B45', bg: '#E8EEF4', icon: '🏦', initials: 'CBN' },
-  NFIU:        { color: '#C0392B', bg: '#FDF2F2', icon: '🔍', initials: 'NFIU' },
-  NITDA:       { color: '#6B4E9B', bg: '#F3EFF9', icon: '💻', initials: 'NITDA' },
-  CAC:         { color: '#1A7A4A', bg: '#EFF7F2', icon: '📝', initials: 'CAC' },
-  EFCC:        { color: '#7B4F12', bg: '#FDF4E7', icon: '⚖️', initials: 'EFCC' },
-  NAICOM:      { color: '#D4A843', bg: '#FDF6E3', icon: '🛡️', initials: 'NAICOM' },
+const REGULATOR_ACCENT: Record<string, { color: string; bg: string; initials: string }> = {
+  SEC_NIGERIA: { color: '#0B6E6E', bg: '#E6F4F4', initials: 'SEC' },
+  CBN:         { color: '#0D2B45', bg: '#E8EEF4', initials: 'CBN' },
+  NFIU:        { color: '#C0392B', bg: '#FDF2F2', initials: 'NFIU' },
+  NITDA:       { color: '#6B4E9B', bg: '#F3EFF9', initials: 'NITDA' },
+  CAC:         { color: '#1A7A4A', bg: '#EFF7F2', initials: 'CAC' },
+  EFCC:        { color: '#7B4F12', bg: '#FDF4E7', initials: 'EFCC' },
+  NAICOM:      { color: '#D4A843', bg: '#FDF6E3', initials: 'NAICOM' },
 };
-const DEFAULT_ACCENT = { color: '#555555', bg: '#F5F5F5', icon: '🏢', initials: '??' };
+const DEFAULT_ACCENT = { color: '#555555', bg: '#F5F5F5', initials: '??' };
 
 const PRIMARY_REGS = new Set(['SEC_NIGERIA', 'CBN', 'NFIU']);
 
@@ -114,7 +120,7 @@ export function RegulatorHubClient({
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0B6E6E]">
-                <span className="text-lg">🔒</span>
+                <Lock className="h-5 w-5 text-white" aria-hidden />
               </div>
               <div>
                 <p className="font-semibold text-[#0D2B45]">Available on Compass plan</p>
@@ -283,7 +289,7 @@ function RegulatorCard({
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-[11px] text-[#0B6E6E] hover:underline"
           >
-            <span>🔗</span>
+            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">{regulator.website.replace('https://', '')}</span>
           </a>
         )}
@@ -294,7 +300,7 @@ function RegulatorCard({
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-[11px] text-[#0B6E6E] hover:underline"
           >
-            <span>🖥️</span>
+            <ComputerDesktopIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <span>ePortal</span>
           </a>
         )}
@@ -303,13 +309,13 @@ function RegulatorCard({
             href={`mailto:${regulator.email}`}
             className="flex items-center gap-1.5 text-[11px] text-[#555555] hover:text-[#0B6E6E]"
           >
-            <span>📧</span>
+            <EnvelopeIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <span className="truncate">{regulator.email}</span>
           </a>
         )}
         {regulator.phone && (
           <p className="flex items-center gap-1.5 text-[11px] text-[#555555]">
-            <span>📞</span>
+            <PhoneIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <span>{regulator.phone}</span>
           </p>
         )}
@@ -322,7 +328,14 @@ function RegulatorCard({
           className="flex-1 rounded-lg bg-[#0B6E6E] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#0D2B45] disabled:opacity-50"
           title={hasCrm ? `Log interaction with ${regulator.name}` : 'Requires Compass plan'}
         >
-          {hasCrm ? '+ Log interaction' : '🔒 Log interaction'}
+          {hasCrm ? (
+            '+ Log interaction'
+          ) : (
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <Lock className="h-3.5 w-3.5" aria-hidden />
+              Log interaction
+            </span>
+          )}
         </button>
         <button
           onClick={onViewHistory}

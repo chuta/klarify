@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Eye, EyeSlash } from '@/components/icons';
 import { setNewPassword } from './actions';
 
 export function ResetPasswordForm(): JSX.Element {
@@ -58,7 +59,7 @@ export function ResetPasswordForm(): JSX.Element {
               tabIndex={-1}
               aria-label={showPw ? 'Hide password' : 'Show password'}
             >
-              {showPw ? '🙈' : '👁️'}
+              {showPw ? <EyeSlash size="md" /> : <Eye size="md" />}
             </button>
           </div>
         </div>

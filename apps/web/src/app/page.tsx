@@ -1,9 +1,16 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import {
+  ArchiveBoxIcon,
+  ClipboardDocumentListIcon,
+  NoSymbolIcon,
+} from '@heroicons/react/24/outline';
 import { getOptionalUser } from '@/lib/supabase/server';
 import { Navbar } from '@/components/marketing/Navbar';
 import { Footer } from '@/components/marketing/Footer';
 import { BookPurchaseLinks } from '@/components/marketing/BookPurchaseLinks';
+import { FeatureIconBox } from '@/components/icons';
+import type { HeroIcon } from '@/components/icons';
 
 /**
  * / — Klarify landing page.
@@ -117,19 +124,19 @@ function Hero(): JSX.Element {
 /* ─────────────────────────────────────────────────────────── */
 
 function ProblemSection(): JSX.Element {
-  const problems = [
+  const problems: { Icon: HeroIcon; title: string; body: string }[] = [
     {
-      icon: '📋',
+      Icon: ClipboardDocumentListIcon,
       title: 'You don\'t know what you don\'t know',
       body: 'Most founders discover they need a licence only after building for months, or after receiving a regulator\'s letter.',
     },
     {
-      icon: '⛔',
+      Icon: NoSymbolIcon,
       title: 'Regulatory letters trigger panic',
       body: 'A letter from SEC Nigeria, CBN, or NFIU is terrifying without context. You have 21 days and no idea what they\'re asking.',
     },
     {
-      icon: '🗃️',
+      Icon: ArchiveBoxIcon,
       title: 'Compliance is manual and fragmented',
       body: 'AML manuals nobody follows. STRs filed late. ARIP stalled at Stage 3. Scattered documents and spreadsheets are not a compliance system.',
     },
@@ -151,12 +158,14 @@ function ProblemSection(): JSX.Element {
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
-          {problems.map(({ icon, title, body }) => (
+          {problems.map(({ Icon, title, body }) => (
             <div
               key={title}
               className="rounded-2xl border border-[#CCCCCC] bg-white p-6 shadow-sm"
             >
-              <div className="mb-4 text-3xl">{icon}</div>
+              <div className="mb-4">
+                <FeatureIconBox icon={Icon} tone="teal" />
+              </div>
               <h3 className="mb-2 text-base font-semibold text-[#1A1A1A]">{title}</h3>
               <p className="text-sm text-[#555555]">{body}</p>
             </div>

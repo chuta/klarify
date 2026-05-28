@@ -1,9 +1,20 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import {
+  BuildingLibraryIcon,
+  BuildingOffice2Icon,
+  ExclamationTriangleIcon,
+  GlobeAltIcon,
+  RocketLaunchIcon,
+  ScaleIcon,
+  WrenchScrewdriverIcon,
+} from '@heroicons/react/24/outline';
 import { getOptionalUser } from '@/lib/supabase/server';
 import { Navbar } from '@/components/marketing/Navbar';
 import { Footer } from '@/components/marketing/Footer';
+import { FeatureIconBox } from '@/components/icons';
+import type { HeroIcon } from '@/components/icons';
 
 export const metadata: Metadata = {
   title: 'Who It\'s For — Klarify',
@@ -58,44 +69,57 @@ function PageHeader(): JSX.Element {
 /* ─────────────────────────────────────────────────────────── */
 
 function Personas(): JSX.Element {
-  const personas = [
+  const personas: {
+    Icon: HeroIcon;
+    tone: 'dark' | 'danger';
+    title: string;
+    urgent: boolean;
+    body: string;
+    useCase: string;
+  }[] = [
     {
-      icon: '🚀',
+      Icon: RocketLaunchIcon,
+      tone: 'dark',
       title: 'The Pre-Launch Founder',
       urgent: false,
       body: 'Building a digital asset product in Nigeria. Has not yet engaged any regulator.',
       useCase: 'Instant product classification, regulator map, step-by-step readiness roadmap.',
     },
     {
-      icon: '⛔',
+      Icon: ExclamationTriangleIcon,
+      tone: 'danger',
       title: 'The Post-Letter Founder',
       urgent: true,
       body: 'Has received a letter from SEC Nigeria, CBN, or NFIU. Does not understand it. Has 21 days to respond.',
       useCase: 'Letter analysis, 72-hour action plan, draft response, specialist connection.',
     },
     {
-      icon: '🏗️',
+      Icon: WrenchScrewdriverIcon,
+      tone: 'dark',
       title: 'The Compliance Builder',
       urgent: false,
       body: 'Has clarity on what to do but lacks infrastructure to do it systematically. AML manual exists but nobody follows it. ARIP stalled at Stage 3.',
       useCase: 'ComplianceOS — smart checklists, document generators, compliance calendar.',
     },
     {
-      icon: '🏢',
+      Icon: BuildingOffice2Icon,
+      tone: 'dark',
       title: 'The Corporate Innovator',
       urgent: false,
       body: 'Innovation lead at a bank, telco, or insurance company told to "do something with blockchain." No Web3 background, no compliance framework.',
       useCase: 'Guided onboarding, regulator map, roadmap appropriate for enterprise context.',
     },
     {
-      icon: '⚖️',
+      Icon: ScaleIcon,
+      tone: 'dark',
       title: 'The Compliance Professional',
       urgent: false,
       body: 'Lawyer or compliance officer serving multiple clients across Nigeria or West Africa. Needs fast, citable regulatory intelligence and client-ready outputs.',
       useCase: 'Document analysis, regulatory Q&A, jurisdiction comparison, client-ready reports.',
     },
     {
-      icon: '🌍',
+      Icon: GlobeAltIcon,
+      tone: 'dark',
       title: 'The Cross-Border Operator',
       urgent: false,
       body: 'Expanding beyond Nigeria into Ghana, Kenya, or South Africa. Each new market brings different regulators and a different compliance framework.',
@@ -125,7 +149,7 @@ function Personas(): JSX.Element {
     <section className="bg-[#0D2B45] px-6 py-20">
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {personas.map(({ icon, title, urgent, body, useCase }) => (
+          {personas.map(({ Icon, tone, title, urgent, body, useCase }) => (
             <div
               key={title}
               className={`relative rounded-2xl border p-6 ${
@@ -139,7 +163,9 @@ function Personas(): JSX.Element {
                   Most Urgent
                 </span>
               )}
-              <div className="mb-3 text-3xl">{icon}</div>
+              <div className="mb-3">
+                <FeatureIconBox icon={Icon} tone={tone} />
+              </div>
               <h3 className="mb-2 text-base font-semibold text-white">{title}</h3>
               <p className="mb-4 text-sm text-white/60">{body}</p>
               <div className="rounded-lg bg-white/10 px-3 py-2">
@@ -156,8 +182,8 @@ function Personas(): JSX.Element {
 
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#D4A843]/20 text-2xl">
-                🏦
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#D4A843]/20">
+                <BuildingLibraryIcon className="h-6 w-6 text-[#D4A843]" aria-hidden />
               </div>
               <div>
                 <div className="mb-1 flex items-center gap-2">

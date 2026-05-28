@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { NoSymbolIcon } from '@heroicons/react/24/outline';
 
 interface CriticalDoc {
   id: string;
@@ -52,9 +53,7 @@ export function CriticalDocumentBanner({
 
   return (
     <div className="mb-6 flex items-start gap-4 rounded-2xl bg-[#C0392B] px-5 py-4 text-white shadow-sm">
-      <span className="text-2xl leading-none" aria-hidden>
-        ⛔
-      </span>
+      <NoSymbolIcon className="h-7 w-7 shrink-0" aria-hidden />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold uppercase tracking-wider">
           Critical regulatory matter

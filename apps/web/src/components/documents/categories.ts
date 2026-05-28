@@ -16,22 +16,19 @@ export type TemplateCategoryKey =
 
 export interface CategoryMeta {
   label: string;
-  icon: string;
   tintBg: string;
   tintFg: string;
 }
 
 export const CATEGORY_DETAILS: Record<TemplateCategoryKey, CategoryMeta> = {
-  ALL: { label: 'All Templates', icon: '◎', tintBg: '#E6F4F4', tintFg: '#0B6E6E' },
-  AML_CFT: { label: 'AML/CFT', icon: '🛡', tintBg: '#E8EEF4', tintFg: '#0D2B45' },
-  KYC: { label: 'KYC', icon: '🪪', tintBg: '#E6F4F4', tintFg: '#0B6E6E' },
-  LICENSING: { label: 'Licensing', icon: '📜', tintBg: '#FDF6E3', tintFg: '#A87C00' },
-  ARIP: { label: 'ARIP', icon: '🏛', tintBg: '#FDF6E3', tintFg: '#A87C00' },
-  OTHER: { label: 'Other', icon: '📄', tintBg: '#F5F5F5', tintFg: '#555555' },
-  /** Sprint 5 — 4 ARIP Framework application documents. Compass+ only. */
+  ALL: { label: 'All Templates', tintBg: '#E6F4F4', tintFg: '#0B6E6E' },
+  AML_CFT: { label: 'AML/CFT', tintBg: '#E8EEF4', tintFg: '#0D2B45' },
+  KYC: { label: 'KYC', tintBg: '#E6F4F4', tintFg: '#0B6E6E' },
+  LICENSING: { label: 'Licensing', tintBg: '#FDF6E3', tintFg: '#A87C00' },
+  ARIP: { label: 'ARIP', tintBg: '#FDF6E3', tintFg: '#A87C00' },
+  OTHER: { label: 'Other', tintBg: '#F5F5F5', tintFg: '#555555' },
   ARIP_FRAMEWORK: {
     label: 'ARIP Framework',
-    icon: '⚖️',
     tintBg: '#E8EEF4',
     tintFg: '#0D2B45',
   },

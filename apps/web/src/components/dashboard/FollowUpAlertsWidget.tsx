@@ -3,6 +3,7 @@
 // Displayed on the dashboard between the critical document banner and the ARIP widget.
 
 import Link from 'next/link';
+import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 
 export interface FollowUpAlert {
   id: string;
@@ -36,7 +37,7 @@ export function FollowUpAlertsWidget({ alerts }: FollowUpAlertsWidgetProps): JSX
     <div className="mb-5 rounded-2xl border border-[#D4A843] bg-[#FDF6E3] p-4">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-base">📋</span>
+          <ClipboardDocumentListIcon className="h-5 w-5 text-[#D4A843]" aria-hidden />
           <p className="text-sm font-semibold text-[#1A1A1A]">
             Outstanding Follow-ups ({alerts.length})
           </p>

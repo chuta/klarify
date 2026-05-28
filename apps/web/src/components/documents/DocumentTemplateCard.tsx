@@ -16,8 +16,10 @@
  * never hardcoded into JSX (CLAUDE.md §16 Rule 2).
  */
 import Link from 'next/link';
+import { Lock } from '@/components/icons';
 import type { TemplateCategoryKey } from './categories';
 import { CATEGORY_DETAILS } from './categories';
+import { CategoryIcon } from './CategoryIcon';
 
 export interface DocumentTemplateCardProps {
   templateId: string;
@@ -73,9 +75,7 @@ export function DocumentTemplateCard({
       {/* Plan lock overlay */}
       {isLocked ? (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-white/85 backdrop-blur-sm">
-          <div className="mb-2 text-2xl" aria-hidden="true">
-            🔒
-          </div>
+          <Lock size="lg" className="text-[#0B6E6E]" aria-hidden />
           <p className="mb-1 text-sm font-semibold text-[#1A1A1A]">
             Available on {lockPlanLabel}+
           </p>
@@ -96,11 +96,11 @@ export function DocumentTemplateCard({
       {/* Header row */}
       <div className="mb-3 flex items-start justify-between">
         <div
-          className="flex h-9 w-9 items-center justify-center rounded-md text-base"
+          className="flex h-9 w-9 items-center justify-center rounded-md"
           style={{ backgroundColor: meta.tintBg, color: meta.tintFg }}
           aria-hidden="true"
         >
-          {meta.icon}
+          <CategoryIcon category={category} className="h-5 w-5" />
         </div>
         {isGenerated ? (
           <span className="inline-flex items-center rounded-full bg-[#FDF6E3] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#A87C00]">

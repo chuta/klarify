@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { BuildingLibraryIcon } from '@heroicons/react/24/outline';
 import { createClient } from '@/lib/supabase/server';
 import { prisma, resolveOrgId } from '@/lib/db';
 import { loadRegulatorsForUser } from '@/lib/regulators';
@@ -64,7 +65,7 @@ export default async function RegulatorsPage(): Promise<JSX.Element> {
       <div className="mb-8 overflow-hidden rounded-2xl border border-[#0B6E6E] bg-[#E6F4F4]">
         <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-4">
-            <span className="mt-0.5 text-2xl">🏛️</span>
+            <BuildingLibraryIcon className="mt-0.5 h-7 w-7 shrink-0 text-[#0B6E6E]" aria-hidden />
             <div>
               <span className="mb-1 inline-block rounded-full bg-[#0B6E6E] px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
                 ARIP Programme

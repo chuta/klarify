@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { ProductType } from '@klarify/core';
 import { PRODUCT_TYPE_META } from '@klarify/core';
+import { StatusLine } from '@/components/icons';
 
 // Locally typed to avoid a runtime dep on apps/api from apps/web. Mirrors
 // ClassificationResult in apps/api/src/routes/ai/classify.ts.
@@ -190,9 +191,9 @@ export function RegulatoryIdentityCard({
 
         {result.dual_licence_required && (
           <div className="mt-3 rounded-lg border border-[#D4A843]/60 bg-[#FDF6E3] px-4 py-3">
-            <p className="text-sm font-medium text-[#7a5a13]">
-              ⚠️ Your product requires TWO registrations.
-            </p>
+            <StatusLine variant="warning" className="text-sm font-medium text-[#7a5a13]">
+              Your product requires TWO registrations.
+            </StatusLine>
             <p className="mt-1 text-xs text-[#7a5a13]">
               A single licence does not cover both functions. You must register for each
               category your product performs.

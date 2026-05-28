@@ -1,6 +1,6 @@
 'use client';
 
-import { CloseIcon } from '@/components/icons';
+import { CloseIcon, StatusLine } from '@/components/icons';
 
 import { useEffect, useState } from 'react';
 import type { RoadmapApiTask } from './types';
@@ -139,9 +139,9 @@ export function TaskDetailDrawer({
             className="mb-4 rounded-lg border-2 border-[#D4A843] bg-[#FDF6E3] p-3"
             data-testid="solicitor-warning"
           >
-            <p className="text-xs font-bold uppercase tracking-wide text-[#8B6914]">
-              ⚠️ Solicitor required
-            </p>
+            <StatusLine variant="warning" className="text-xs font-bold uppercase tracking-wide text-[#8B6914]">
+              Solicitor required
+            </StatusLine>
             <p className="mt-1 text-xs leading-relaxed text-[#1A1A1A]">
               Under Section 16 of the ARIP Framework, your application must be filed
               through a registered solicitor or adviser. You cannot self-file. Tick

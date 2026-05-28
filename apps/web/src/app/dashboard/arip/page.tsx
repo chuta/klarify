@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { apiFetch } from '@/lib/api';
 import { ARIPTrackerV2Client } from './_client';
 import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
+import { SecInnovationContacts } from '@/components/arip/SecInnovationContacts';
 
 /**
  * /dashboard/arip — ARIP Application Tracker (spec stage model).
@@ -92,25 +93,7 @@ export default async function ARIPTrackerPage(): Promise<JSX.Element> {
         </p>
       </div>
 
-      {/* Quick-access contacts */}
-      <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-[#CCCCCC] bg-[#FAFAFA] px-5 py-3 text-xs text-[#555555]">
-        <span className="font-semibold text-[#1A1A1A]">SEC Innovation Office:</span>
-        <a href="mailto:innovation@sec.gov.ng" className="hover:text-[#0B6E6E]">
-          📧 innovation@sec.gov.ng
-        </a>
-        <a href="mailto:fintech@sec.gov.ng" className="hover:text-[#0B6E6E]">
-          📧 fintech@sec.gov.ng
-        </a>
-        <span>🕐 Tue &amp; Thu, 10am–2pm</span>
-        <a
-          href="https://home.sec.gov.ng"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-[#0B6E6E] hover:underline"
-        >
-          🔗 SEC ePortal
-        </a>
-      </div>
+      <SecInnovationContacts />
 
       {/* Legal disclaimer — CLAUDE.md §16 Rule 1 — must never be removed */}
       <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">

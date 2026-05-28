@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
+import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import { createClient } from '@/lib/supabase/client';
 
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
@@ -166,9 +167,7 @@ export function DocumentUploader({
               : 'border-[#CCCCCC] hover:border-[#0B6E6E]',
           ].join(' ')}
         >
-          <span className="text-3xl" aria-hidden>
-            📄
-          </span>
+          <DocumentTextIcon className="h-10 w-10 text-[#0B6E6E]" aria-hidden />
           <p className="mt-3 text-sm font-semibold text-[#1A1A1A]">
             Drop your regulatory document here
           </p>
@@ -262,9 +261,7 @@ export function DocumentUploader({
                     onClick={() => router.push(`/dashboard/documents/${doc.id}`)}
                     className="flex min-w-0 flex-1 items-center gap-3 text-left"
                   >
-                    <span className="text-lg" aria-hidden>
-                      📄
-                    </span>
+                    <DocumentTextIcon className="h-5 w-5 shrink-0 text-[#0B6E6E]" aria-hidden />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-[#1A1A1A]">
                         {doc.filename}

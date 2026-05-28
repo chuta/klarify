@@ -25,7 +25,8 @@ import {
   CATEGORY_DETAILS,
   type TemplateCategoryKey,
 } from './categories';
-import { Spinner } from '@/components/icons';
+import { DocumentTextIcon, Spinner } from '@/components/icons';
+import { CategoryIcon } from './CategoryIcon';
 
 // Narrow type for envelope responses from `apps/api`.
 interface ApiEnvelope {
@@ -355,11 +356,11 @@ export function DocumentGeneratorForm({
         </Link>
         <div className="mt-2 flex items-center gap-3">
           <span
-            className="flex h-9 w-9 items-center justify-center rounded-md text-base"
+            className="flex h-9 w-9 items-center justify-center rounded-md"
             style={{ backgroundColor: meta.tintBg, color: meta.tintFg }}
             aria-hidden="true"
           >
-            {meta.icon}
+            <CategoryIcon category={template.category} className="h-5 w-5" />
           </span>
           <div>
             <h1 className="text-xl font-semibold text-[#0D2B45]">
@@ -478,9 +479,7 @@ export function DocumentGeneratorForm({
               <GeneratingState templateName={template.documentName} />
             ) : (
               <div className="flex h-full min-h-[420px] flex-col items-center justify-center px-6 py-12 text-center">
-                <div className="mb-3 text-4xl opacity-40" aria-hidden="true">
-                  📄
-                </div>
+                <DocumentTextIcon className="mb-3 h-12 w-12 opacity-40 text-[#0B6E6E]" aria-hidden />
                 <h3 className="mb-2 text-base font-medium text-[#0D2B45]">
                   Your generated document will appear here
                 </h3>

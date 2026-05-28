@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
+import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import { createClient } from '@/lib/supabase/client';
 import {
   WHITE_PAPER_LICENCE_CATEGORIES,
@@ -226,9 +227,7 @@ export function WhitePaperUploader({
             dragging ? 'border-[#0B6E6E] bg-[#E6F4F4]' : 'border-[#CCCCCC] hover:border-[#0B6E6E]',
           ].join(' ')}
         >
-          <span className="text-3xl" aria-hidden>
-            📄
-          </span>
+          <DocumentTextIcon className="h-10 w-10 text-[#0B6E6E]" aria-hidden />
           <p className="mt-3 text-sm font-semibold text-[#1A1A1A]">
             Drop your white paper here
           </p>

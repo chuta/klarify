@@ -12,6 +12,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { NoSymbolIcon } from '@heroicons/react/24/outline';
+import { StatusLine, StatusIcon } from '@/components/icons';
 // NOTE: ARIP_STAGE_LABELS and ARIP_STATUS_LABELS now live in
 // ./aripLabels.ts (a non-`'use client'` module) so Server Components can
 // import them safely. Importing them back into this file would be fine,
@@ -88,9 +90,9 @@ function CustomerGrowthBar({
   return (
     <div>
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-sm font-medium text-[#1A1A1A]">
-          📊 Customer growth: {growthPct}% of 10% limit used
-        </span>
+        <StatusLine variant="chart" className="text-sm font-medium text-[#1A1A1A]">
+          Customer growth: {growthPct}% of 10% limit used
+        </StatusLine>
         {!editing && (
           <button
             onClick={() => { setEditing(true); setInputVal(String(currentCount)); }}
@@ -145,10 +147,10 @@ function CustomerGrowthBar({
       {/* Threshold warnings */}
       {growthPct >= 10 && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
-          <p className="text-xs font-semibold text-red-700">
-            ⛔ 10% LIMIT REACHED — pause all customer acquisition immediately.
+          <StatusLine variant="danger" className="text-xs font-semibold text-red-700">
+            10% LIMIT REACHED — pause all customer acquisition immediately.
             Continuing to grow may result in AIP withdrawal.
-          </p>
+          </StatusLine>
         </div>
       )}
       {growthPct >= 8 && growthPct < 10 && (
@@ -184,7 +186,7 @@ export function ARIPRestrictionsWidget({
     <div className="mb-8 overflow-hidden rounded-2xl border-2 border-[#D4A843] bg-[#FDF6E3]">
       {/* Header — non-dismissible */}
       <div className="flex items-center gap-3 border-b border-[#D4A843]/30 bg-[#D4A843]/10 px-6 py-4">
-        <span className="text-xl">⚠️</span>
+        <StatusIcon variant="warning" className="h-6 w-6 shrink-0 text-[#D4A843]" />
         <div>
           <p className="text-sm font-bold uppercase tracking-wide text-[#0D2B45]">
             ACTIVE AIP — RESTRICTIONS IN FORCE
@@ -203,7 +205,7 @@ export function ARIPRestrictionsWidget({
       <div className="divide-y divide-[#D4A843]/20 px-6">
         {/* Row 1 — Promotional ban */}
         <div className="flex items-start gap-4 py-4">
-          <span className="mt-0.5 shrink-0 text-xl">⛔</span>
+          <NoSymbolIcon className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden />
           <div className="flex-1">
             <div className="mb-1 flex items-center gap-2">
               <p className="text-sm font-semibold text-[#1A1A1A]">
@@ -231,20 +233,20 @@ export function ARIPRestrictionsWidget({
             />
           ) : (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-              <p className="text-xs font-semibold text-amber-700">
-                ⚠️ Customer baseline not recorded. Go to the{' '}
+              <StatusLine variant="warning" className="text-xs font-semibold text-amber-700">
+                Customer baseline not recorded. Go to the{' '}
                 <Link href="/dashboard/arip" className="underline">
                   ARIP Tracker
                 </Link>{' '}
                 to lock your baseline immediately.
-              </p>
+              </StatusLine>
             </div>
           )}
         </div>
 
         {/* Row 3 — Business scope */}
         <div className="flex items-start gap-4 py-4">
-          <span className="mt-0.5 shrink-0 text-xl">🚫</span>
+          <NoSymbolIcon className="mt-0.5 h-5 w-5 shrink-0 text-[#555555]" aria-hidden />
           <div className="flex-1">
             <p className="mb-1 text-sm font-semibold text-[#1A1A1A]">
               Business limited to approved activities
@@ -264,7 +266,7 @@ export function ARIPRestrictionsWidget({
 
         {/* Row 4 — Next SEC filing */}
         <div className="flex items-start gap-4 py-4">
-          <span className="mt-0.5 shrink-0 text-xl">📅</span>
+          <StatusIcon variant="calendar" className="mt-0.5 h-5 w-5 shrink-0 text-[#0B6E6E]" />
           <div className="flex-1">
             <p className="mb-1 text-sm font-semibold text-[#1A1A1A]">
               {arip.next_filing

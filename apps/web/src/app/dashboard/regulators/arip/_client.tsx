@@ -12,8 +12,10 @@
  *   Stage 5: Transition to Registration
  */
 
+import { MapPinIcon } from '@heroicons/react/24/outline';
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import { StatusLine, StatusIcon } from '@/components/icons';
 import {
   ARIP_PROCESSING_FEE,
   formatAripProcessingFeeNgn,
@@ -186,8 +188,8 @@ export function ARIPTrackerClient({ arip: initialArip, accessToken }: Props): JS
   if (!arip) {
     return (
       <div className="rounded-2xl border-2 border-dashed border-[#0B6E6E] bg-[#E6F4F4] p-12 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl">
-          📋
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white">
+          <StatusIcon variant="clipboard" className="h-8 w-8 text-[#0B6E6E]" />
         </div>
         <h2 className="mb-2 text-xl font-semibold text-[#0B6E6E]">Start your ARIP journey</h2>
         <p className="mx-auto mb-6 max-w-md text-sm text-[#555555]">
@@ -250,7 +252,9 @@ export function ARIPTrackerClient({ arip: initialArip, accessToken }: Props): JS
                       {stage.label}
                     </p>
                     {'solicitorRequired' in stage && (
-                      <p className="mt-0.5 text-[9px] text-amber-600">⚠️ Solicitor Required</p>
+                      <StatusLine variant="warning" className="mt-0.5 justify-center text-[9px] text-amber-600" iconClassName="h-3 w-3">
+                        Solicitor Required
+                      </StatusLine>
                     )}
                   </div>
                 </button>
@@ -309,18 +313,22 @@ export function ARIPTrackerClient({ arip: initialArip, accessToken }: Props): JS
             <div className="mt-4">
               {arip.stage_status === 'eligible' && (
                 <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                  ✅ You are eligible. Proceed to Stage 3 Formal Application.
+                  <StatusLine variant="success">
+                    You are eligible. Proceed to Stage 3 Formal Application.
+                  </StatusLine>
                 </div>
               )}
               {arip.stage_status === 'ineligible' && (
                 <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  ⛔ SEC has found you ineligible. Written reasons should have been provided.
-                  Review and address the issues before reapplying.
+                  <StatusLine variant="danger">
+                    SEC has found you ineligible. Written reasons should have been provided.
+                    Review and address the issues before reapplying.
+                  </StatusLine>
                 </div>
               )}
               {arip.stage_status === 'deferred' && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                  ⏳ SEC has deferred your application. This is normal — await their further
+                  SEC has deferred your application. This is normal — await their further
                   communication before proceeding.
                 </div>
               )}
@@ -332,9 +340,9 @@ export function ARIPTrackerClient({ arip: initialArip, accessToken }: Props): JS
           <StagePanel title="Stage 3: Formal Application" stageId="formal_application" arip={arip} save={save}>
             {/* CRITICAL SOLICITOR BLOCKER — must never be removed per prompt rules */}
             <div className="mb-6 rounded-lg border-2 border-red-400 bg-red-50 px-5 py-4">
-              <p className="mb-1 text-sm font-bold text-red-700">
-                ⚠️ SOLICITOR REQUIRED
-              </p>
+              <StatusLine variant="danger" className="mb-1 text-sm font-bold text-red-700">
+                SOLICITOR REQUIRED
+              </StatusLine>
               <p className="text-sm text-red-700">
                 Under Section 16 of the ARIP Framework, your application MUST be filed through
                 a registered solicitor or adviser. You cannot file directly. Complete the solicitor
@@ -561,8 +569,9 @@ export function ARIPTrackerClient({ arip: initialArip, accessToken }: Props): JS
 
             {/* Customer baseline — CRITICAL */}
             <div className="mb-6 rounded-xl border-2 border-amber-400 bg-amber-50 p-5">
-              <h4 className="mb-1 text-sm font-bold text-[#1A1A1A]">
-                📌 Record your customer count TODAY
+              <h4 className="mb-1 flex items-center gap-1.5 text-sm font-bold text-[#1A1A1A]">
+                <MapPinIcon className="h-4 w-4 shrink-0 text-[#0B6E6E]" aria-hidden />
+                Record your customer count TODAY
               </h4>
               <p className="mb-4 text-sm text-[#555555]">
                 You must record your exact customer count on the day you receive AIP. This becomes
@@ -570,11 +579,13 @@ export function ARIPTrackerClient({ arip: initialArip, accessToken }: Props): JS
               </p>
               {baselineLocked && arip.arip_entry_customer_count !== null ? (
                 <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                  🔒 Baseline locked: {arip.arip_entry_customer_count.toLocaleString()} customers on{' '}
-                  {arip.aip_issued_date
-                    ? new Date(arip.aip_issued_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-                    : 'AIP receipt date'}.{' '}
-                  Your 10% cap = {Math.floor(arip.arip_entry_customer_count * 0.1).toLocaleString()} additional customers.
+                  <StatusLine variant="lock">
+                    Baseline locked: {arip.arip_entry_customer_count.toLocaleString()} customers on{' '}
+                    {arip.aip_issued_date
+                      ? new Date(arip.aip_issued_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                      : 'AIP receipt date'}.{' '}
+                    Your 10% cap = {Math.floor(arip.arip_entry_customer_count * 0.1).toLocaleString()} additional customers.
+                  </StatusLine>
                 </div>
               ) : (
                 <BaselineLockForm
@@ -652,8 +663,10 @@ export function ARIPTrackerClient({ arip: initialArip, accessToken }: Props): JS
             <div className="mt-6">
               {arip.outcome === 'granted' && (
                 <div className="rounded-lg border border-green-300 bg-green-50 px-5 py-4 text-sm text-green-800">
-                  🎉 Congratulations — your ARIP journey is complete. You are now a fully
-                  registered operator in the Nigerian capital market.
+                  <StatusLine variant="celebration">
+                    Congratulations — your ARIP journey is complete. You are now a fully
+                    registered operator in the Nigerian capital market.
+                  </StatusLine>
                 </div>
               )}
               {arip.outcome === 'new_regs_adopted' && (
@@ -852,7 +865,9 @@ function GrowthTracker({
       )}
       {growthPct >= 10 && (
         <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
-          ⛔ 10% LIMIT REACHED — pause all customer acquisition immediately.
+          <StatusLine variant="danger">
+            10% LIMIT REACHED — pause all customer acquisition immediately.
+          </StatusLine>
         </div>
       )}
       {growthPct >= 8 && growthPct < 10 && (

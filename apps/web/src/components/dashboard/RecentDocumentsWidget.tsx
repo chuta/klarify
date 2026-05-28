@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { DocumentTextIcon } from '@heroicons/react/24/outline';
 
 export interface RecentDoc {
   id: string;
@@ -74,9 +75,7 @@ export function RecentDocumentsWidget({
                 href={`/dashboard/documents/${doc.id}`}
                 className="flex items-center gap-3 rounded-lg border border-[#F5F5F5] px-3 py-2 hover:bg-[#FAFAFA]"
               >
-                <span className="text-lg" aria-hidden>
-                  📄
-                </span>
+                <DocumentTextIcon className="h-5 w-5 shrink-0 text-[#0B6E6E]" aria-hidden />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-[#1A1A1A]">
                     {doc.filename}

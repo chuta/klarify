@@ -1,6 +1,7 @@
 'use client';
 
 import { CloseIcon } from '@/components/icons';
+import { InteractionTypeIcon } from '@/components/regulators/InteractionTypeIcon';
 
 // Interaction Log Modal — Sprint 5-C1.
 // Creates a new regulator interaction log entry via /api/regulators/interactions.
@@ -16,12 +17,12 @@ interface InteractionModalProps {
   onSuccess: () => void;
 }
 
-const INTERACTION_TYPES: { value: InteractionType; label: string; emoji: string }[] = [
-  { value: 'call', label: 'Call', emoji: '📞' },
-  { value: 'email', label: 'Email', emoji: '📧' },
-  { value: 'meeting', label: 'Meeting', emoji: '🤝' },
-  { value: 'submission', label: 'Submission', emoji: '📋' },
-  { value: 'letter', label: 'Letter', emoji: '📄' },
+const INTERACTION_TYPES: { value: InteractionType; label: string }[] = [
+  { value: 'call', label: 'Call' },
+  { value: 'email', label: 'Email' },
+  { value: 'meeting', label: 'Meeting' },
+  { value: 'submission', label: 'Submission' },
+  { value: 'letter', label: 'Letter' },
 ];
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -131,7 +132,7 @@ export function InteractionModal({
               Interaction Type
             </label>
             <div className="flex flex-wrap gap-2">
-              {INTERACTION_TYPES.map(({ value, label, emoji }) => (
+              {INTERACTION_TYPES.map(({ value, label }) => (
                 <button
                   key={value}
                   type="button"
@@ -142,7 +143,7 @@ export function InteractionModal({
                       : 'border-[#CCCCCC] bg-white text-[#555555] hover:border-[#0B6E6E]'
                   }`}
                 >
-                  <span>{emoji}</span>
+                  <InteractionTypeIcon type={value} className="h-4 w-4" />
                   <span>{label}</span>
                 </button>
               ))}
