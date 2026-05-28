@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Lock } from '@/components/icons';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -175,7 +176,7 @@ export function NotificationsClient({ accessToken }: NotificationsClientProps): 
                 </span>
                 {isLocked && (
                   <span className="inline-flex items-center gap-1 text-xs font-medium text-[#555555] bg-[#F5F5F5] border border-[#E5E7EB] rounded px-2 py-0.5">
-                    <LockIcon />
+                    <Lock size="xs" />
                     Always on
                   </span>
                 )}
@@ -222,26 +223,5 @@ export function NotificationsClient({ accessToken }: NotificationsClientProps): 
         })}
       </p>
     </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Icon
-// ---------------------------------------------------------------------------
-
-function LockIcon(): JSX.Element {
-  return (
-    <svg
-      width={10}
-      height={12}
-      fill="none"
-      viewBox="0 0 10 12"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      aria-hidden="true"
-    >
-      <rect x={1.5} y={5} width={7} height={6} rx={1} />
-      <path d="M3 5V3.5a2 2 0 0 1 4 0V5" strokeLinecap="round" />
-    </svg>
   );
 }

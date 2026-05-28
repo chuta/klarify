@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getOptionalUser } from '@/lib/supabase/server';
 import { SubmitButton } from '@/components/ui/SubmitButton';
+import { Envelope } from '@/components/icons';
 import { requestPasswordReset } from './actions';
 
 interface ForgotPasswordPageProps {
@@ -60,9 +61,7 @@ export default async function ForgotPasswordPage({
           {sent ? (
             <div className="p-8 text-center">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#E6F4F4]">
-                <svg className="h-7 w-7 text-[#0B6E6E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
+                <Envelope className="text-[#0B6E6E]" />
               </div>
               <h1 className="mb-2 text-xl font-semibold text-[#1A1A1A]">Check your inbox</h1>
               <p className="text-sm text-[#555555]">

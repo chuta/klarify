@@ -4,6 +4,7 @@ import { OnboardingWizard } from '@/app/onboarding/_wizard';
 import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 import { requireDashboardSession } from '@/lib/dashboardSession';
 import { resolveUserSetupState } from '@/lib/teamService';
+import { Info } from '@/components/icons';
 
 /**
  * /dashboard/onboarding — setup wizard for organisation owners only.
@@ -64,19 +65,7 @@ export default async function DashboardOnboardingPage(): Promise<JSX.Element> {
         </div>
 
         <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#E6F4F4] bg-[#E6F4F4] px-4 py-3">
-          <svg
-            className="h-4 w-4 shrink-0 text-[#0B6E6E]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
+          <Info className="shrink-0 text-[#0B6E6E]" />
           <p className="text-xs text-[#0B6E6E]">
             Completing setup makes you the organisation owner with full access to billing, team invites, and document exports.
           </p>

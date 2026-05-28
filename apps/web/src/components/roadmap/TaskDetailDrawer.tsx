@@ -1,5 +1,7 @@
 'use client';
 
+import { CloseIcon } from '@/components/icons';
+
 import { useEffect, useState } from 'react';
 import type { RoadmapApiTask } from './types';
 import { P3_01_TEMPLATE_REF_ID } from './types';
@@ -126,9 +128,7 @@ export function TaskDetailDrawer({
             aria-label="Close task details"
             className="text-[#555555] hover:text-[#1A1A1A]"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <CloseIcon size="md" />
           </button>
         </div>
 

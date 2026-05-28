@@ -2,6 +2,7 @@
 
 import type { RoadmapApiTask } from './types';
 import { P3_01_TEMPLATE_REF_ID } from './types';
+import { CheckSolid, Lock, Spinner } from '@/components/icons';
 
 interface RoadmapTaskCardProps {
   task: RoadmapApiTask;
@@ -50,10 +51,7 @@ export function RoadmapTaskCard({
     >
       {isLocked && (
         <div className="pointer-events-none absolute right-3 top-3 flex items-center gap-1 rounded bg-[#F5F5F5] px-1.5 py-0.5 text-[10px] font-semibold text-[#555555]">
-          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c-1.1 0-2 .9-2 2v2h4v-2c0-1.1-.9-2-2-2zM6 11V8a6 6 0 1112 0v3" />
-            <rect x="5" y="11" width="14" height="10" rx="2" />
-          </svg>
+          <Lock size="xs" />
           Locked
         </div>
       )}
@@ -77,15 +75,10 @@ export function RoadmapTaskCard({
           ].join(' ')}
         >
           {isComplete && (
-            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+            <CheckSolid className="text-white" />
           )}
           {!isComplete && saving && (
-            <svg className="h-3 w-3 animate-spin text-[#0B6E6E]" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
+            <Spinner className="animate-spin text-[#0B6E6E]" size="xs" />
           )}
         </button>
 

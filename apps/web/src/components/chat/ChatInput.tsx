@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { Send } from '@/components/icons';
 
 interface Props {
   onSend: (text: string) => void;
@@ -122,14 +123,7 @@ export function ChatInput({
               className="inline-flex items-center gap-1 rounded-lg bg-[#0B6E6E] px-4 py-1.5 text-xs font-medium text-white hover:bg-[#0a5a5a] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Send
-              <svg
-                className="h-3.5 w-3.5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden
-              >
-                <path d="M3.105 3.105a.75.75 0 011.052-.137l13.5 7.5a.75.75 0 010 1.314l-13.5 7.5A.75.75 0 013 18.75v-5.25l9.25-1.5L3 10.5v-5.25a.75.75 0 01.105-.395z" />
-              </svg>
+              <Send className="h-3.5 w-3.5" />
             </button>
           )}
         </div>

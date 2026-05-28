@@ -14,6 +14,7 @@
     "schema": "../api/prisma/schema.prisma"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@klarify/ai": "workspace:*",
     "@klarify/config": "workspace:*",
     "@klarify/core": "workspace:*",

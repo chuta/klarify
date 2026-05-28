@@ -2,6 +2,7 @@
 
 import { useFormStatus } from 'react-dom';
 import type { ReactNode } from 'react';
+import { Spinner } from '@/components/icons';
 
 /**
  * Brand-styled submit button that automatically reflects the parent form's
@@ -68,7 +69,7 @@ export function SubmitButton({
     >
       {pending ? (
         <>
-          <Spinner />
+          <Spinner className="animate-spin" />
           <span>{pendingLabel ?? `${label}…`}</span>
         </>
       ) : (
@@ -78,35 +79,5 @@ export function SubmitButton({
         </>
       )}
     </button>
-  );
-}
-
-/** Inline 14px spinner (animate-spin) — colour matches the button text. */
-function Spinner(): JSX.Element {
-  return (
-    <svg
-      className="h-4 w-4 animate-spin"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      {/* Faint background ring so the spinning arc reads at any rotation. */}
-      <circle
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeOpacity="0.25"
-        strokeWidth="3"
-      />
-      {/* Rotating arc — quarter-circle, butt-capped for crisp tips. */}
-      <path
-        d="M12 2a10 10 0 0 1 10 10"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }

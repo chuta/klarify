@@ -8,6 +8,7 @@ import {
   getEventDisplayMeta,
   urgencyLabel,
 } from '@/lib/calendar';
+import { CalendarDaysIcon, CheckSolid, CloseIcon } from '@/components/icons';
 
 interface ComplianceCalendarClientProps {
   initialEvents: CalendarEventDTO[];
@@ -265,9 +266,7 @@ function EmptyState(): JSX.Element {
   return (
     <div className="rounded-2xl border border-dashed border-[#0B6E6E] bg-[#E6F4F4] p-8 text-center">
       <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white">
-        <svg className="h-7 w-7 text-[#0B6E6E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
+        <CalendarDaysIcon className="h-7 w-7 text-[#0B6E6E]" strokeWidth={1.5} aria-hidden />
       </div>
       <h2 className="mb-1 text-lg font-semibold text-[#0B6E6E]">No deadlines yet</h2>
       <p className="mx-auto mb-4 max-w-md text-sm text-[#555555]">
@@ -357,9 +356,7 @@ function EventRow({
         ].join(' ')}
       >
         {event.isComplete ? (
-          <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
+          <CheckSolid className="text-white" />
         ) : null}
       </button>
 
@@ -453,9 +450,7 @@ function AddEventModal({
             className="rounded-lg p-1.5 text-[#555555] transition hover:bg-[#F5F5F5]"
             aria-label="Close"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <CloseIcon size="md" />
           </button>
         </div>
 

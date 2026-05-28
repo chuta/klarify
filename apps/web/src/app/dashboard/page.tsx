@@ -11,6 +11,7 @@ import {
   type RecentDoc,
 } from '@/components/dashboard/RecentDocumentsWidget';
 import { CriticalDocumentBanner } from '@/components/dashboard/CriticalDocumentBanner';
+import { ClipboardDocumentCheckIcon } from '@/components/icons';
 // Import the label map from the pure-data module, NOT from the widget itself.
 // The widget is `'use client'`, and named exports from client modules become
 // opaque client references inside Server Components — reading a property off
@@ -151,9 +152,7 @@ export default async function DashboardPage(): Promise<JSX.Element> {
       {!hasOnboarded && (
         <div className="mb-8 rounded-2xl border-2 border-dashed border-[#0B6E6E] bg-[#E6F4F4] p-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white">
-            <svg className="h-7 w-7 text-[#0B6E6E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 8l2 2 4-4" />
-            </svg>
+            <ClipboardDocumentCheckIcon className="h-7 w-7 text-[#0B6E6E]" aria-hidden />
           </div>
           <h2 className="mb-2 text-lg font-semibold text-[#0B6E6E]">
             Calculate your Regulatory Readiness Score

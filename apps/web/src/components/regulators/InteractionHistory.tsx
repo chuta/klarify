@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { InteractionType, RegulatorInteraction } from '@klarify/core';
+import { CloseIcon, Download } from '@/components/icons';
 
 interface InteractionHistoryProps {
   regulatorCode: string;
@@ -137,9 +138,7 @@ export function InteractionHistory({
               download
               className="flex items-center gap-1.5 rounded-lg border border-[#CCCCCC] px-3 py-1.5 text-xs font-medium text-[#555555] transition hover:bg-[#F5F5F5]"
             >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
+              <Download className="h-3.5 w-3.5" />
               Download CSV
             </a>
             <button
@@ -147,9 +146,7 @@ export function InteractionHistory({
               className="rounded-lg p-1.5 text-[#555555] transition hover:bg-[#F5F5F5]"
               aria-label="Close"
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <CloseIcon size="md" />
             </button>
           </div>
         </div>

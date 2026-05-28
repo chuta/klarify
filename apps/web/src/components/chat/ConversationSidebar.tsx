@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { ConversationSummary } from '@klarify/ai/chat/useKlarifyChat';
+import { Plus, Trash } from '@/components/icons';
 
 interface Props {
   conversations: ConversationSummary[];
@@ -43,9 +44,7 @@ export function ConversationSidebar({
           onClick={onNew}
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0B6E6E] px-3 py-2 text-sm font-medium text-white hover:bg-[#0a5a5a]"
         >
-          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-            <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
-          </svg>
+          <Plus />
           New conversation
         </button>
       </div>
@@ -124,18 +123,7 @@ export function ConversationSidebar({
                           }}
                           className="opacity-0 transition-opacity hover:text-[#C0392B] group-hover:opacity-100"
                         >
-                          <svg
-                            className="h-4 w-4"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            aria-hidden
-                          >
-                            <path
-                              fillRule="evenodd"
-                              clipRule="evenodd"
-                              d="M9 2a1 1 0 00-1 1v1H4a1 1 0 100 2h12a1 1 0 100-2h-4V3a1 1 0 00-1-1H9zM5 8a1 1 0 011 1v7a2 2 0 002 2h4a2 2 0 002-2V9a1 1 0 112 0v7a4 4 0 01-4 4H8a4 4 0 01-4-4V9a1 1 0 011-1z"
-                            />
-                          </svg>
+                          <Trash />
                         </span>
                       )}
                     </div>

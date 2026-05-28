@@ -6,6 +6,7 @@ import {
   RegulatoryIdentityCard,
   type ClassificationResult,
 } from './RegulatoryIdentityCard';
+import { Spinner } from '@/components/icons';
 
 const MIN_DESCRIPTION = 50;
 
@@ -257,27 +258,7 @@ export function ClassifyForm({ apiBaseUrl }: { apiBaseUrl: string }): JSX.Elemen
       >
         {submitting ? (
           <span className="flex items-center gap-2">
-            <svg
-              className="h-4 w-4 animate-spin"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden
-            >
-              <circle
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeOpacity="0.3"
-              />
-              <path
-                d="M22 12a10 10 0 00-10-10"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-            </svg>
+            <Spinner className="animate-spin" />
             <span>{LOADING_LINES[loadingStep]}</span>
           </span>
         ) : (

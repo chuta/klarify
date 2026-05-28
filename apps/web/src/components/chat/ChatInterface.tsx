@@ -12,6 +12,7 @@ import {
   SpecialistRequestModal,
   type SpecialistRequestDefaults,
 } from '@/components/specialists/SpecialistRequestModal';
+import { ChatBubbleLeftRightIcon, MenuIcon, Plus } from '@/components/icons';
 
 const STARTER_QUESTIONS: string[] = [
   'What licences does my product need in Nigeria?',
@@ -154,13 +155,7 @@ export function ChatInterface({
             className="rounded p-1.5 text-[#555] hover:bg-[#F5F5F5]"
             aria-label="Open conversations"
           >
-            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm1 4a1 1 0 100 2h12a1 1 0 100-2H4z"
-              />
-            </svg>
+            <MenuIcon size="md" />
           </button>
           <span className="text-sm font-semibold text-[#1A1A1A]">FounderCounsel</span>
           <button
@@ -169,9 +164,7 @@ export function ChatInterface({
             className="rounded p-1.5 text-[#555] hover:bg-[#F5F5F5]"
             aria-label="New conversation"
           >
-            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-              <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
-            </svg>
+            <Plus size="md" />
           </button>
         </div>
 
@@ -358,13 +351,7 @@ function EmptyState({ onPick }: { onPick: (q: string) => void }): JSX.Element {
   return (
     <div className="flex w-full flex-col items-center justify-center py-12 text-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E6F4F4]">
-        <svg className="h-7 w-7 text-[#0B6E6E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-          />
-        </svg>
+        <ChatBubbleLeftRightIcon className="h-7 w-7 text-[#0B6E6E]" strokeWidth={1.6} aria-hidden />
       </div>
       <h2 className="mb-2 text-xl font-semibold text-[#1A1A1A]">
         Navigate Regulated Markets with Confidence

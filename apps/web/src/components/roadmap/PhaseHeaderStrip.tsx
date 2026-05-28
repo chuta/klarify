@@ -1,6 +1,7 @@
 'use client';
 
 import { PHASE_META, type RoadmapApiPhaseProgress } from './types';
+import { Lock } from '@/components/icons';
 
 interface PhaseHeaderStripProps {
   progress: RoadmapApiPhaseProgress[];
@@ -62,21 +63,10 @@ export function PhaseHeaderStrip({ progress, activePhase, onSelect }: PhaseHeade
                 <p className="mt-0.5 hidden text-[11px] text-[#555555] sm:block">{meta.subtitle}</p>
               </div>
               {isLocked && (
-                <svg
+                <Lock
                   aria-label="locked"
-                  className="h-4 w-4 shrink-0 text-[#CCCCCC]"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 11c-1.1 0-2 .9-2 2v2h4v-2c0-1.1-.9-2-2-2zM6 11V8a6 6 0 1112 0v3"
-                  />
-                  <rect x="5" y="11" width="14" height="10" rx="2" />
-                </svg>
+                  className="shrink-0 text-[#CCCCCC]"
+                />
               )}
             </div>
             <div className="flex items-center gap-2">

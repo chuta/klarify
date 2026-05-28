@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { CheckSolid } from '@/components/icons';
 
 /**
  * Animated stepper rendered while a document is being analysed.
@@ -247,7 +248,7 @@ function StepBadge({
         key="done"
         className="klarify-pop relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0B6E6E] text-white shadow-sm ring-4 ring-white"
       >
-        <CheckIcon />
+        <CheckSolid className="text-white" size="sm" />
       </span>
     );
   }
@@ -269,27 +270,6 @@ function StepBadge({
     <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F5F5F5] text-[11px] font-bold text-[#999] ring-4 ring-white">
       {index + 1}
     </span>
-  );
-}
-
-function CheckIcon(): JSX.Element {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 20 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <path
-        d="M4.5 10.5L8 14L15.5 6.5"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
 
