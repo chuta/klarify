@@ -341,7 +341,7 @@ export function ClassifyForm({ apiBaseUrl }: { apiBaseUrl: string }): JSX.Elemen
               Business model <span className="text-[#C0392B]">*</span>
             </label>
             <p className="text-[11px] text-[#777]">
-              How you earn revenue — fees, spreads, subscriptions, etc. Max{' '}
+              How you earn revenue: fees, spreads, subscriptions, etc. Max{' '}
               {CLASSIFY_LIMITS.maxBusinessModel} characters.
             </p>
             <input
@@ -417,14 +417,14 @@ export function ClassifyForm({ apiBaseUrl }: { apiBaseUrl: string }): JSX.Elemen
 
       {!canSubmit && !submitting ? (
         <p className="text-center text-[11px] text-[#777]">
-          Complete all required fields above to enable classification.
+          Classification takes 6–30 seconds.
+        This is regulatory information, not legal advice, always verify with a qualified
+        practitioner.
         </p>
       ) : null}
 
       <p className="text-[11px] text-[#777]">
-        Classification takes 6–30 seconds.
-        This is regulatory information, not legal advice, always verify with a qualified
-        practitioner.
+      Klarify,...Know what licence you need, what to do next, and stay regulator-ready.
       </p>
     </form>
   );

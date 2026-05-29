@@ -32,7 +32,7 @@ export default async function ClassifyPage(): Promise<JSX.Element> {
           Complete every field below. Klarify uses your description, features, business
           model, and target users to map your product against Nigerian and African
           regulatory frameworks (ISA 2025, SEC Digital Asset Rules, MLPPA 2022, CBN VASP
-          Guidelines) and return a Regulatory Identity Card.
+          Guidelines) and return a Regulatory Identity Card. No guess work.
         </p>
       </header>
 
