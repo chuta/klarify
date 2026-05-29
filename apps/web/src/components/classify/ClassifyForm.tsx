@@ -199,18 +199,18 @@ export function ClassifyForm({ apiBaseUrl }: { apiBaseUrl: string }): JSX.Elemen
         </p>
         <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-[#1A1A1A]">
           <li>
-            <span className="font-semibold text-[#0D2B45]">Product description</span>{' '}
-            — between {CLASSIFY_LIMITS.minDescription} and {CLASSIFY_LIMITS.maxDescription}{' '}
+            <span className="font-semibold text-[#0D2B45]">Product description:</span>{' '}
+             between {CLASSIFY_LIMITS.minDescription} and {CLASSIFY_LIMITS.maxDescription}{' '}
             characters. Too short or too long will block submission.
           </li>
           <li>
-            <span className="font-semibold text-[#0D2B45]">Key features</span> — add at
+            <span className="font-semibold text-[#0D2B45]">Key feature:</span> add at
             least one (press Enter after each). Max {CLASSIFY_LIMITS.maxFeatures} features,{' '}
             {CLASSIFY_LIMITS.maxFeatureLen} characters each.
           </li>
           <li>
-            <span className="font-semibold text-[#0D2B45]">Business model</span> and{' '}
-            <span className="font-semibold text-[#0D2B45]">Target users</span> — both
+            <span className="font-semibold text-[#0D2B45]">Business model:</span> and{' '}
+            <span className="font-semibold text-[#0D2B45]">Target users</span> both
             required. Empty fields are not sent to the classifier.
           </li>
         </ul>
@@ -422,8 +422,8 @@ export function ClassifyForm({ apiBaseUrl }: { apiBaseUrl: string }): JSX.Elemen
       ) : null}
 
       <p className="text-[11px] text-[#777]">
-        Classification uses Claude Opus + the Klarify regulatory corpus. Takes 6–15 seconds.
-        This is regulatory information, not legal advice — always verify with a qualified
+        Classification takes 6–30 seconds.
+        This is regulatory information, not legal advice, always verify with a qualified
         practitioner.
       </p>
     </form>

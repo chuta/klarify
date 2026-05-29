@@ -29,7 +29,7 @@ export default async function ClassifyPage(): Promise<JSX.Element> {
       <header className="mb-6">
         <h1 className="text-2xl font-semibold text-[#1A1A1A]">Classify Your Product</h1>
         <p className="mt-1 text-sm text-[#555]">
-          Complete every field below — Klarify uses your description, features, business
+          Complete every field below. Klarify uses your description, features, business
           model, and target users to map your product against Nigerian and African
           regulatory frameworks (ISA 2025, SEC Digital Asset Rules, MLPPA 2022, CBN VASP
           Guidelines) and return a Regulatory Identity Card.
