@@ -43,6 +43,7 @@ import { productTypeZodEnum } from '@klarify/core';
 import { prisma } from '../../db.js';
 import { requireAuth } from '../../middleware/auth.js';
 import { rateLimitAI, type RateLimitVars } from '../../middleware/rateLimitAI.js';
+import { klarifyZodHook } from '../../middleware/zodHook.js';
 
 export const classifyRoutes = new Hono<{ Variables: RateLimitVars }>();
 
@@ -139,7 +140,7 @@ classifyRoutes.post(
   '/classify',
   requireAuth,
   rateLimitAI,
-  zValidator('json', ClassifyRequestSchema),
+  zValidator('json', ClassifyRequestSchema, klarifyZodHook),
   async (c) => {
     const userId = c.get('userId');
     const body = c.req.valid('json');
@@ -186,7 +187,7 @@ classifyRoutes.post(
       'OUTPUT FORMAT — respond with ONE valid JSON object only. No prose. ' +
         'No code fences. Match this exact shape:\n' +
         '{\n' +
-        '  "primary_category": "DAX|DAOP|DAC|DAI|PAYMENT|HYBRID",\n' +
+        '  "primary_category": "DAX|DAOP|DAC|DAI|AVASP|DAPO|RATOP|PAYMENT|HYBRID",\n' +
         '  "secondary_categories": [string],\n' +
         '  "primary_regulator": "SEC_NIGERIA|CBN|BOTH",\n' +
         '  "secondary_regulators": [string],\n' +
