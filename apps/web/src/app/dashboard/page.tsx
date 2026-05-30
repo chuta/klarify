@@ -25,7 +25,7 @@ import { DimensionBreakdown } from '@/components/compliance/DimensionBreakdown';
 import { ScoreHistorySection } from './_score-history';
 import { FollowUpAlertsWidget, type FollowUpAlert } from '@/components/dashboard/FollowUpAlertsWidget';
 import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
-import { UpdateReadinessScoreButton } from '@/components/compliance/UpdateReadinessScoreButton';
+import { ReassessReadinessLink } from '@/components/compliance/ReassessReadinessLink';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -196,8 +196,8 @@ export default async function DashboardPage(): Promise<JSX.Element> {
                   {score.totalScore === 0 && (
                     <>
                       {' '}
-                      If you completed onboarding or roadmap tasks, use Update score to rebuild from
-                      your profile — analysing a regulator letter does not reset compliance progress.
+                      If your score looks wrong after analysing a regulator letter, re-assess your
+                      infrastructure — letter analysis does not change compliance progress.
                     </>
                   )}
                 </p>
@@ -214,10 +214,7 @@ export default async function DashboardPage(): Promise<JSX.Element> {
                   >
                     Ask FounderCounsel
                   </Link>
-                  <UpdateReadinessScoreButton
-                    accessToken={accessToken}
-                    emphasize={score.totalScore === 0}
-                  />
+                  <ReassessReadinessLink emphasize={score.totalScore === 0} />
                 </div>
               </div>
             </div>

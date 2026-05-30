@@ -21,6 +21,7 @@ export interface KlarifyEventMap {
   document_analysed: { urgency?: string };
   roadmap_task_completed: { phase?: number; task_id?: string };
   readiness_score_viewed: { score?: number };
+  readiness_reassessment_completed: { score?: number; infrastructure_count?: number };
 
   // The Post-Letter wedge (highest-converting path)
   letter_uploaded: { source: 'upload' | 'paste' };

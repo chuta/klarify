@@ -9,6 +9,7 @@ import {
   type DimensionKey,
   DIMENSION_WEIGHTS,
   DIMENSION_INDICATORS,
+  readinessReassessmentSchema,
 } from '@klarify/core';
 import { prisma, withRls } from '../db.js';
 import { requireAuth, type AuthVars } from '../middleware/auth.js';
@@ -18,7 +19,7 @@ import {
   materialiseRoadmapIfEmpty,
   reconcileLockState,
 } from '../services/roadmapService.js';
-import { recalculateScore } from '../services/scoreRecalculation.js';
+import { recalculateScore, reassessReadinessScore } from '../services/scoreRecalculation.js';
 
 export const complianceRoutes = new Hono<{ Variables: AuthVars }>();
 
@@ -158,6 +159,66 @@ complianceRoutes.post('/score/recalculate', requireAuth, async (c) => {
     );
   }
 });
+
+// ========================================================================== //
+// POST /score/reassess — full infrastructure re-assessment wizard submit.  //
+// ========================================================================== //
+complianceRoutes.post(
+  '/score/reassess',
+  requireAuth,
+  zValidator('json', readinessReassessmentSchema),
+  async (c) => {
+    const userId = c.get('userId');
+    const input = c.req.valid('json');
+
+    try {
+      const orgId = await resolveOrgId(userId);
+      if (orgId === null) {
+        return c.json(
+          { success: false as const, error: 'Organisation not found.', code: 'ORG_NOT_FOUND' },
+          404,
+        );
+      }
+
+      const record = await reassessReadinessScore(orgId, userId, input);
+      if (record === null) {
+        return c.json(
+          {
+            success: false as const,
+            error: 'Complete onboarding before re-assessing your score.',
+            code: 'PROFILE_NOT_FOUND',
+          },
+          404,
+        );
+      }
+
+      return c.json({
+        success: true as const,
+        data: {
+          totalScore: record.totalScore,
+          dimensions: {
+            corporate_structure: record.corporateStructure,
+            capital_licensing: record.capitalLicensing,
+            kyc_infrastructure: record.kycInfrastructure,
+            aml_cft_programme: record.amlCftProgramme,
+            transaction_monitoring: record.transactionMonitoring,
+            regulatory_reporting: record.regulatoryReporting,
+            regulatory_relationships: record.regulatoryRelationships,
+            product_classification: record.productClassification,
+          },
+          calculatedAt: record.calculatedAt,
+          orgId,
+        },
+      });
+    } catch (err) {
+      console.error('[compliance/score/reassess] error', err);
+      return c.json(
+        { success: false as const, error: 'Failed to re-assess score.', code: 'SCORE_REASSESS_ERROR' },
+        500,
+      );
+    }
+  },
+);
 
 // ========================================================================== //
 // PUT /indicators — update a single indicator + recalc + re-check lock state. //
