@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { NotificationsClient } from './_client';
+import { AnalyticsPreference } from '@/components/analytics/AnalyticsPreference';
 import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
 
 export const metadata = {
@@ -28,6 +29,15 @@ export default async function NotificationsPage(): Promise<JSX.Element> {
       <Suspense fallback={<NotificationsSkeleton />}>
         <NotificationsClient accessToken={session.access_token} />
       </Suspense>
+
+      <div className="mt-10 mb-4">
+        <h2 className="text-lg font-bold text-[#1A1A1A] mb-1">Privacy &amp; analytics</h2>
+        <p className="text-[#555555] text-sm">
+          Control the anonymous usage data Klarify collects to improve the product.
+        </p>
+      </div>
+
+      <AnalyticsPreference />
     </DashboardPageShell>
   );
 }
