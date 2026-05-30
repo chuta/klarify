@@ -37,7 +37,7 @@ const PREF_CONFIG: PrefConfig[] = [
   {
     key:         'emailDocumentAnalysis',
     label:       'Document analysis results',
-    description: 'Get notified when a regulatory document has been analysed — including urgency level and 72-hour action plan.',
+    description: 'Get notified when a regulatory document has been analysed, including urgency level and 72-hour action plan.',
   },
   {
     key:         'emailAripAlerts',
@@ -47,7 +47,7 @@ const PREF_CONFIG: PrefConfig[] = [
   {
     key:         'emailLifecycle',
     label:       'Onboarding tips & launch offers',
-    description: 'Helpful emails during your first 9 days — Readiness Score guide, product tips, plan comparison, and launch pricing reminders.',
+    description: 'Helpful emails during your first 9 days, Readiness Score guide, product tips, plan comparison, and launch pricing reminders.',
   },
   {
     key:         'emailWeeklyDigest',
@@ -57,7 +57,7 @@ const PREF_CONFIG: PrefConfig[] = [
   {
     key:         'emailBilling',
     label:       'Billing notifications',
-    description: 'Payment confirmations, subscription alerts, and renewal reminders — required for account security.',
+    description: 'Payment confirmations, subscription alerts, and renewal reminders, required for account security.',
     locked:      true,
   },
 ];
