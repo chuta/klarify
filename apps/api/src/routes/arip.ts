@@ -252,7 +252,7 @@ aripRoutes.put('/', requireAuth, async (c) => {
       });
     });
 
-    void recalculateScore(orgId).catch((e: unknown) =>
+    void recalculateScore(orgId, userId).catch((e: unknown) =>
       console.error('[arip/put] recalc error', e),
     );
 

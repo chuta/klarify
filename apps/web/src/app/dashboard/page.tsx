@@ -25,6 +25,7 @@ import { DimensionBreakdown } from '@/components/compliance/DimensionBreakdown';
 import { ScoreHistorySection } from './_score-history';
 import { FollowUpAlertsWidget, type FollowUpAlert } from '@/components/dashboard/FollowUpAlertsWidget';
 import { DashboardPageShell } from '@/components/dashboard/DashboardPageShell';
+import { UpdateReadinessScoreButton } from '@/components/compliance/UpdateReadinessScoreButton';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -192,8 +193,15 @@ export default async function DashboardPage(): Promise<JSX.Element> {
                 <p className="mb-5 text-sm text-[#555555]">
                   Your score is calculated across 8 compliance dimensions weighted by their regulatory
                   impact. Improve by completing tasks in your Roadmap.
+                  {score.totalScore === 0 && (
+                    <>
+                      {' '}
+                      If you completed onboarding or roadmap tasks, use Update score to rebuild from
+                      your profile — analysing a regulator letter does not reset compliance progress.
+                    </>
+                  )}
                 </p>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap items-start gap-3">
                   <Link
                     href="/dashboard/roadmap"
                     className="rounded-lg bg-[#0B6E6E] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0D2B45]"
@@ -206,6 +214,10 @@ export default async function DashboardPage(): Promise<JSX.Element> {
                   >
                     Ask FounderCounsel
                   </Link>
+                  <UpdateReadinessScoreButton
+                    accessToken={accessToken}
+                    emphasize={score.totalScore === 0}
+                  />
                 </div>
               </div>
             </div>

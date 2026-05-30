@@ -1,17 +1,5 @@
-// =============================================================================
-// scoreRecalculation.ts — full resync of the readiness score from persistent
-// state (CLAUDE.md §16 Rule 6: score must update in real time).
-//
-// Unlike flipIndicatorAndRecalc (a single indicator flip inside a WithRls
-// transaction), recalculateScore is a standalone rebuild that:
-//   1. Seeds from onboarding existing_infrastructure (user profile).
-//   2. Overlays the latest readiness snapshot (manual indicator toggles).
-//   3. Overlays completed roadmap tasks (authoritative when indicatorKey set).
-//   4. Persists a new readiness_scores row (history point).
-//
-// MUST run inside withRls — bare prisma bypasses RLS GUCs and previously wrote
-// zero-score rows after background jobs (e.g. letter analysis completion).
-// =============================================================================
+// Mirror of apps/api/src/services/scoreRecalculation.ts — Netlify Route Handlers
+// use the same RLS-scoped rebuild logic as the Fly API.
 
 import type { Prisma, ReadinessScore } from '@prisma/client';
 import {
@@ -25,8 +13,8 @@ import {
   type DimensionKey,
   type IndicatorState,
 } from '@klarify/core';
-import { prisma, withRls } from '../db.js';
-import { parseSnapshotToIndicatorState } from './roadmapService.js';
+import { prisma, withRls } from '@/lib/db';
+import { parseSnapshotToIndicatorState } from '@/lib/roadmapService';
 
 function copySnapshotValues(base: IndicatorState, snap: IndicatorState): IndicatorState {
   let state = base;
@@ -83,7 +71,6 @@ async function buildIndicatorState(
 
   let snapshotState = parseSnapshotToIndicatorState(latestScore?.snapshot ?? null);
 
-  // Recover from a corrupt zero snapshot (background recalc without RLS).
   if (countTrueIndicators(snapshotState) === 0 && latestScore?.totalScore === 0) {
     const prior = await tx.readinessScore.findFirst({
       where: { orgId, totalScore: { gt: 0 } },
@@ -121,10 +108,6 @@ async function buildIndicatorState(
   return state;
 }
 
-/**
- * Rebuild the readiness score for an org and persist a new snapshot row.
- * Requires a member userId for RLS — pass the authenticated user when available.
- */
 export async function recalculateScore(
   orgId: string,
   actorUserId?: string,

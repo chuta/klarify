@@ -110,6 +110,56 @@ complianceRoutes.get('/score', requireAuth, async (c) => {
 });
 
 // ========================================================================== //
+// POST /score/recalculate — rebuild score from profile + snapshot + tasks.   //
+// ========================================================================== //
+complianceRoutes.post('/score/recalculate', requireAuth, async (c) => {
+  const userId = c.get('userId');
+
+  try {
+    const orgId = await resolveOrgId(userId);
+    if (orgId === null) {
+      return c.json(
+        { success: false as const, error: 'Organisation not found.', code: 'ORG_NOT_FOUND' },
+        404,
+      );
+    }
+
+    const record = await recalculateScore(orgId, userId);
+    if (record === null) {
+      return c.json(
+        { success: false as const, error: 'Could not recalculate score.', code: 'SCORE_RECALC_ERROR' },
+        500,
+      );
+    }
+
+    return c.json({
+      success: true as const,
+      data: {
+        totalScore: record.totalScore,
+        dimensions: {
+          corporate_structure: record.corporateStructure,
+          capital_licensing: record.capitalLicensing,
+          kyc_infrastructure: record.kycInfrastructure,
+          aml_cft_programme: record.amlCftProgramme,
+          transaction_monitoring: record.transactionMonitoring,
+          regulatory_reporting: record.regulatoryReporting,
+          regulatory_relationships: record.regulatoryRelationships,
+          product_classification: record.productClassification,
+        },
+        calculatedAt: record.calculatedAt,
+        orgId,
+      },
+    });
+  } catch (err) {
+    console.error('[compliance/score/recalculate] error', err);
+    return c.json(
+      { success: false as const, error: 'Failed to recalculate score.', code: 'SCORE_RECALC_ERROR' },
+      500,
+    );
+  }
+});
+
+// ========================================================================== //
 // PUT /indicators — update a single indicator + recalc + re-check lock state. //
 // CLAUDE.md §16 Rule 6.                                                        //
 // ========================================================================== //
@@ -168,7 +218,7 @@ complianceRoutes.put(
 
       // Full resync fire-and-forget: catches any task-linked indicators not
       // yet applied and produces an additional history point (§16 Rule 6).
-      void recalculateScore(orgId).catch((e: unknown) =>
+      void recalculateScore(orgId, userId).catch((e: unknown) =>
         console.error('[compliance/indicators] recalc error', e),
       );
 
@@ -379,7 +429,7 @@ complianceRoutes.put(
 
       // Fire-and-forget full resync — catches tasks without indicatorKey and
       // adds a fresh history point regardless (§16 Rule 6).
-      void recalculateScore(orgId).catch((e: unknown) =>
+      void recalculateScore(orgId, userId).catch((e: unknown) =>
         console.error('[compliance/roadmap/task PUT] recalc error', e),
       );
 

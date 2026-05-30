@@ -918,7 +918,7 @@ After Sprint 6 closes:
       * Compliance PDF export (US-006)
       * PWA packaging
       * Human Escalation vetted directory (US-011 full)
-      * PostHog analytics baseline
+      * PostHog funnel dashboards + feature flags (SDK wired May 2026)
 ─────────────────────────────────────────────────────
 
 
@@ -933,7 +933,8 @@ After Sprint 6 closes:
 | Compliance PDF export | US-006 | Not yet built | Sprint 7 |
 | PWA + offline mode | PRD §5.5 | Responsive web | Beta polish |
 | Native mobile app | PRD §4.1 Phase 2 | Web-only | Post-beta |
-| PostHog analytics | PRD §4.2 | Not integrated | Sprint 7 |
+| PostHog analytics (SDK + events) | PRD §4.2 | ✅ Shipped pre–Sprint 7 (client + server, consent, 17 events) | — |
+| PostHog funnel dashboards + flags | PRD §4.2 | Events wired; UI funnels not configured | Sprint 7 |
 | Google OAuth | PRD §4.2 | Email + magic link | Sprint 7 |
 
 
