@@ -51,8 +51,8 @@ export function AnalyticsPreference(): JSX.Element | null {
           </span>
         </div>
         <p className="text-[#555555] text-xs leading-relaxed">
-          Share anonymous usage data — which features you use and where you get
-          stuck — so we can improve Klarify. We never collect the content of
+          Share anonymous usage data, which features you use and where you get
+          stuck, so we can improve Klarify. We never collect the content of
           your documents, classifications, chats, or uploaded letters; only
           actions, categories, and counts. Turning this off also disables
           session replay on your account.
