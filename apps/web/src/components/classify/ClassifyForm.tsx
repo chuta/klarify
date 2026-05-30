@@ -8,6 +8,7 @@ import {
 } from './RegulatoryIdentityCard';
 import { Spinner } from '@/components/icons';
 import { formatApiError } from '@/lib/apiError';
+import { track } from '@/lib/analytics/events';
 import {
   buildClassifyPayload,
   CLASSIFY_LIMITS,
@@ -154,6 +155,11 @@ export function ClassifyForm({ apiBaseUrl }: { apiBaseUrl: string }): JSX.Elemen
 
       setResult(body.data.result);
       setClassificationId(body.data.id);
+      track('ai_query_made', { surface: 'classify' });
+      track('classification_run', {
+        primary_category: body.data.result.primary_category,
+        risk: body.data.result.risk_if_unlicensed,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : formatApiError(err));
     } finally {

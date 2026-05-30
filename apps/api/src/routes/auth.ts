@@ -10,6 +10,7 @@ import { sendWelcomeEmail } from '@klarify/email';
 import { prisma } from '../db.js';
 import { requireAuth, type AuthVars } from '../middleware/auth.js';
 import { resolveUserSetupState } from '../services/userSetup.js';
+import { captureServerEvent } from '../services/analytics.js';
 
 export const authRoutes = new Hono<{ Variables: AuthVars }>();
 
@@ -61,6 +62,16 @@ authRoutes.post('/sync', requireAuth, async (c) => {
         ...(avatar !== undefined && { avatar }),
       },
     });
+
+    // Server-confirmed signup — fires exactly once, the first time we see the
+    // user. `identify` on the client links subsequent events to this person.
+    if (isNewUser) {
+      captureServerEvent({
+        distinctId: user.id,
+        event: 'signup_completed',
+        properties: { email: user.email },
+      });
+    }
 
     // Welcome email on first user creation — await so serverless runtimes
     // (Netlify) do not terminate before Resend accepts the message.

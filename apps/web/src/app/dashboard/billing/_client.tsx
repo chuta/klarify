@@ -11,6 +11,7 @@ import {
   PLAN_PRICING_NGN,
   type SubscriptionStatusData,
 } from '@/lib/billingStatus';
+import { track } from '@/lib/analytics/events';
 
 // ---------------------------------------------------------------------------
 // Korapay types
@@ -207,6 +208,7 @@ export function BillingClient({
       }
 
       setIsLoading(plan);
+      track('checkout_started', { plan, billing_cycle: cycle });
 
       const couponCode =
         appliedCoupon &&

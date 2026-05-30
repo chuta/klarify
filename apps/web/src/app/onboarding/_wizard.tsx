@@ -6,6 +6,7 @@ import { submitOnboarding } from './actions';
 import type { OnboardingCompleteInput } from '@klarify/core';
 import { PRODUCT_TYPE_META, PRODUCT_TYPES } from '@klarify/core';
 import { CheckSolid, Spinner } from '@/components/icons';
+import { track } from '@/lib/analytics/events';
 
 const PRODUCT_TYPE_OPTIONS = PRODUCT_TYPES.map((value) => ({
   value,
@@ -171,6 +172,12 @@ export function OnboardingWizard({
     };
 
     setIsPending(true);
+    // Fire before the server action redirects (the redirect unmounts us).
+    track('onboarding_completed', {
+      stage: state.stage,
+      markets: state.target_markets,
+      product_types: state.product_types,
+    });
     submitOnboarding(payload).then((result) => {
       if (result?.error) {
         setServerError(result.error);

@@ -7,6 +7,31 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@klarify/core', '@klarify/ai', '@klarify/ui'],
+  /**
+   * PostHog reverse proxy (US Cloud).
+   *
+   * Browsers send analytics to `/ingest/*` on our own origin, which Next.js
+   * rewrites to PostHog. This keeps requests first-party so ad-blockers and
+   * mobile networks common in our African market don't silently drop events.
+   * `skipTrailingSlashRedirect` prevents a 308 on the static-asset path.
+   *
+   * Endpoints per PostHog US Cloud:
+   *   - ingestion: https://us.i.posthog.com
+   *   - static assets: https://us-assets.i.posthog.com
+   */
+  skipTrailingSlashRedirect: true,
+  async rewrites() {
+    return [
+      {
+        source: '/ingest/static/:path*',
+        destination: 'https://us-assets.i.posthog.com/static/:path*',
+      },
+      {
+        source: '/ingest/:path*',
+        destination: 'https://us.i.posthog.com/:path*',
+      },
+    ];
+  },
   experimental: {
     typedRoutes: true,
     // Prisma's query engine is a native `.node` binary that is loaded

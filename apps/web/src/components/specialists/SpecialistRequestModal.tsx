@@ -9,6 +9,7 @@ import {
 } from '@klarify/core';
 import { createClient } from '@/lib/supabase/client';
 import { CloseIcon } from '@/components/icons';
+import { track } from '@/lib/analytics/events';
 
 export interface SpecialistRequestDefaults {
   topic?: SpecialistTopic;
@@ -137,6 +138,7 @@ export function SpecialistRequestModal({
           return;
         }
         setSubmitted(true);
+        track('specialist_requested', { reason: topic });
       } catch {
         setError('Network error. Please try again.');
       } finally {

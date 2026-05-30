@@ -11,6 +11,7 @@ import {
   type RoadmapApiResponse,
   type RoadmapApiTask,
 } from '@/components/roadmap/types';
+import { track } from '@/lib/analytics/events';
 
 interface RoadmapClientProps {
   initialRoadmap: RoadmapApiResponse;
@@ -139,6 +140,12 @@ export function RoadmapClient({
         return;
       }
       const nextStatus = task.status === 'complete' ? 'not_started' : 'complete';
+      if (nextStatus === 'complete') {
+        track('roadmap_task_completed', {
+          task_id: task.templateRefId ?? task.id,
+          phase: task.phase,
+        });
+      }
       await updateTask(task.id, { status: nextStatus });
     },
     [pushToast, updateTask],

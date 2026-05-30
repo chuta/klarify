@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { NavSection } from './_nav';
 import { CloseIcon, MenuIcon } from '@/components/icons';
+import { SignOutButton } from '@/components/analytics/SignOutButton';
 
 interface MobileNavProps {
   email: string;
@@ -144,14 +145,7 @@ export function MobileNav({ email, displayName, navSections }: MobileNavProps): 
             </span>
             <span className="flex-1 truncate text-xs">{email}</span>
           </Link>
-          <form method="POST" action="/auth/sign-out" className="mt-1">
-            <button
-              type="submit"
-              className="w-full rounded-lg px-3 py-2 text-left text-xs text-[#555555] transition hover:bg-[#F5F5F5] hover:text-[#C0392B]"
-            >
-              Sign out
-            </button>
-          </form>
+          <SignOutButton />
         </div>
       </aside>
     </>

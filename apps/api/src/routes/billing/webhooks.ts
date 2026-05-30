@@ -10,6 +10,7 @@
 import { timingSafeEqual, createHmac } from 'node:crypto';
 import { Hono } from 'hono';
 import { activateSubscription } from '../../services/billing.js';
+import { captureServerEvent } from '../../services/analytics.js';
 import { prisma } from '../../db.js';
 import {
   sendSubscriptionReceiptEmail,
@@ -102,7 +103,21 @@ async function handleChargeSuccess(payload: Record<string, unknown>): Promise<vo
     });
     const orgOwner = await prisma.organisation.findUnique({
       where: { id: orgId },
-      include: { owner: { select: { email: true, name: true } } },
+      include: { owner: { select: { id: true, email: true, name: true } } },
+    });
+
+    // Server-confirmed conversion — does not depend on the browser firing it.
+    captureServerEvent({
+      distinctId: orgOwner?.owner?.id ?? orgId,
+      event: 'subscription_activated',
+      properties: {
+        plan: result.plan,
+        billing_cycle: sub?.billingCycle ?? 'monthly',
+        amount: (data.amount as number | undefined) ?? 0,
+        currency: 'NGN',
+        reference,
+      },
+      groups: { organisation: orgId },
     });
 
     if (orgOwner?.owner?.email && sub) {
@@ -160,10 +175,19 @@ async function handleChargeFailed(payload: Record<string, unknown>): Promise<voi
       where: { korapayTransactionRef: reference },
       include: {
         org: {
-          include: { owner: { select: { email: true, name: true } } },
+          include: { owner: { select: { id: true, email: true, name: true } } },
         },
       },
     });
+
+    if (pending) {
+      captureServerEvent({
+        distinctId: pending.org.owner?.id ?? pending.orgId,
+        event: 'payment_failed',
+        properties: { plan: pending.plan, reference },
+        groups: { organisation: pending.orgId },
+      });
+    }
 
     if (pending?.org.owner?.email) {
       const retryByDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-NG', {

@@ -11,6 +11,7 @@ import {
   type JurisdictionGapRow,
 } from '@klarify/core';
 import { CitationBadge, coreCitationToBadge } from '@/components/chat/CitationBadge';
+import { track } from '@/lib/analytics/events';
 
 const TARGET_OPTIONS: { code: JurisdictionCode; label: string }[] = [
   { code: 'GH', label: 'Ghana' },
@@ -125,6 +126,7 @@ export function JurisdictionGapAnalyser({
       if (!body.success || !body.data) throw new Error(body.error ?? 'Analysis failed.');
       setResult(body.data.result);
       setAnalysisId(body.data.analysisId);
+      track('ai_query_made', { surface: 'jurisdiction' });
       await loadHistory();
     } catch (err) {
       setError((err as Error).message);

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { SCENARIO_TEMPLATES, SCENARIO_DISCLAIMER, type ScenarioResult } from '@klarify/core';
 import { CitationBadge, coreCitationToBadge } from '@/components/chat/CitationBadge';
+import { track } from '@/lib/analytics/events';
 
 const MIN_CHARS = 30;
 const MAX_CHARS = 2000;
@@ -103,6 +104,7 @@ export function ScenarioSimulator({ apiBaseUrl, hasAccess }: Props): JSX.Element
       setResult(body.data.result);
       setAnalysisId(body.data.analysisId);
       setScenario(text.trim());
+      track('ai_query_made', { surface: 'scenario' });
       await loadHistory();
     } catch (err) {
       setError((err as Error).message);

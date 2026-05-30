@@ -37,6 +37,7 @@
     "ioredis": "^5.10.1",
     "jose": "^5.9.6",
     "pdf-parse": "^1.1.1",
+    "posthog-node": "^5.35.6",
     "prisma": "^5.20.0",
     "tsx": "^4.19.0",
     "typescript": "^5.5.0",

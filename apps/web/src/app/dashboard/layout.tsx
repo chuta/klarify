@@ -8,6 +8,8 @@ import { getDashboardNav } from './_nav';
 import { MobileNav } from './_mobile-nav';
 import { DashboardShellExtras } from '@/components/dashboard/DashboardShellExtras';
 import { SessionInactivityGuard } from '@/components/auth/SessionInactivityGuard';
+import { PostHogIdentify } from '@/components/analytics/PostHogIdentify';
+import { SignOutButton } from '@/components/analytics/SignOutButton';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -39,6 +41,7 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
   return (
     <div className="flex h-screen bg-[#FAFAFA] overflow-hidden">
       <SessionInactivityGuard />
+      <PostHogIdentify userId={user.id} email={email} />
       {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-[#CCCCCC] bg-white">
         <div className="flex h-16 items-center border-b border-[#CCCCCC] px-5">
@@ -87,14 +90,7 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
             </span>
             <span className="flex-1 truncate text-xs">{email}</span>
           </Link>
-          <form method="POST" action="/auth/sign-out" className="mt-1">
-            <button
-              type="submit"
-              className="w-full rounded-lg px-3 py-2 text-left text-xs text-[#555555] transition hover:bg-[#F5F5F5] hover:text-[#C0392B]"
-            >
-              Sign out
-            </button>
-          </form>
+          <SignOutButton />
         </div>
       </aside>
 

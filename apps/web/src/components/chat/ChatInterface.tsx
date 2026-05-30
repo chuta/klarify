@@ -13,6 +13,7 @@ import {
   type SpecialistRequestDefaults,
 } from '@/components/specialists/SpecialistRequestModal';
 import { ChatBubbleLeftRightIcon, Lock, MenuIcon, Plus } from '@/components/icons';
+import { track } from '@/lib/analytics/events';
 
 const STARTER_QUESTIONS: string[] = [
   'What licences does my product need in Nigeria?',
@@ -58,6 +59,18 @@ export function ChatInterface({
     deleteConversation,
   } = useKlarifyChat({ getAuthToken });
 
+  const handleSend = useCallback(
+    (text: string) => {
+      track('ai_query_made', {
+        surface: 'chat',
+        remaining:
+          quota && quota.limit !== null ? Math.max(quota.limit - quota.used, 0) : undefined,
+      });
+      void sendMessage(text);
+    },
+    [quota, sendMessage],
+  );
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [specialistModalOpen, setSpecialistModalOpen] = useState(false);
   const [specialistDefaults, setSpecialistDefaults] = useState<
@@ -93,6 +106,15 @@ export function ChatInterface({
   const emptyState = messages.length === 0;
   const quotaBlocked =
     quota !== null && quota.limit !== null && quota.used >= quota.limit;
+
+  useEffect(() => {
+    if (quotaBlocked) {
+      track('paywall_hit', {
+        feature: 'ai_queries',
+        required_plan: (quota?.plan ?? 'free') === 'free' ? 'navigator' : 'compass',
+      });
+    }
+  }, [quotaBlocked, quota?.plan]);
 
   const quotaBlockedMessage = quotaBlocked
     ? `You have used all ${quota?.limit} AI queries this month on the ${quota?.plan} plan. ` +
@@ -171,7 +193,7 @@ export function ChatInterface({
         {/* Scrollable message area */}
         <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
           {emptyState ? (
-            <EmptyState onPick={(q) => void sendMessage(q)} />
+            <EmptyState onPick={handleSend} />
           ) : (
             <div className="flex w-full flex-col gap-4">
               {messages.map((m) => (
@@ -248,7 +270,7 @@ export function ChatInterface({
               <QueryLimitUpgradePrompt plan={quota?.plan ?? 'free'} limit={quota?.limit ?? 0} />
             ) : (
               <ChatInput
-                onSend={(text) => void sendMessage(text)}
+                onSend={handleSend}
                 onStop={stopStreaming}
                 isStreaming={isStreaming}
                 blockedMessage={null}
@@ -332,6 +354,9 @@ function QueryLimitUpgradePrompt({
       <div className="flex items-center gap-3">
         <a
           href={`/dashboard/billing?plan=${requiredPlan}`}
+          onClick={() =>
+            track('upgrade_clicked', { from_plan: plan, to_plan: requiredPlan })
+          }
           className="rounded-lg bg-[#0B6E6E] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0A5F5F]"
         >
           Upgrade to {planLabel} →

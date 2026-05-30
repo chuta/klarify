@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import { createClient } from '@/lib/supabase/client';
+import { track } from '@/lib/analytics/events';
 
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_EXT = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
@@ -70,6 +71,7 @@ export function DocumentUploader({
           | { success: true; data: { documentId: string } }
           | { success: false; error: string };
         if (!body.success) throw new Error(body.error);
+        track('letter_uploaded', { source: 'upload' });
         router.push(`/dashboard/documents/${body.data.documentId}`);
       } catch (err) {
         setError((err as Error).message);
@@ -106,6 +108,7 @@ export function DocumentUploader({
           | { success: true; data: { documentId: string } }
           | { success: false; error: string };
         if (!body.success) throw new Error(body.error);
+        track('letter_uploaded', { source: 'paste' });
         router.push(`/dashboard/documents/${body.data.documentId}`);
       } catch (err) {
         setError((err as Error).message);

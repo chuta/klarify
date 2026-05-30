@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
+import { PostHogProvider } from '@/components/analytics/PostHogProvider';
 
 /**
  * `metadataBase` is consumed by Next.js when resolving relative URLs in
@@ -49,7 +50,7 @@ export default function RootLayout({ children }: { children: ReactNode }): JSX.E
   return (
     <html lang="en">
       <body className="bg-bg-primary text-[color:var(--klarify-text-primary,#1A1A1A)] font-sans antialiased">
-        {children}
+        <PostHogProvider>{children}</PostHogProvider>
       </body>
     </html>
   );

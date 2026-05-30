@@ -1,7 +1,8 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { track } from '@/lib/analytics/events';
 import {
   parseDraftBody,
   stripMarkdownToPlainText,
@@ -77,6 +78,14 @@ export function DocumentAnalysisResult({
 }): JSX.Element {
   const baseUrl = apiBaseUrl.replace(/\/$/, '');
   const [specialistOpen, setSpecialistOpen] = useState(false);
+
+  useEffect(() => {
+    track('analysis_viewed', {
+      urgency: result.urgency_level,
+      document_id: documentId,
+    });
+  }, [documentId, result.urgency_level]);
+
   const showSpecialistCta =
     result.urgency_level === 'CRITICAL' || result.urgency_level === 'HIGH';
 
@@ -442,6 +451,7 @@ function DraftResponseCard({
         | { success: true; data: { downloadUrl: string } }
         | { success: false; error: string };
       if (!body.success) throw new Error(body.error);
+      track('draft_exported', { document_id: documentId });
       window.location.href = body.data.downloadUrl;
     } catch (err) {
       setError((err as Error).message);

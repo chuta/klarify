@@ -9,11 +9,12 @@
 // CLAUDE.md §3: client fetches must use NEXT_PUBLIC_API_URL (Fly origin).
 // =============================================================================
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   ScoreHistoryChart,
   type ScorePoint,
 } from '@/components/compliance/ScoreHistoryChart';
+import { track } from '@/lib/analytics/events';
 
 interface ScoreHistoryData {
   days: number;
@@ -35,6 +36,14 @@ export function ScoreHistorySection({
   const [data, setData] = useState<ScoreHistoryData>(initialData);
   const [days, setDays] = useState<30 | 60 | 90>(30);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    track('readiness_score_viewed', {
+      score: initialData.current?.total ?? undefined,
+    });
+    // Fire once on mount — the dashboard score view.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDaysChange = useCallback(
     async (newDays: 30 | 60 | 90) => {
